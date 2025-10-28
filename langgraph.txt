@@ -1,0 +1,362 @@
+# Documentación de create_react_agent() en LangGraph
+
+He investigado la documentación oficial de LangGraph para extraer información completa sobre `create_react_agent()` y la configuración de system prompts. Esta función se encuentra en `langgraph.prebuilt` y es la manera más rápida de crear agentes ReAct en LangGraph.
+
+## Parámetros de create_react_agent()
+
+La función `create_react_agent()` acepta los siguientes parámetros, donde solo **model** y **tools** son obligatorios:
+
+### Parámetros obligatorios
+
+**model** - El modelo de lenguaje para el agente. Acepta tres formatos:
+- **String**: Identificador simple como `"anthropic:claude-3-7-sonnet-latest"` o `"openai:gpt-4o"`
+- **Objeto ChatModel**: Instancia pre-configurada con temperatura y otros parámetros
+- **Callable**: Función que recibe state y runtime para selección dinámica del modelo
+
+```python
+# Opción 1: String simple
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather]
+)
+
+# Opción 2: Modelo configurado
+from langchain.chat_models import init_chat_model
+model = init_chat_model("anthropic:claude-3-7-sonnet-latest", temperature=0)
+agent = create_react_agent(model=model, tools=[get_weather])
+```
+
+**tools** - Lista de herramientas o instancia de `ToolNode`. Acepta:
+- Secuencia de `BaseTool`, funciones Python, o diccionarios
+- Instancia de `ToolNode` para mayor control
+
+```python
+def get_weather(city: str) -> str:
+    """Get weather for a given city."""
+    return f"It's always sunny in {city}!"
+
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather]
+)
+```
+
+### Parámetros opcionales principales
+
+**prompt** (Optional[Prompt] = None) - El system prompt para el agente. Este es el parámetro clave para configurar el comportamiento del agente. Acepta dos formatos principales:
+- **String**: Interpretado automáticamente como `SystemMessage`
+- **Callable**: Función que devuelve lista de mensajes para prompts dinámicos
+
+**checkpointer** (Optional[Checkpointer] = None) - Objeto para persistir el estado del grafo entre invocaciones, habilitando memoria conversacional. Usa `InMemorySaver()` para memoria en RAM o implementaciones persistentes para producción.
+
+**state_schema** (Optional[StateSchemaType] = None) - Schema personalizado que define el estado del grafo. Debe incluir una clave `messages`. Por defecto usa `AgentState`.
+
+**context_schema** (Optional[type[Any]] = None) - Schema para contexto de runtime, usado con prompts dinámicos para pasar datos de configuración sin incluirlos en los mensajes del LLM.
+
+**response_format** - Schema para salida estructurada final. El agente hace una llamada adicional al LLM para formatear la respuesta según este schema.
+
+**interrupt_before/interrupt_after** (Optional[list[str]]) - Listas de nombres de nodos (`"agent"` o `"tools"`) donde interrumpir la ejecución, útil para aprobaciones humanas o procesamiento adicional.
+
+**store** (Optional[BaseStore]) - Store para persistir datos entre múltiples threads/conversaciones (memoria de largo plazo).
+
+**name** (Optional[str]) - Nombre del grafo compilado, útil cuando se usa como subgrafo en sistemas multi-agente.
+
+**debug** (bool = False) - Habilita modo debug con trazas detalladas.
+
+**version** (Literal["v1", "v2"] = "v2") - Versión del grafo. Usa `"v2"` (predeterminado) para características actuales.
+
+## Configuración de system prompts
+
+LangGraph ofrece dos enfoques para configurar system prompts: **estáticos** (fijos) y **dinámicos** (generados en runtime).
+
+### Prompts estáticos
+
+La forma más simple es pasar un string directamente al parámetro `prompt`, que se interpreta automáticamente como un `SystemMessage`:
+
+```python
+from langgraph.prebuilt import create_react_agent
+
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather],
+    prompt="You are a helpful assistant"  # Convertido a SystemMessage
+)
+
+# Invocar el agente
+response = agent.invoke({
+    "messages": [{"role": "user", "content": "what is the weather in sf"}]
+})
+```
+
+Este enfoque es perfecto para instrucciones fijas que no cambian entre invocaciones.
+
+### Prompts dinámicos
+
+Para personalización basada en el usuario o datos de runtime, usa una función callable como prompt. LangGraph ofrece dos métodos:
+
+#### Método 1: Usando state y config (compatible con versiones anteriores)
+
+```python
+from langchain_core.messages import AnyMessage
+from langchain_core.runnables import RunnableConfig
+from langgraph.prebuilt.chat_agent_executor import AgentState
+
+def prompt(state: AgentState, config: RunnableConfig) -> list[AnyMessage]:
+    user_name = config["configurable"].get("user_name", "there")
+    system_msg = f"You are a helpful assistant. Address the user as {user_name}."
+    return [{"role": "system", "content": system_msg}] + state["messages"]
+
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather],
+    prompt=prompt
+)
+
+# Invocar con configuración
+agent.invoke(
+    {"messages": [{"role": "user", "content": "what is the weather in sf"}]},
+    config={"configurable": {"user_name": "John Smith"}}
+)
+```
+
+#### Método 2: Usando Runtime context (recomendado desde v0.6.0)
+
+Este método más moderno usa `context_schema` para definir explícitamente el contexto de runtime:
+
+```python
+from dataclasses import dataclass
+from langchain_core.messages import AnyMessage
+from langgraph.runtime import get_runtime
+from langgraph.prebuilt.chat_agent_executor import AgentState
+
+@dataclass
+class ContextSchema:
+    user_name: str
+    language: str = "English"
+
+def prompt(state: AgentState) -> list[AnyMessage]:
+    runtime = get_runtime(ContextSchema)
+    system_msg = f"""You are a helpful assistant. 
+    Address the user as {runtime.context.user_name}.
+    Respond in {runtime.context.language}."""
+    return [{"role": "system", "content": system_msg}] + state["messages"]
+
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather],
+    prompt=prompt,
+    context_schema=ContextSchema
+)
+
+# Invocar con context
+agent.invoke(
+    {"messages": [{"role": "user", "content": "what is the weather in sf"}]},
+    context={"user_name": "John Smith", "language": "Spanish"}
+)
+```
+
+### Prompts con state schema personalizado
+
+Puedes acceder a campos adicionales del estado directamente en el prompt:
+
+```python
+from langgraph.prebuilt.chat_agent_executor import AgentState
+
+class CustomState(AgentState):
+    user_name: str
+    conversation_topic: str
+
+def prompt(state: CustomState) -> list[AnyMessage]:
+    system_msg = f"""You are a helpful assistant. 
+    User's name: {state["user_name"]}
+    Topic: {state["conversation_topic"]}"""
+    return [{"role": "system", "content": system_msg}] + state["messages"]
+
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather],
+    state_schema=CustomState,
+    prompt=prompt
+)
+
+agent.invoke({
+    "messages": "Hello!",
+    "user_name": "Alice",
+    "conversation_topic": "weather"
+})
+```
+
+## Ejemplos completos de código
+
+### Ejemplo 1: Agente básico con memoria persistente
+
+Este ejemplo muestra cómo crear un agente con memoria conversacional usando `InMemorySaver`:
+
+```python
+from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import InMemorySaver
+
+def get_weather(city: str) -> str:
+    """Get weather for a given city."""
+    return f"It's always sunny in {city}!"
+
+# Crear checkpointer
+checkpointer = InMemorySaver()
+
+# Crear agente con memoria
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather],
+    checkpointer=checkpointer,
+    prompt="You are a helpful weather assistant"
+)
+
+# Primera conversación
+config = {"configurable": {"thread_id": "1"}}
+response1 = agent.invoke(
+    {"messages": [{"role": "user", "content": "what is the weather in sf"}]},
+    config
+)
+
+# Segunda conversación - mantiene el contexto
+response2 = agent.invoke(
+    {"messages": [{"role": "user", "content": "what about new york?"}]},
+    config
+)
+```
+
+### Ejemplo 2: Agente con prompt dinámico basado en hora
+
+```python
+from datetime import datetime
+from langchain_core.messages import AnyMessage
+from langgraph.prebuilt.chat_agent_executor import AgentState
+
+def time_aware_prompt(state: AgentState) -> list[AnyMessage]:
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+    system_msg = f"""You are a helpful assistant. 
+    Current date and time: {current_time}
+    Always include time-relevant context in your responses."""
+    return [{"role": "system", "content": system_msg}] + state["messages"]
+
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather],
+    prompt=time_aware_prompt
+)
+```
+
+### Ejemplo 3: Control de iteraciones máximas
+
+```python
+from langgraph.errors import GraphRecursionError
+from langgraph.prebuilt import create_react_agent
+
+max_iterations = 3
+recursion_limit = 2 * max_iterations + 1
+
+agent = create_react_agent(
+    model="anthropic:claude-3-5-haiku-latest",
+    tools=[get_weather]
+)
+
+try:
+    response = agent.invoke(
+        {"messages": [{"role": "user", "content": "what's the weather"}]},
+        {"recursion_limit": recursion_limit}
+    )
+except GraphRecursionError:
+    print("Agent stopped due to max iterations.")
+```
+
+### Ejemplo 4: Salida estructurada con Pydantic
+
+```python
+from pydantic import BaseModel, Field
+
+class WeatherResponse(BaseModel):
+    """Structured weather response."""
+    location: str = Field(description="The city queried")
+    conditions: str = Field(description="Weather conditions")
+    temperature: str = Field(description="Temperature information")
+
+agent = create_react_agent(
+    model="anthropic:claude-3-7-sonnet-latest",
+    tools=[get_weather],
+    response_format=WeatherResponse,
+    prompt="You are a weather assistant. Always provide structured responses."
+)
+
+response = agent.invoke({
+    "messages": [{"role": "user", "content": "what is the weather in sf"}]
+})
+
+# Acceder a la respuesta estructurada
+structured_output = response["structured_response"]
+print(f"Location: {structured_output.location}")
+print(f"Conditions: {structured_output.conditions}")
+```
+
+### Ejemplo 5: Streaming de respuestas
+
+```python
+# Streaming síncrono
+for chunk in agent.stream(
+    {"messages": [{"role": "user", "content": "what is the weather in sf"}]},
+    stream_mode="updates"
+):
+    print(chunk)
+
+# Streaming asíncrono
+async for chunk in agent.astream(
+    {"messages": [{"role": "user", "content": "what is the weather in sf"}]},
+    stream_mode="updates"
+):
+    print(chunk)
+```
+
+## Cómo funciona el agente ReAct
+
+El agente sigue este flujo de ejecución:
+
+1. **Entrada del usuario** → Nodo "agent" (LLM + prompt aplicado)
+2. **¿Hay tool_calls en la respuesta del LLM?**
+   - **Sí** → Ejecutar nodo "tools" → Volver al nodo "agent" con ToolMessages
+   - **No** → Retornar estado final con todos los mensajes
+3. El proceso se repite hasta que no haya más tool_calls
+
+Este ciclo permite al agente razonar sobre qué herramientas usar, ejecutarlas, y luego razonar sobre los resultados antes de responder al usuario.
+
+## Diferencias importantes
+
+### Prompt vs messages input
+
+- **String en `prompt`** → Se convierte en `SystemMessage`
+- **String en `messages`** → Se convierte en `HumanMessage`
+
+```python
+agent = create_react_agent(
+    prompt="You are helpful"  # SystemMessage
+)
+
+agent.invoke({
+    "messages": "Hello"  # HumanMessage
+})
+```
+
+### Tipos de contexto
+
+- **Runtime context**: Datos estáticos pasados via `context` (ej: user_name, preferencias)
+- **Dynamic state**: Estado mutable durante la ejecución (ej: messages, resultados de tools)
+- **LLM context**: Los mensajes reales pasados al prompt del LLM
+
+El runtime context optimiza el LLM context al permitirte pasar datos necesarios para tu código sin incluirlos innecesariamente en el prompt del LLM.
+
+## Notas adicionales
+
+- La documentación actual será deprecada con el lanzamiento de LangGraph v1.0 en octubre de 2025
+- Usa `version="v2"` (predeterminado) para las características más recientes
+- Para sistemas multi-agente complejos, considera usar el parámetro `name` al crear subgrafos
+- Combina `checkpointer` para memoria de corto plazo y `store` para memoria de largo plazo entre conversaciones
+
+Todas las fuentes provienen de la documentación oficial de LangGraph en https://langchain-ai.github.io/langgraph/

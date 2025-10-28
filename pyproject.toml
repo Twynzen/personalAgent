@@ -1,0 +1,196 @@
+[project]
+name = "sendell"
+version = "0.1.0"
+description = "Autonomous proactive AI agent for Windows device monitoring and control via MCP"
+authors = [
+    {name = "Daniel", email = "daniel@sendell.dev"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = ["ai-agent", "mcp", "langgraph", "automation", "monitoring"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # Core Agent Framework
+    "langgraph>=0.2.0",
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.2.0",
+
+    # LLM Provider
+    "openai>=1.0.0",
+
+    # MCP Protocol
+    "mcp>=0.9.0",
+
+    # System Monitoring
+    "psutil>=5.9.0",
+    "pywin32>=306; sys_platform == 'win32'",
+    "WMI>=1.5.1; sys_platform == 'win32'",
+
+    # Windows Automation
+    "pywinauto>=0.6.8; sys_platform == 'win32'",
+    "pynput>=1.7.0",
+    "pyautogui>=0.9.54",
+
+    # Data Validation & Config
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+
+    # Vector Store & Memory
+    "chromadb>=0.4.0",
+
+    # Security
+    "keyring>=24.0.0",
+    "cryptography>=41.0.0",
+
+    # CLI & Terminal
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "click>=8.1.0",
+
+    # Utils
+    "httpx>=0.27.0",
+    "aiofiles>=23.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+
+    # Code Quality
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "isort>=5.12.0",
+
+    # Type Stubs
+    "types-psutil>=5.9.0",
+    "types-aiofiles>=23.0.0",
+]
+
+langsmith = [
+    # Observability
+    "langsmith>=0.1.0",
+]
+
+local-models = [
+    # Local LLM support (future)
+    "llama-cpp-python>=0.2.0",
+    "transformers>=4.35.0",
+]
+
+all = [
+    "sendell[dev,langsmith,local-models]",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/sendell"
+Documentation = "https://github.com/yourusername/sendell/docs"
+Repository = "https://github.com/yourusername/sendell"
+Issues = "https://github.com/yourusername/sendell/issues"
+
+[project.scripts]
+sendell = "sendell.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sendell"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--cov=sendell",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+asyncio_mode = "auto"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports in __init__.py
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+strict_optional = true
+
+[[tool.mypy.overrides]]
+module = [
+    "langgraph.*",
+    "langchain.*",
+    "chromadb.*",
+    "pywinauto.*",
+    "pynput.*",
+    "pyautogui.*",
+    "WMI.*",
+]
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["sendell"]
