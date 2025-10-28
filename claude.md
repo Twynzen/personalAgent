@@ -698,31 +698,130 @@ dependencies = [
 
 ---
 
+## DESARROLLO ACTUAL: RAMA feature/proactivity
+
+### Sesión 13 (2025-10-28): Inicio de Proactividad
+
+**Objetivo**: Evolucionar Sendell de agente reactivo a agente proactivo con identidad temporal.
+
+**Visión**: Sendell debe ser un compañero que vive contigo, no solo un asistente que espera comandos. Enfoque en el **usuario como persona**, no solo su trabajo.
+
+**Documentos de referencia**:
+- `proactividad.txt` - Arquitectura de proactividad (sistemas, fases, identidad)
+- `iapersonal.txt` - Stack tecnológico y arquitectura completa
+- `PROACTIVITY_DESIGN.md` - Diseño detallado de implementación
+
+**Branch creado**: `feature/proactivity`
+
+**5 Sistemas Core a implementar**:
+
+1. **Sistema de Identidad Temporal**
+   - Agente tiene "birth_date" y conoce hace cuánto vive
+   - Fases de evolución: Birth (días 1-7), Adolescence (8-30), Maturity (31-60), Mastery (60+)
+   - Ejemplo: "Es mi 5to día contigo, aún estoy aprendiendo tu ritmo"
+
+2. **Sistema de Reloj Interno**
+   - Sendell concibe el tiempo como recurso útil
+   - Contextos: morning_routine, work_hours, evening_routine, sleep_time
+   - Trackea uso del tiempo del usuario
+
+3. **Sistema de Memoria Personal Expandida**
+   - Más allá de facts: hábitos, rutinas, proyectos personales, familia
+   - Ejemplo: "Abuela María", hábito "Llamar a la abuela" semanal
+   - Patrones detectados: procrastinación, preferencias
+
+4. **Sistema de Recordatorios Personales**
+   - One-time: "Recuérdame llamar al doctor mañana 10am"
+   - Recurring: "Recuérdame llamar a mi abuela todos los domingos"
+   - Conditional: "Recuérdame revisar proyecto X cuando tenga tiempo libre"
+
+5. **Sistema de Atención Temporal Adaptativo**
+   - No check-ins fijos, sino cálculo dinámico de urgencia
+   - Urgency scoring 0-1 basado en: deadlines, hábitos, patrones, contexto
+   - Conversión urgencia a timing: 0.9 = 15min, 0.5 = 4h, 0.2 = mañana
+
+**Implementación por fases (5 semanas)**:
+
+**Fase 1 (Semana 1)**: Fundación
+- identity.py: AgentIdentity con birth_date, relationship_age, phase
+- temporal_clock.py: Reloj interno con time contexts
+- Actualizar memoria JSON con agent_identity
+- Validación: "Cuánto tiempo llevas conmigo?" -> "Es mi 5to día contigo"
+
+**Fase 2 (Semana 2)**: Memoria Personal
+- personal_memory.py: Habit, Routine, PersonalProject, Goal
+- GUI: Tab "Vida Personal" en brain_gui
+- CRUD de hábitos y rutinas
+- Validación: Agregar hábito "Llamar a la abuela" semanal
+
+**Fase 3 (Semana 3)**: Recordatorios Básicos
+- reminders.py: Reminder con tipos (one_time, recurring, conditional)
+- Trigger system para time-based
+- Integración con loop proactivo
+- Validación: "Recuérdame X mañana" -> se dispara correctamente
+
+**Fase 4 (Semana 4)**: Urgency Scoring
+- attention_system.py: calculate_urgency_score, urgency_to_next_interaction
+- Factores: deadlines, hábitos overdue, patrones, tiempo óptimo
+- Validación: Intervenciones oportunas, no spam
+
+**Fase 5 (Semana 5)**: Loop Proactivo Completo
+- proactive_loop.py: Loop con todos los sistemas integrados
+- daily_reflection: Reflexión al final del día
+- Sistema de feedback: ¿Esto te ayudó?
+- Validación: Dejar correr 7 días, medir utilidad vs molestia
+
+**Nuevos módulos**:
+```
+src/sendell/proactive/
+├── identity.py              # AgentIdentity, relationship phases
+├── temporal_clock.py        # Reloj interno, time awareness
+├── personal_memory.py       # Memoria personal expandida
+├── reminders.py             # Sistema de recordatorios
+├── attention_system.py      # Urgency scoring, timing optimizer
+└── proactive_loop.py        # Loop principal proactivo
+```
+
+**Principios de diseño**:
+- ✅ Respeto al usuario: 1 intervención valiosa > 10 molestas
+- ✅ Transparencia: Explica por qué actúa
+- ✅ Evolución gradual: Días 1-7 tímido, días 30+ anticipatorio
+- ✅ Medición: Track utilidad de intervenciones, aprende del feedback
+
+**Métricas de éxito v0.2**:
+- ✅ Intervenciones proactivas útiles >80%
+- ✅ Falsos positivos (molestias) <10%
+- ✅ 95%+ recordatorios se disparan a tiempo
+- ✅ Usuario siente que Sendell "lo conoce"
+
+---
+
 ## PRÓXIMOS PASOS INMEDIATOS
 
-### Para v0.2 (Siguiente milestone):
+### Para v0.2 (En desarrollo - rama feature/proactivity):
 
-1. **Memoria conversacional persistente**
-   - Cargar facts en contexto automáticamente
-   - LangGraph checkpointer para mantener conversaciones
+**PRIORIDAD 1: Proactividad (5 semanas)**
+1. **Identidad temporal y reloj interno** (Semana 1)
+2. **Memoria personal expandida** (Semana 2)
+3. **Sistema de recordatorios** (Semana 3)
+4. **Urgency scoring** (Semana 4)
+5. **Loop proactivo completo** (Semana 5)
 
-2. **Auto-aprendizaje**
-   - Extraer facts automáticamente de conversaciones
-   - Categorizar facts inteligentemente
+**PRIORIDAD 2: Integración (después de proactividad)**
+- Memoria conversacional persistente con checkpointer
+- Auto-aprendizaje de facts desde conversaciones
+- Activar servidor MCP para extensibilidad
 
-3. **Más herramientas**
-   - take_screenshot: Capturar pantalla cuando sea útil
-   - manage_projects: Track proyectos activos de Daniel
-   - control_music: Control de Spotify/media
-
-4. **Activar MCP Server**
-   - Permitir plugins externos
-   - Extensibilidad para terceros
+**FUTURO v0.3+**:
+- Detección automática de patrones
+- Integración Google Calendar/Email
+- Análisis de productividad
+- take_screenshot, manage_projects, control_music
 
 ---
 
 **FIN DE MEMORIA PERMANENTE**
 
-Este archivo refleja el estado REAL del proyecto Sendell v0.1.
-Última actualización: 2025-10-28
-Estado: MVP COMPLETADO Y FUNCIONAL
+Este archivo refleja el estado REAL del proyecto Sendell.
+Última actualización: 2025-10-28 (Sesión 13)
+Estado: v0.1 MVP COMPLETADO - v0.2 PROACTIVIDAD EN DESARROLLO (rama feature/proactivity)
