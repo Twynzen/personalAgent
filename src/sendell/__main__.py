@@ -36,8 +36,8 @@ def show_banner():
     """Show Sendell banner"""
     banner = """
 ========================================
-      SENDELL - AI Agent v0.1
-  Autonomous System Monitor & Control
+      SENDELL - AI Agent v0.2
+  Autonomous & Proactive AI Assistant
 ========================================
 """
     console.print(banner, style="bold cyan")
@@ -164,16 +164,25 @@ async def run_chat_loop():
     agent = get_agent()
     conversation_history = []
 
+    # Start proactive loop in background
+    await agent.proactive_loop.start()
+    console.print("[dim]⏰ Proactive reminders active (checking every 60s)[/dim]\n")
+
     while True:
         try:
-            # Get user input
-            user_input = console.input("\n[bold cyan]You:[/bold cyan] ").strip()
+            # Get user input (non-blocking using asyncio.to_thread)
+            user_input = await asyncio.to_thread(
+                console.input, "\n[bold cyan]You:[/bold cyan] "
+            )
+            user_input = user_input.strip()
 
             if not user_input:
                 continue
 
             # Handle commands
             if user_input.lower() in ["/quit", "/exit", "/q"]:
+                console.print("[yellow]Stopping proactive loop...[/yellow]")
+                await agent.proactive_loop.stop()
                 console.print("[yellow]Goodbye![/yellow]")
                 break
 
@@ -294,10 +303,66 @@ def brain():
 
 
 @app.command()
+def status():
+    """
+    Show proactive system status.
+
+    Displays agent identity, relationship phase, proactive loop status,
+    and upcoming reminders.
+    """
+    try:
+        console.print("\n[bold]Proactive System Status[/bold]\n")
+
+        agent = get_agent()
+        status_data = agent.get_proactive_status()
+
+        # Agent Identity
+        identity = status_data["identity"]
+        console.print(f"[bold cyan]Agent Identity[/bold cyan]")
+        console.print(f"  Age: {identity['age_days']} days")
+        console.print(f"  Phase: {identity['phase']}")
+        console.print(f"  Confidence: {identity['confidence']:.2f}")
+
+        # Proactive Loop
+        loop = status_data["loop"]
+        console.print(f"\n[bold cyan]Proactive Loop[/bold cyan]")
+        console.print(f"  Running: {'Yes' if loop['running'] else 'No'}")
+        console.print(f"  Check interval: {loop['check_interval_seconds']}s")
+        console.print(f"  Cycles run: {loop['cycles_run']}")
+        console.print(f"  Reminders triggered: {loop['reminders_triggered']}")
+        if loop['last_check_at']:
+            console.print(f"  Last check: {loop['last_check_at']}")
+
+        # Reminders
+        reminders = status_data["reminders"]
+        console.print(f"\n[bold cyan]Reminders[/bold cyan]")
+        console.print(f"  Total: {reminders['total']}")
+        console.print(f"  Due now: {reminders['due']}")
+        console.print(f"  Upcoming (24h): {reminders['upcoming_24h']}")
+
+        # Show upcoming reminders
+        upcoming = agent.reminder_manager.get_upcoming_reminders(hours=24)
+        if upcoming:
+            console.print(f"\n[bold cyan]Upcoming Reminders (next 24h)[/bold cyan]")
+            for r in upcoming:
+                due_time = r.due_at.strftime("%I:%M %p")
+                console.print(f"  - {r.content} at {due_time} ({', '.join(r.actions)})")
+        else:
+            console.print(f"\n[dim]No upcoming reminders in the next 24 hours[/dim]")
+
+        console.print()
+
+    except Exception as e:
+        logger.error(f"Failed to get status: {e}")
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        sys.exit(1)
+
+
+@app.command()
 def version():
     """Show Sendell version"""
-    console.print("\n[bold cyan]Sendell v0.1.0[/bold cyan] - MVP Release")
-    console.print("Autonomous AI Agent for System Monitoring\n")
+    console.print("\n[bold cyan]Sendell v0.2.0[/bold cyan] - Proactive System")
+    console.print("Autonomous & Proactive AI Assistant\n")
 
 
 @app.callback()

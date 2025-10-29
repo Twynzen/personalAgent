@@ -67,7 +67,7 @@ class ProactiveLoop:
 
         self.running = True
         self.loop_task = asyncio.create_task(self._run_loop())
-        logger.info("ProactiveLoop started")
+        logger.debug("ProactiveLoop started")
 
     async def stop(self):
         """Stop the proactive loop"""
@@ -87,7 +87,7 @@ class ProactiveLoop:
 
     async def _run_loop(self):
         """Main loop that runs continuously"""
-        logger.info("Proactive monitoring loop starting...")
+        logger.debug("Proactive monitoring loop starting...")
 
         try:
             while self.running:
@@ -95,7 +95,7 @@ class ProactiveLoop:
                 await asyncio.sleep(self.check_interval)
 
         except asyncio.CancelledError:
-            logger.info("Proactive loop cancelled")
+            logger.debug("Proactive loop cancelled")
         except Exception as e:
             logger.error(f"Proactive loop error: {e}", exc_info=True)
             self.running = False
@@ -105,17 +105,24 @@ class ProactiveLoop:
         self.stats["cycles_run"] += 1
         self.stats["last_check_at"] = datetime.now()
 
-        logger.debug(f"Proactive cycle {self.stats['cycles_run']}")
+        # Debug logging only to file (use debug level)
+        logger.debug(f"Proactive cycle #{self.stats['cycles_run']} - Checking reminders...")
 
         try:
             # 1. Check for due reminders
+            all_reminders = self.reminder_manager.get_all_reminders()
+            logger.debug(f"Total reminders in manager: {len(all_reminders)}")
+
             due_reminders = self.reminder_manager.get_due_reminders()
 
             if due_reminders:
-                logger.info(f"Found {len(due_reminders)} due reminders")
+                # Only log to console when there ARE reminders to process
+                logger.info(f"⏰ Processing {len(due_reminders)} reminder(s)...")
 
                 for reminder in due_reminders:
                     await self._process_reminder(reminder)
+            else:
+                logger.debug(f"No reminders due yet")
 
             # 2. Future: Check for patterns, habits, etc.
             # await self._check_habits()
@@ -131,7 +138,7 @@ class ProactiveLoop:
         Args:
             reminder: The reminder to process
         """
-        logger.info(
+        logger.debug(
             f"Processing reminder: {reminder.reminder_id} - {reminder.content} (actions: {reminder.actions})"
         )
 
@@ -148,11 +155,12 @@ class ProactiveLoop:
                 actions=reminder.actions, content=message, title="Sendell Reminder"
             )
 
-            # Log results
+            # Log results (debug level for details)
+            actions_str = ", ".join([r["action"] for r in results if r["success"]])
+            logger.info(f"✅ Reminder: '{reminder.content}' → {actions_str}")
+
             for result in results:
-                if result["success"]:
-                    logger.info(f"Action executed: {result['action']}")
-                else:
+                if not result["success"]:
                     logger.error(f"Action failed: {result['action']} - {result.get('error')}")
 
             # Mark reminder as processed
@@ -168,7 +176,7 @@ class ProactiveLoop:
                 except Exception as e:
                     logger.error(f"Callback error: {e}")
 
-            logger.info(f"Reminder processed successfully: {reminder.reminder_id}")
+            logger.debug(f"Reminder processed successfully: {reminder.reminder_id}")
 
         except Exception as e:
             logger.error(f"Error processing reminder {reminder.reminder_id}: {e}", exc_info=True)

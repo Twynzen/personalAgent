@@ -49,7 +49,7 @@ def send_chat_message(content: str) -> Dict:
     Returns:
         dict: Result of action
     """
-    logger.info(f"Reminder chat message: {content}")
+    logger.debug(f"Reminder chat message: {content}")
 
     # This returns the message to be displayed in chat
     return {"success": True, "action": "chat_message", "message": content}
@@ -100,7 +100,7 @@ def show_windows_popup(title: str, content: str) -> Dict:
             timeout=5,
         )
 
-        logger.info(f"Windows popup shown: {title} - {content}")
+        logger.debug(f"Windows popup shown: {title} - {content}")
         return {"success": True, "action": "popup", "title": title, "message": content}
 
     except Exception as e:
@@ -143,7 +143,7 @@ def open_notepad_with_message(content: str) -> Dict:
         # Open in notepad
         subprocess.Popen(["notepad.exe", temp_path], shell=False)
 
-        logger.info(f"Notepad opened with reminder: {content}")
+        logger.debug(f"Notepad opened with reminder: {content}")
         return {
             "success": True,
             "action": "notepad",
@@ -171,7 +171,7 @@ def play_notification_sound() -> Dict:
 
         winsound.MessageBeep(winsound.MB_ICONASTERISK)
 
-        logger.info("Notification sound played")
+        logger.debug("Notification sound played")
         return {"success": True, "action": "sound"}
 
     except Exception as e:
