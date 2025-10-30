@@ -8,8 +8,8 @@
 
 ## 🚨 ESTADO ACTUAL DEL DESARROLLO (Para Reinicio de Contexto)
 
-**Branch actual**: `feature/ui-foundation` (Branch 1 de Fase 2A completado, pendiente push)
-**Siguiente**: Crear `feature/ascii-art-library` (Branch 2 de Fase 2A)
+**Branch actual**: `feature/ascii-art-library` (Branch 2 de Fase 2A completado, pendiente push)
+**Siguiente**: Crear `feature/notification-sounds` (Branch 3 de Fase 2A)
 
 **Workflow establecido**:
 1. Claude crea branch para tarea específica
@@ -22,9 +22,9 @@
 8. Documentar SIEMPRE en CLAUDE.md
 
 **Fase actual**: Fase 2A - Sistema de Notificaciones Visuales (6 branches totales)
-- ✅ Branch 1: UI Foundation (COMPLETADO - pendiente push por Daniel)
-- ⏳ Branch 2: ASCII Art Library (SIGUIENTE - por iniciar)
-- ⏳ Branch 3: Notification Levels + Sounds
+- ✅ Branch 1: UI Foundation (COMPLETADO - pushed por Daniel)
+- ✅ Branch 2: ASCII Art Library (COMPLETADO - pendiente push por Daniel)
+- ⏳ Branch 3: Integrate ASCII Art + Sounds (SIGUIENTE - por iniciar)
 - ⏳ Branch 4: Snooze/Dismiss Integration
 - ⏳ Branch 5: Reminder System Integration
 - ⏳ Branch 6: Brain GUI Customization
@@ -1052,8 +1052,48 @@ src/sendell/proactive/
 
 ---
 
+#### Branch 2: `feature/ascii-art-library` - ✅ COMPLETADO
+
+**Objetivo**: Crear biblioteca de ASCII art para ventanas de notificación
+
+**Implementación**:
+- Creado `ascii_art.py` (415 líneas)
+- 25 ASCII arts organizados por categoría:
+  - Sendell (3): avatar, happy, thinking
+  - Time/Reminders (4): clock, alarm, timer, hourglass
+  - Alerts (4): warning, fire, bell, exclamation
+  - Positive (4): check, star, trophy, thumbs_up
+  - Personal (3): heart, phone, gift
+  - Tech (3): computer, terminal, lightbulb
+  - Critical (2): skull, stop
+- Funciones helper:
+  - `get_art(name)` - Obtener arte por nombre
+  - `list_available_arts()` - Listar todos
+  - `get_art_by_category(category)` - Filtrar por categoría
+- Todos ASCII puro (Windows compatible)
+
+**Testing**:
+- `test_notification.py` actualizado con 2 nuevas opciones
+- Opción 7: Ver todos los ASCII arts
+- Opción 8: Preview de arte en notificación
+- Daniel testeó: "se ven bien, están lindos"
+- 25/25 artes verificados correctamente
+
+**Commit**: `0cea990` - "feat: Add ASCII art library for notifications (Phase 2A - Task 2)"
+
+**Archivos creados**:
+- `src/sendell/ui/ascii_art.py` (415 líneas)
+
+**Archivos modificados**:
+- `src/sendell/ui/__init__.py` (exports ASCII art)
+- `test_notification.py` (+54 líneas)
+
+**Próximo paso**: Branch 3 - Integrar ASCII art en NotificationWindow + sistema de sonidos
+
+---
+
 **FIN DE MEMORIA PERMANENTE**
 
 Este archivo refleja el estado REAL del proyecto Sendell.
-Última actualización: 2025-10-29 22:15 (Sesión 15 - Branch 1 Fase 2A completado)
-Estado: v0.1 MVP COMPLETADO - v0.2 FASE 1 COMPLETADA - v0.2 FASE 2A INICIADA ✅
+Última actualización: 2025-10-29 23:35 (Sesión 15 - Branch 1 y 2 Fase 2A completados)
+Estado: v0.1 MVP COMPLETADO - v0.2 FASE 1 COMPLETADA - v0.2 FASE 2A EN PROGRESO (2/6) ✅
