@@ -17,7 +17,10 @@ from sendell.ui import (
     get_art,
     get_art_for_context,
     list_available_arts,
-    ASCII_ART_DICT
+    ASCII_ART_DICT,
+    get_animated_art,
+    list_animated_arts,
+    ANIMATED_ARTS
 )
 
 
@@ -282,55 +285,215 @@ def test_reminder_scenarios():
         print(f"   Result: {result}")
 
 
+def test_all_animated_arts():
+    """Test all 10 animated ASCII arts"""
+    print("\n=== Testing ALL 10 Animated ASCII Arts ===")
+
+    animations = list_animated_arts()
+    print(f"\nTotal animations available: {len(animations)}")
+    print(f"Animations: {', '.join(animations)}\n")
+
+    for anim_name in animations:
+        print(f"\n--- Testing: {anim_name} ---")
+        animated_art = get_animated_art(anim_name)
+
+        print(f"Frames: {animated_art.total_frames}")
+        print(f"FPS: {animated_art.fps}")
+        print(f"Duration: {animated_art.duration:.2f}s")
+        print(f"Loop: {animated_art.loop}")
+
+        input("Press Enter to show animation...")
+
+        window = NotificationWindow(
+            message=f"Testing {anim_name} animation!",
+            title=f"Animated: {anim_name}",
+            level=NotificationLevel.ATTENTION,
+            animated_art=animated_art,
+            play_sound=False
+        )
+        result = window.show()
+        print(f"Result: {result}")
+
+
+def test_specific_animations():
+    """Test specific key animations"""
+    print("\n=== Testing KEY Animations ===")
+
+    key_animations = [
+        ("sendell_blink", "Sendell blinking and winking"),
+        ("heart_beat", "Heart beating rhythm"),
+        ("fire_burning", "Fire flames animating"),
+        ("hourglass_sand", "Sand falling through hourglass"),
+        ("star_explosion", "Star exploding celebration")
+    ]
+
+    for anim_name, description in key_animations:
+        print(f"\n{description}")
+        input("Press Enter to show...")
+
+        animated_art = get_animated_art(anim_name)
+
+        window = NotificationWindow(
+            message=description,
+            title=f"Animation: {anim_name}",
+            level=NotificationLevel.AVATAR,
+            animated_art=animated_art,
+            play_sound=True
+        )
+        result = window.show()
+        print(f"Result: {result}")
+
+
+def test_animated_reminder_scenarios():
+    """Test real scenarios with animated arts"""
+    print("\n=== Testing Animated REMINDER Scenarios ===")
+
+    scenarios = [
+        {
+            "message": "Time to call your grandmother!",
+            "title": "Family Reminder",
+            "animation": "heart_beat",
+            "level": "attention"
+        },
+        {
+            "message": "Meeting starts in 5 minutes!",
+            "title": "Calendar Alert",
+            "animation": "clock_ticking",
+            "level": "attention"
+        },
+        {
+            "message": "URGENT: Server on fire!",
+            "title": "Critical Alert",
+            "animation": "fire_burning",
+            "level": "urgent"
+        },
+        {
+            "message": "Congratulations! Task completed!",
+            "title": "Achievement Unlocked",
+            "animation": "star_explosion",
+            "level": "info"
+        },
+        {
+            "message": "Deadline approaching fast!",
+            "title": "Time Running Out",
+            "animation": "hourglass_sand",
+            "level": "urgent"
+        },
+    ]
+
+    for i, scenario in enumerate(scenarios, 1):
+        print(f"\n{i}. {scenario['title']}")
+        print(f"   Message: {scenario['message']}")
+        print(f"   Animation: {scenario['animation']}")
+        input("   Press Enter to show...")
+
+        animated_art = get_animated_art(scenario["animation"])
+
+        window = NotificationWindow(
+            message=scenario["message"],
+            title=scenario["title"],
+            level=NotificationLevel(scenario["level"]),
+            animated_art=animated_art,
+            play_sound=True
+        )
+        result = window.show()
+        print(f"   Result: {result}")
+
+
+def test_animation_comparison():
+    """Compare static vs animated art side by side"""
+    print("\n=== Comparing STATIC vs ANIMATED ===")
+
+    print("\n1. Static Sendell")
+    input("Press Enter...")
+    window = NotificationWindow(
+        message="This is static Sendell art",
+        title="Static Art",
+        level=NotificationLevel.AVATAR,
+        ascii_art=get_art("sendell"),
+        play_sound=False
+    )
+    window.show()
+
+    print("\n2. Animated Sendell (blinking)")
+    input("Press Enter...")
+    window = NotificationWindow(
+        message="This is ANIMATED Sendell art!",
+        title="Animated Art",
+        level=NotificationLevel.AVATAR,
+        animated_art=get_animated_art("sendell_blink"),
+        play_sound=False
+    )
+    window.show()
+
+    print("\nNotice the difference? Animated = LIFE!")
+
+
+def test_all_levels():
+    """Test all 4 notification levels in sequence"""
+    print("\n=== Testing ALL 4 Levels ===")
+
+    levels = [
+        ("INFO", "info", "This is an informational message."),
+        ("ATTENTION", "attention", "Please pay attention to this!"),
+        ("URGENT", "urgent", "URGENT: This requires immediate action!"),
+        ("AVATAR", "avatar", "Hello! It's me, Sendell.")
+    ]
+
+    for name, level, msg in levels:
+        print(f"\n--- {name} Level ---")
+        input("Press Enter to show...")
+        result = show_notification(
+            message=msg,
+            level=level,
+            auto_art=True,
+            play_sound=True
+        )
+        print(f"Result: {result}")
+
+
 def main():
-    """Main test menu"""
-    print("=" * 50)
-    print("  SENDELL NOTIFICATION WINDOW TESTER")
-    print("  NOW WITH ASCII ART + SOUNDS!")
-    print("=" * 50)
+    """Main test menu - SIMPLIFIED"""
+    print("=" * 60)
+    print("  SENDELL NOTIFICATION TESTER")
+    print("  Animated ASCII Art + Dynamic Window Sizing")
+    print("=" * 60)
 
     tests = {
-        "1": ("Test INFO notification", test_info_notification),
-        "2": ("Test ATTENTION notification", test_attention_notification),
-        "3": ("Test URGENT notification", test_urgent_notification),
-        "4": ("Test AVATAR notification", test_avatar_notification),
-        "5": ("Test with callbacks", test_with_callbacks),
-        "6": ("Test ALL levels (one by one)", lambda: [
-            test_info_notification(),
-            test_attention_notification(),
-            test_urgent_notification(),
-            test_avatar_notification()
-        ]),
-        "7": ("Print all ASCII arts", test_print_all_ascii_arts),
-        "8": ("Test ASCII art in notification (preview)", test_ascii_art_in_notification),
-        "9": ("Test notification WITH ASCII art", test_notification_with_art),
-        "10": ("Test notifications WITH sounds", test_notification_with_sound),
-        "11": ("Test AUTO art selection", test_auto_art_selection),
-        "12": ("Test REAL reminder scenarios", test_reminder_scenarios),
+        "1": ("Test ALL 4 levels (INFO, ATTENTION, URGENT, AVATAR)", test_all_levels),
+        "2": ("Test KEY animations (5 best)", test_specific_animations),
+        "3": ("Test REAL reminder scenarios", test_animated_reminder_scenarios),
+        "4": ("Test Sendell avatar animation", test_notification_with_art),
+        "5": ("Compare STATIC vs ANIMATED", test_animation_comparison),
     }
 
     while True:
-        print("\nSelect a test:")
+        print("\n" + "=" * 60)
+        print("SELECT A TEST:")
         for key, (desc, _) in tests.items():
             print(f"  {key}. {desc}")
         print("  q. Quit")
+        print("=" * 60)
 
         choice = input("\nYour choice: ").strip().lower()
 
         if choice == 'q':
-            print("Exiting...")
+            print("\nExiting... Goodbye!")
             break
 
         if choice in tests:
             _, test_func = tests[choice]
             try:
                 test_func()
+                print("\n" + "-" * 60)
+                print("Test completed successfully!")
+                print("-" * 60)
             except Exception as e:
-                print(f"ERROR: {e}")
+                print(f"\nERROR: {e}")
                 import traceback
                 traceback.print_exc()
         else:
-            print("Invalid choice!")
+            print("\nInvalid choice! Please select 1-5 or 'q' to quit.")
 
 
 if __name__ == "__main__":
