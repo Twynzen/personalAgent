@@ -8,8 +8,8 @@
 
 ## 🚨 ESTADO ACTUAL DEL DESARROLLO (Para Reinicio de Contexto)
 
-**Branch actual**: `feature/ascii-art-library` (Branch 2 de Fase 2A completado, pendiente push)
-**Siguiente**: Crear `feature/notification-sounds` (Branch 3 de Fase 2A)
+**Branch actual**: `feature/notification-sounds` (Branch 3 de Fase 2A completado, pendiente push)
+**Siguiente**: Branch 4 ESPECIAL - Mejorar ASCII arts con animaciones (leer asciiguia.txt)
 
 **Workflow establecido**:
 1. Claude crea branch para tarea específica
@@ -21,13 +21,16 @@
 7. Repetir para siguiente branch
 8. Documentar SIEMPRE en CLAUDE.md
 
-**Fase actual**: Fase 2A - Sistema de Notificaciones Visuales (6 branches totales)
+**Fase actual**: Fase 2A - Sistema de Notificaciones Visuales (7 branches - ajustado)
 - ✅ Branch 1: UI Foundation (COMPLETADO - pushed por Daniel)
-- ✅ Branch 2: ASCII Art Library (COMPLETADO - pendiente push por Daniel)
-- ⏳ Branch 3: Integrate ASCII Art + Sounds (SIGUIENTE - por iniciar)
-- ⏳ Branch 4: Snooze/Dismiss Integration
-- ⏳ Branch 5: Reminder System Integration
-- ⏳ Branch 6: Brain GUI Customization
+- ✅ Branch 2: ASCII Art Library (COMPLETADO - pushed por Daniel)
+- ✅ Branch 3: Integrate ASCII Art + Sounds (COMPLETADO - pendiente push)
+- ⏳ Branch 4 ESPECIAL: Animated ASCII Arts (SIGUIENTE - leer asciiguia.txt)
+- ⏳ Branch 5: Snooze/Dismiss Integration
+- ⏳ Branch 6: Reminder System Integration
+- ⏳ Branch 7: Brain GUI Customization
+
+**Nota**: Branch 4 ESPECIAL agregado - Daniel pidió mejorar ASCII arts con animaciones usando asciiguia.txt
 
 **Contexto de Fase 2A**:
 Daniel testeó sistema de reminders (v0.2 Fase 1) y pidió mejoras:
@@ -1092,8 +1095,62 @@ src/sendell/proactive/
 
 ---
 
+#### Branch 3: `feature/notification-sounds` - ✅ COMPLETADO
+
+**Objetivo**: Integrar ASCII art en ventanas + sistema de sonidos por nivel de urgencia
+
+**Implementación**:
+- Modificado `notification_window.py` (+131 líneas):
+  - Agregado parámetro `ascii_art` para mostrar arte en ventanas
+  - Agregado parámetro `play_sound` para controlar sonidos
+  - Sistema de sonidos con `winsound` (4 sonidos Windows):
+    - INFO: SystemAsterisk (suave)
+    - ATTENTION: SystemExclamation (alerta)
+    - URGENT: SystemHand (crítico)
+    - AVATAR: SystemQuestion (amigable)
+  - Ajuste automático de tamaño (+200px si hay arte)
+  - Display de ASCII art con fuente Courier en UI
+  - Función `get_art_for_context()` - mapeo inteligente mensaje → arte:
+    - Keywords: meeting/reunion → alarm
+    - Keywords: familia/abuela → heart
+    - Keywords: urgent/crítico → fire
+    - Keywords: complete/done → check/trophy
+    - 30+ keywords detectados en español e inglés
+  - Función `show_notification()` mejorada con auto-art
+- Actualizado `__init__.py` (+4 exports)
+- Actualizado `test_notification.py` (+133 líneas):
+  - Opción 9: Test ASCII art integrado en ventana
+  - Opción 10: Test sonidos por nivel
+  - Opción 11: Test auto-selección de arte ⭐
+  - Opción 12: Test escenarios reales de reminders ⭐
+
+**Características nuevas**:
+- ASCII art visible dentro de las ventanas de notificación
+- Sonidos diferentes por nivel de urgencia
+- Mapeo automático inteligente de contexto
+- 4 escenarios reales de reminders testeados
+
+**Testing**:
+- Daniel testeó opciones 9-12: "si genial te felicito"
+- ✅ ASCII arts se ven bien en ventanas
+- ✅ Sonidos funcionan correctamente (4 niveles)
+- ✅ Auto-selección escoge artes apropiados
+- ✅ Mucho más llamativo que versión anterior
+- ✅ Escenarios reales se ven profesionales
+
+**Commit**: [pendiente] - "feat: Integrate ASCII art + sound system in notifications (Phase 2A - Task 3)"
+
+**Archivos modificados**:
+- `src/sendell/ui/notification_window.py` (+131 líneas)
+- `src/sendell/ui/__init__.py` (+4 exports)
+- `test_notification.py` (+133 líneas)
+
+**Próximo paso**: Branch 4 ESPECIAL - Mejorar ASCII arts con animaciones (usando asciiguia.txt)
+
+---
+
 **FIN DE MEMORIA PERMANENTE**
 
 Este archivo refleja el estado REAL del proyecto Sendell.
-Última actualización: 2025-10-29 23:35 (Sesión 15 - Branch 1 y 2 Fase 2A completados)
-Estado: v0.1 MVP COMPLETADO - v0.2 FASE 1 COMPLETADA - v0.2 FASE 2A EN PROGRESO (2/6) ✅
+Última actualización: 2025-10-30 00:45 (Sesión 15 - Branch 1, 2, 3 Fase 2A completados)
+Estado: v0.1 MVP COMPLETADO - v0.2 FASE 1 COMPLETADA - v0.2 FASE 2A EN PROGRESO (3/6) ✅
