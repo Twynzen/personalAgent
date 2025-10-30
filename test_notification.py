@@ -13,7 +13,9 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from sendell.ui import (
     NotificationWindow,
     NotificationLevel,
+    show_notification,
     get_art,
+    get_art_for_context,
     list_available_arts,
     ASCII_ART_DICT
 )
@@ -154,10 +156,137 @@ def test_ascii_art_in_notification():
         print("Invalid input!")
 
 
+def test_notification_with_art():
+    """Test notification with ASCII art"""
+    print("\n=== Testing Notification WITH ASCII Art ===")
+
+    # Test with Sendell avatar
+    print("\n1. Testing AVATAR level with Sendell art...")
+    window = NotificationWindow(
+        message="Hello! I'm Sendell, your AI assistant!",
+        title="Meet Sendell",
+        level=NotificationLevel.AVATAR,
+        ascii_art=get_art("sendell"),
+        play_sound=True
+    )
+    result = window.show()
+    print(f"Result: {result}")
+
+
+def test_notification_with_sound():
+    """Test notifications with different sounds"""
+    print("\n=== Testing Notifications WITH Sounds ===")
+
+    levels = [
+        (NotificationLevel.INFO, "INFO: Quiet asterisk sound"),
+        (NotificationLevel.ATTENTION, "ATTENTION: Exclamation sound"),
+        (NotificationLevel.URGENT, "URGENT: Hand/stop sound"),
+        (NotificationLevel.AVATAR, "AVATAR: Question sound"),
+    ]
+
+    for level, desc in levels:
+        print(f"\n{desc}")
+        input("Press Enter to show notification...")
+
+        window = NotificationWindow(
+            message=f"This is a {level.value.upper()} level notification with sound!",
+            title=f"{level.value.capitalize()} Sound Test",
+            level=level,
+            play_sound=True
+        )
+        result = window.show()
+        print(f"Result: {result}")
+
+
+def test_auto_art_selection():
+    """Test automatic ASCII art selection based on message content"""
+    print("\n=== Testing AUTO ASCII Art Selection ===")
+
+    test_messages = [
+        ("Don't forget your meeting in 5 minutes!", "attention"),
+        ("Llamar a la abuela", "attention"),
+        ("Great work on completing the project!", "info"),
+        ("URGENT: Critical system error!", "urgent"),
+        ("Time for your daily code review", "attention"),
+    ]
+
+    for message, level in test_messages:
+        print(f"\nMessage: '{message}'")
+        print(f"Level: {level}")
+
+        # Get auto-selected art
+        level_enum = NotificationLevel(level)
+        art = get_art_for_context(message, level_enum)
+
+        if art:
+            print(f"Auto-selected art preview:")
+            print(art[:100] + "..." if len(art) > 100 else art)
+        else:
+            print("No art auto-selected")
+
+        input("Press Enter to show notification...")
+
+        result = show_notification(
+            message=message,
+            level=level,
+            auto_art=True,
+            play_sound=True
+        )
+        print(f"Result: {result}")
+
+
+def test_reminder_scenarios():
+    """Test real reminder scenarios"""
+    print("\n=== Testing Real REMINDER Scenarios ===")
+
+    scenarios = [
+        {
+            "message": "Time to call your grandmother!",
+            "title": "Family Reminder",
+            "level": "attention",
+            "art": get_art("heart"),
+        },
+        {
+            "message": "Meeting with team starts in 10 minutes",
+            "title": "Calendar Alert",
+            "level": "attention",
+            "art": get_art("alarm"),
+        },
+        {
+            "message": "DEADLINE: Project submission due NOW!",
+            "title": "Urgent Deadline",
+            "level": "urgent",
+            "art": get_art("fire"),
+        },
+        {
+            "message": "Great job! You completed all your tasks today!",
+            "title": "Achievement",
+            "level": "info",
+            "art": get_art("trophy"),
+        },
+    ]
+
+    for i, scenario in enumerate(scenarios, 1):
+        print(f"\n{i}. {scenario['title']}")
+        print(f"   Message: {scenario['message']}")
+        input("   Press Enter to show...")
+
+        window = NotificationWindow(
+            message=scenario["message"],
+            title=scenario["title"],
+            level=NotificationLevel(scenario["level"]),
+            ascii_art=scenario["art"],
+            play_sound=True
+        )
+        result = window.show()
+        print(f"   Result: {result}")
+
+
 def main():
     """Main test menu"""
     print("=" * 50)
     print("  SENDELL NOTIFICATION WINDOW TESTER")
+    print("  NOW WITH ASCII ART + SOUNDS!")
     print("=" * 50)
 
     tests = {
@@ -174,6 +303,10 @@ def main():
         ]),
         "7": ("Print all ASCII arts", test_print_all_ascii_arts),
         "8": ("Test ASCII art in notification (preview)", test_ascii_art_in_notification),
+        "9": ("Test notification WITH ASCII art", test_notification_with_art),
+        "10": ("Test notifications WITH sounds", test_notification_with_sound),
+        "11": ("Test AUTO art selection", test_auto_art_selection),
+        "12": ("Test REAL reminder scenarios", test_reminder_scenarios),
     }
 
     while True:
