@@ -1,8 +1,39 @@
 # CLAUDE.MD - Memoria Permanente del Proyecto Sendell
 
-**Última actualización**: 2025-10-28
-**Estado del proyecto**: v0.1 MVP - COMPLETADO Y FUNCIONAL
+**Última actualización**: 2025-10-29 22:20
+**Estado del proyecto**: v0.2 Fase 2A en desarrollo - Sistema de Notificaciones Visuales
 **Desarrolladores**: Daniel (Testing/PM) + Claude (Arquitectura/Desarrollo)
+
+---
+
+## 🚨 ESTADO ACTUAL DEL DESARROLLO (Para Reinicio de Contexto)
+
+**Branch actual**: `feature/ui-foundation` (Branch 1 de Fase 2A completado, pendiente push)
+**Siguiente**: Crear `feature/ascii-art-library` (Branch 2 de Fase 2A)
+
+**Workflow establecido**:
+1. Claude crea branch para tarea específica
+2. Claude desarrolla código
+3. Claude muestra código a Daniel para testing
+4. Daniel testea y da feedback ("funciona" o "ajusta X")
+5. Si funciona → Claude hace commit con mensaje descriptivo
+6. Daniel hace push
+7. Repetir para siguiente branch
+8. Documentar SIEMPRE en CLAUDE.md
+
+**Fase actual**: Fase 2A - Sistema de Notificaciones Visuales (6 branches totales)
+- ✅ Branch 1: UI Foundation (COMPLETADO - pendiente push por Daniel)
+- ⏳ Branch 2: ASCII Art Library (SIGUIENTE - por iniciar)
+- ⏳ Branch 3: Notification Levels + Sounds
+- ⏳ Branch 4: Snooze/Dismiss Integration
+- ⏳ Branch 5: Reminder System Integration
+- ⏳ Branch 6: Brain GUI Customization
+
+**Contexto de Fase 2A**:
+Daniel testeó sistema de reminders (v0.2 Fase 1) y pidió mejoras:
+- Reminders actuales abren notepad (funciona pero muy simple)
+- Necesita: Ventanas visuales llamativas con ASCII art, colores, sonidos
+- Objetivo: Hacer notificaciones más impactantes y personalizadas
 
 ---
 
@@ -88,35 +119,48 @@ COMPLETADO. Todas las funcionalidades core están operativas:
 
 ---
 
-## ESTRUCTURA DE ARCHIVOS (ACTUAL)
+## ESTRUCTURA DE ARCHIVOS (ACTUAL - 2025-10-29)
 
 ```
 sendell/
 ├── pyproject.toml              # Dependencias con uv
 ├── README.md                   # Documentación usuario
+├── CLAUDE.md                   # Este archivo - Memoria permanente
 ├── .env                        # Configuración (crear desde .env.example)
 ├── .env.example                # Template de configuración
-├── claude.md                   # Este archivo - Memoria permanente
+├── test_notification.py        # Testing script para UI (v0.2 Fase 2A)
 │
 ├── data/
-│   └── sendell_memory.json     # Memoria persistente (facts, conversaciones)
+│   └── sendell_memory.json     # Memoria persistente (facts, conversaciones, reminders, identity)
 │
 ├── src/
 │   └── sendell/
 │       ├── __init__.py
-│       ├── __main__.py         # Entry: uv run python -m sendell
+│       ├── __main__.py         # Entry: uv run python -m sendell (comandos: chat, status, brain, health)
 │       ├── config.py           # Pydantic Settings
 │       │
 │       ├── agent/              # 🧠 ORQUESTACIÓN
 │       │   ├── __init__.py
-│       │   ├── core.py         # SendellAgent con LangGraph
+│       │   ├── core.py         # SendellAgent con LangGraph (7 tools)
 │       │   ├── prompts.py      # System prompts (chat, proactive, base)
 │       │   ├── memory.py       # Sistema JSON de memoria
-│       │   └── brain_gui.py    # GUI tkinter (3 tabs)
+│       │   └── brain_gui.py    # GUI tkinter (3 tabs: Memorias, Prompts, Herramientas)
+│       │
+│       ├── proactive/          # ⏰ SISTEMA PROACTIVO (v0.2 Fase 1)
+│       │   ├── __init__.py
+│       │   ├── identity.py              # AgentIdentity, RelationshipPhase
+│       │   ├── temporal_clock.py        # TimeContext, optimal timing
+│       │   ├── reminders.py             # Reminder, ReminderManager
+│       │   ├── reminder_actions.py      # popup, notepad, sound, chat_message
+│       │   └── proactive_loop.py        # ProactiveLoop asyncio background
+│       │
+│       ├── ui/                 # 🎨 SISTEMA UI (v0.2 Fase 2A - EN DESARROLLO)
+│       │   ├── __init__.py              # ✅ Branch 1 completado
+│       │   └── notification_window.py   # ✅ NotificationWindow con 4 niveles
 │       │
 │       ├── mcp/                # 🔌 CAPA MCP (implementado, no activo)
 │       │   ├── __init__.py
-│       │   ├── server.py       # Servidor MCP (para v0.2)
+│       │   ├── server.py       # Servidor MCP (para v0.2+)
 │       │   └── tools/          # Implementación de herramientas
 │       │       ├── __init__.py
 │       │       ├── monitoring.py    # get_system_health, get_active_window
