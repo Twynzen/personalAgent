@@ -10,7 +10,13 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from sendell.ui import NotificationWindow, NotificationLevel
+from sendell.ui import (
+    NotificationWindow,
+    NotificationLevel,
+    get_art,
+    list_available_arts,
+    ASCII_ART_DICT
+)
 
 
 def test_info_notification():
@@ -104,6 +110,50 @@ def test_with_callbacks():
     print(f"Result: {result}")
 
 
+def test_print_all_ascii_arts():
+    """Print all available ASCII arts to console"""
+    print("\n=== Testing ASCII Arts Library ===")
+    print(f"Total arts: {len(ASCII_ART_DICT)}")
+    print(f"Available: {', '.join(sorted(list_available_arts()))}\n")
+
+    for name in sorted(list_available_arts()):
+        print("=" * 50)
+        print(f"ART: {name.upper()}")
+        print("=" * 50)
+        print(get_art(name))
+        input("Press Enter for next art...")
+
+
+def test_ascii_art_in_notification():
+    """Test ASCII art inside notification window"""
+    print("\n=== Testing ASCII Art in Notification ===")
+
+    # Let user select art
+    arts = sorted(list_available_arts())
+    print("\nAvailable arts:")
+    for i, art_name in enumerate(arts, 1):
+        print(f"  {i}. {art_name}")
+
+    try:
+        choice = int(input("\nSelect art number: "))
+        if 1 <= choice <= len(arts):
+            art_name = arts[choice - 1]
+            art = get_art(art_name)
+
+            print(f"\nShowing notification with '{art_name}' art...")
+
+            # Create notification window (note: ASCII art not yet integrated into window)
+            # For now, just print it
+            print("\n[Preview - ASCII art will be integrated in next branch]")
+            print(art)
+            print("\nNotification window would show above art")
+
+        else:
+            print("Invalid choice!")
+    except ValueError:
+        print("Invalid input!")
+
+
 def main():
     """Main test menu"""
     print("=" * 50)
@@ -121,7 +171,9 @@ def main():
             test_attention_notification(),
             test_urgent_notification(),
             test_avatar_notification()
-        ])
+        ]),
+        "7": ("Print all ASCII arts", test_print_all_ascii_arts),
+        "8": ("Test ASCII art in notification (preview)", test_ascii_art_in_notification),
     }
 
     while True:
