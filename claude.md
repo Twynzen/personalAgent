@@ -948,10 +948,68 @@ src/sendell/proactive/
 - ✅ Commit detallado con changelog completo
 - ✅ `claude.md` actualizado (esta entrada)
 
+### Sesión 15 (2025-10-29): Inicio Fase 2A - Sistema de Notificaciones Visuales
+
+**Objetivo**: Mejorar UX de reminders con ventanas visuales llamativas en lugar de notepad simple.
+
+**Contexto**: Daniel testeó sistema de reminders y feedback fue:
+- ✅ Notepad funciona pero es muy simple
+- ❌ Necesita algo más llamativo y visual
+- 💡 Propuesta: Ventanas con ASCII art, colores, sonidos, niveles de urgencia
+
+**Roadmap Fase 2A** (6 tareas):
+1. UI Foundation (ventanas base)
+2. ASCII Art Library
+3. Sistema de niveles con sonidos
+4. Botones Snooze/Dismiss funcionales
+5. Integración con reminders
+6. Customización desde brain GUI
+
+---
+
+#### Branch 1: `feature/ui-foundation` - ✅ COMPLETADO
+
+**Objetivo**: Estructura base del módulo UI con ventanas de notificación
+
+**Implementación**:
+- Creado módulo `src/sendell/ui/`
+- `notification_window.py` (272 líneas):
+  - Clase `NotificationLevel` (Enum: INFO, ATTENTION, URGENT, AVATAR)
+  - Clase `NotificationWindow` (ventana tkinter completa)
+  - 4 niveles con diferentes colores, tamaños, comportamiento
+  - Sistema de callbacks (on_dismiss, on_snooze)
+  - Auto-centrado en pantalla
+  - Topmost para niveles urgentes
+
+**Características por nivel**:
+| Nivel | Color | Tamaño | Topmost | Botones |
+|-------|-------|--------|---------|---------|
+| INFO | Azul | 400x250 | No | Dismiss |
+| ATTENTION | Naranja | 500x350 | Sí | Dismiss + Snooze |
+| URGENT | Rojo | 600x400 | Sí | Dismiss + Snooze |
+| AVATAR | Morado | 500x400 | Sí | Dismiss |
+
+**Testing**:
+- Script `test_notification.py` creado para testing manual
+- Daniel testeó todos los niveles: "funciona bastante bien"
+- ✅ Todas las ventanas se abren correctamente
+- ✅ Colores y tamaños apropiados
+- ✅ Botones responden correctamente
+- ✅ Topmost funciona en niveles correctos
+
+**Commit**: `9b5f2a4` - "feat: Add UI notification window system (Phase 2A - Task 1)"
+
+**Archivos creados**:
+- `src/sendell/ui/__init__.py`
+- `src/sendell/ui/notification_window.py` (272 líneas)
+- `test_notification.py` (152 líneas)
+
+**Próximo paso**: Branch 2 - ASCII Art Library
+
 ---
 
 **FIN DE MEMORIA PERMANENTE**
 
 Este archivo refleja el estado REAL del proyecto Sendell.
-Última actualización: 2025-10-28 22:50 (Sesión 14 - Fase 1 completada)
-Estado: v0.1 MVP COMPLETADO - v0.2 FASE 1 COMPLETADA (rama feature/proactivity) ✅
+Última actualización: 2025-10-29 22:15 (Sesión 15 - Branch 1 Fase 2A completado)
+Estado: v0.1 MVP COMPLETADO - v0.2 FASE 1 COMPLETADA - v0.2 FASE 2A INICIADA ✅
