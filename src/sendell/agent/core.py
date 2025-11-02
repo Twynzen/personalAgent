@@ -192,7 +192,7 @@ class SendellAgent:
                 }
 
         @tool
-        async def add_reminder(content: str, minutes_from_now: int, actions: str = "chat_message") -> dict:
+        async def add_reminder(content: str, minutes_from_now: int, actions: str = "visual_notification") -> dict:
             """Add a personal reminder that will trigger at a specific time.
 
             This creates a reminder that will execute one or more actions when the time arrives.
@@ -202,16 +202,20 @@ class SendellAgent:
                 content: What to remind about (e.g., "call grandma", "take a break")
                 minutes_from_now: How many minutes from now to trigger (e.g., 30, 60, 120)
                 actions: Comma-separated action types:
-                    - chat_message: Send message in chat (default)
-                    - popup: Windows notification/toast
-                    - notepad: Open notepad with message
+                    - visual_notification: Rich visual window with animated ASCII art (RECOMMENDED, default)
+                    - chat_message: Send message in chat
+                    - popup: Simple Windows toast notification (legacy)
+                    - notepad: Open notepad with message (legacy)
                     - sound: Play notification sound
-                    Example: "popup,sound" or "popup,notepad,chat_message"
+                    Example: "visual_notification" or "visual_notification,sound"
 
             Examples:
                 - "Remind me to call in 30 minutes" -> add_reminder("call", 30)
-                - "Remind me to take a break in 60 minutes with popup" -> add_reminder("take a break", 60, "popup")
-                - "Remind me to check project in 2 minutes with popup and notepad" -> add_reminder("check project", 2, "popup,notepad")
+                  (Uses visual_notification by default - shows animated window with ASCII art)
+                - "Remind me to take a break in 60 minutes" -> add_reminder("take a break", 60)
+                  (Visual notification with auto-selected ASCII art based on content)
+                - "Remind me to check project in 2 minutes" -> add_reminder("check project", 2)
+                  (Urgency automatically detected, shows appropriate colors/sounds)
 
             Returns:
                 dict: Success status, reminder details, and trigger time
@@ -389,30 +393,78 @@ class SendellAgent:
         Args:
             content: What to remind about
             minutes_from_now: Minutes from now to trigger
-            actions: List of action types (chat_message, popup, notepad, sound)
+            actions: List of action types (visual_notification, chat_message, popup, notepad, sound)
 
         Returns:
             Reminder: The created reminder
         """
         if actions is None:
-            actions = ["chat_message"]
+            actions = ["visual_notification"]
 
         due_at = datetime.now() + timedelta(minutes=minutes_from_now)
+
+        # Auto-detect importance based on keywords in content
+        importance = self._calculate_reminder_importance(content, minutes_from_now)
 
         reminder = Reminder(
             content=content,
             reminder_type=ReminderType.ONE_TIME,
             due_at=due_at,
             actions=actions,
-            importance=0.8,
+            importance=importance,
         )
 
         self.reminder_manager.add_reminder(reminder)
         self.memory.set_reminders(self.reminder_manager.to_dict()["reminders"])
 
-        logger.debug(f"Reminder added: {content} at {due_at.strftime('%I:%M %p')}")
+        logger.debug(f"Reminder added: {content} at {due_at.strftime('%I:%M %p')} (importance: {importance})")
 
         return reminder
+
+    def _calculate_reminder_importance(self, content: str, minutes_from_now: int) -> float:
+        """
+        Calculate importance level based on content and timing.
+
+        Args:
+            content: Reminder content
+            minutes_from_now: Minutes until reminder triggers
+
+        Returns:
+            float: Importance level 0.0-1.0
+        """
+        content_lower = content.lower()
+        importance = 0.5  # Default medium
+
+        # High importance keywords
+        high_importance_keywords = [
+            "urgent", "important", "critical", "asap", "immediately",
+            "deadline", "meeting", "appointment", "call", "urgente",
+            "importante", "critico", "reunion", "cita"
+        ]
+
+        # Medium-high importance keywords
+        medium_high_keywords = [
+            "remember", "don't forget", "make sure", "check", "review",
+            "recordar", "no olvides", "revisar", "verificar"
+        ]
+
+        # Check for high importance
+        if any(keyword in content_lower for keyword in high_importance_keywords):
+            importance = 0.85
+
+        # Check for medium-high importance
+        elif any(keyword in content_lower for keyword in medium_high_keywords):
+            importance = 0.65
+
+        # Adjust based on timing (sooner = more important)
+        if minutes_from_now <= 5:
+            importance = min(1.0, importance + 0.15)  # Very soon = boost importance
+        elif minutes_from_now <= 15:
+            importance = min(1.0, importance + 0.10)
+        elif minutes_from_now >= 240:  # 4+ hours
+            importance = max(0.3, importance - 0.15)  # Far away = reduce importance
+
+        return round(importance, 2)
 
     async def _on_reminder_triggered(self, reminder: Reminder, results: List[Dict]) -> None:
         """
