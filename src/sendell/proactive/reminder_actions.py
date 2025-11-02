@@ -6,13 +6,14 @@ Actions:
 - popup: Windows notification/toast
 - notepad: Open notepad with message
 - sound: Play notification sound
+- visual_notification: Rich visual notification with ASCII art (NEW)
 """
 
 import subprocess
 import tempfile
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional, Callable
 
 from pydantic import BaseModel
 
@@ -25,9 +26,10 @@ class ActionType(str, Enum):
     """Types of reminder actions"""
 
     CHAT_MESSAGE = "chat_message"  # Send message in chat
-    POPUP = "popup"  # Windows notification
-    NOTEPAD = "notepad"  # Open notepad with message
+    POPUP = "popup"  # Windows notification (legacy)
+    NOTEPAD = "notepad"  # Open notepad with message (legacy)
     SOUND = "sound"  # Play notification sound
+    VISUAL_NOTIFICATION = "visual_notification"  # Rich visual notification with ASCII art (recommended)
 
 
 class ReminderAction(BaseModel):
@@ -179,14 +181,107 @@ def play_notification_sound() -> Dict:
         return {"success": False, "action": "sound", "error": str(e)}
 
 
-async def execute_reminder_action(action_type: str, content: str, title: str = "Reminder") -> Dict:
+def show_visual_notification(
+    content: str,
+    title: str = "Sendell Reminder",
+    importance: float = 0.5,
+    reminder_id: Optional[str] = None,
+    on_dismiss: Optional[Callable] = None,
+    on_snooze: Optional[Callable] = None
+) -> Dict:
+    """
+    Show rich visual notification with ASCII art, animations, and sounds.
+
+    This is the recommended notification method - replaces popup and notepad.
+
+    Args:
+        content: Reminder content/message
+        title: Notification title
+        importance: Importance level 0-1 (determines urgency level)
+        reminder_id: ID of the reminder (for callbacks)
+        on_dismiss: Callback when user dismisses
+        on_snooze: Callback when user snoozes
+
+    Returns:
+        dict: Result of action including user action (dismissed/snoozed)
+    """
+    try:
+        from sendell.ui import NotificationWindow, NotificationLevel, get_art_for_context
+
+        # Map importance to notification level
+        if importance >= 0.8:
+            level = NotificationLevel.URGENT
+        elif importance >= 0.5:
+            level = NotificationLevel.ATTENTION
+        else:
+            level = NotificationLevel.INFO
+
+        # Auto-select appropriate ASCII art based on content
+        art = get_art_for_context(content, level, prefer_animated=True)
+
+        # Determine if we got animated or static art
+        from sendell.ui.animation_engine import AnimatedArt
+        if isinstance(art, AnimatedArt):
+            # Create window with animated art
+            window = NotificationWindow(
+                message=content,
+                title=title,
+                level=level,
+                animated_art=art,
+                play_sound=True,
+                on_dismiss=on_dismiss,
+                on_snooze=on_snooze
+            )
+        else:
+            # Create window with static art (or no art)
+            window = NotificationWindow(
+                message=content,
+                title=title,
+                level=level,
+                ascii_art=art,
+                play_sound=True,
+                on_dismiss=on_dismiss,
+                on_snooze=on_snooze
+            )
+
+        # Show window (blocking until user responds)
+        user_action = window.show()
+
+        logger.info(f"Visual notification shown: {title} - user action: {user_action}")
+        return {
+            "success": True,
+            "action": "visual_notification",
+            "title": title,
+            "message": content,
+            "user_action": user_action,  # "dismissed" or "snoozed"
+            "reminder_id": reminder_id
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to show visual notification: {e}")
+        return {"success": False, "action": "visual_notification", "error": str(e)}
+
+
+async def execute_reminder_action(
+    action_type: str,
+    content: str,
+    title: str = "Reminder",
+    importance: float = 0.5,
+    reminder_id: Optional[str] = None,
+    on_dismiss: Optional[Callable] = None,
+    on_snooze: Optional[Callable] = None
+) -> Dict:
     """
     Execute a reminder action.
 
     Args:
-        action_type: Type of action (chat_message, popup, notepad, sound)
+        action_type: Type of action (chat_message, popup, notepad, sound, visual_notification)
         content: Reminder content
-        title: Title for popup (optional)
+        title: Title for notification (optional)
+        importance: Importance level 0-1 for visual_notification
+        reminder_id: ID of the reminder (for callbacks)
+        on_dismiss: Callback when user dismisses
+        on_snooze: Callback when user snoozes
 
     Returns:
         dict: Result of execution
@@ -210,6 +305,16 @@ async def execute_reminder_action(action_type: str, content: str, title: str = "
         elif action == ActionType.SOUND:
             return play_notification_sound()
 
+        elif action == ActionType.VISUAL_NOTIFICATION:
+            return show_visual_notification(
+                content,
+                title,
+                importance,
+                reminder_id,
+                on_dismiss,
+                on_snooze
+            )
+
         else:
             return {"success": False, "error": f"Action not implemented: {action}"}
 
@@ -218,14 +323,26 @@ async def execute_reminder_action(action_type: str, content: str, title: str = "
         return {"success": False, "error": str(e)}
 
 
-async def execute_reminder_actions(actions: List[str], content: str, title: str = "Reminder") -> List[Dict]:
+async def execute_reminder_actions(
+    actions: List[str],
+    content: str,
+    title: str = "Reminder",
+    importance: float = 0.5,
+    reminder_id: Optional[str] = None,
+    on_dismiss: Optional[Callable] = None,
+    on_snooze: Optional[Callable] = None
+) -> List[Dict]:
     """
     Execute multiple reminder actions.
 
     Args:
         actions: List of action types
         content: Reminder content
-        title: Title for popup
+        title: Title for notification
+        importance: Importance level 0-1
+        reminder_id: ID of the reminder (for callbacks)
+        on_dismiss: Callback when user dismisses
+        on_snooze: Callback when user snoozes
 
     Returns:
         list: Results of each action execution
@@ -233,7 +350,15 @@ async def execute_reminder_actions(actions: List[str], content: str, title: str 
     results = []
 
     for action_type in actions:
-        result = await execute_reminder_action(action_type, content, title)
+        result = await execute_reminder_action(
+            action_type,
+            content,
+            title,
+            importance,
+            reminder_id,
+            on_dismiss,
+            on_snooze
+        )
         results.append(result)
 
     return results

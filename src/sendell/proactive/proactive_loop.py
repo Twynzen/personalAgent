@@ -150,21 +150,47 @@ class ProactiveLoop:
             # Format reminder message
             message = f"{greeting}! Reminder: {reminder.content}"
 
+            # Create callbacks for snooze/dismiss
+            def on_dismiss_callback():
+                """Called when user dismisses the notification"""
+                logger.info(f"User dismissed reminder: {reminder.reminder_id}")
+                self.reminder_manager.dismiss_reminder(reminder.reminder_id)
+
+            def on_snooze_callback():
+                """Called when user snoozes the notification"""
+                logger.info(f"User snoozed reminder: {reminder.reminder_id} (5 minutes)")
+                self.reminder_manager.snooze_reminder(reminder.reminder_id, minutes=5)
+
             # Execute all actions for this reminder
             results = await execute_reminder_actions(
-                actions=reminder.actions, content=message, title="Sendell Reminder"
+                actions=reminder.actions,
+                content=message,
+                title="Sendell Reminder",
+                importance=reminder.importance,
+                reminder_id=reminder.reminder_id,
+                on_dismiss=on_dismiss_callback,
+                on_snooze=on_snooze_callback
             )
 
             # Log results (debug level for details)
             actions_str = ", ".join([r["action"] for r in results if r["success"]])
             logger.info(f"✅ Reminder: '{reminder.content}' → {actions_str}")
 
+            # Check if user interacted with visual notification
+            user_action = None
             for result in results:
                 if not result["success"]:
                     logger.error(f"Action failed: {result['action']} - {result.get('error')}")
 
-            # Mark reminder as processed
-            self.reminder_manager.process_sent_reminder(reminder.reminder_id)
+                # Capture user action from visual_notification
+                if result.get("action") == "visual_notification" and result.get("user_action"):
+                    user_action = result["user_action"]
+
+            # Only process_sent_reminder if user didn't already handle it via UI
+            # (dismiss/snooze callbacks already updated the state)
+            if user_action is None:
+                # No UI interaction, mark as processed normally (for legacy actions)
+                self.reminder_manager.process_sent_reminder(reminder.reminder_id)
 
             # Update stats
             self.stats["reminders_triggered"] += 1

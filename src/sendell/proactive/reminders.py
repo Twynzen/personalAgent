@@ -268,6 +268,50 @@ class ReminderManager:
         if reminder.reminder_type == ReminderType.RECURRING:
             reminder.reset_for_next_occurrence()
 
+    def snooze_reminder(self, reminder_id: str, minutes: int = 5) -> bool:
+        """
+        Snooze a reminder for N minutes.
+
+        Args:
+            reminder_id: ID of reminder to snooze
+            minutes: How many minutes to snooze (default 5)
+
+        Returns:
+            bool: True if snoozed successfully
+        """
+        reminder = self.get_reminder(reminder_id)
+        if not reminder:
+            return False
+
+        reminder.snooze(minutes)
+        return True
+
+    def dismiss_reminder(self, reminder_id: str) -> bool:
+        """
+        Dismiss (complete) a reminder.
+
+        For one-time reminders: marks as completed
+        For recurring reminders: advances to next occurrence
+
+        Args:
+            reminder_id: ID of reminder to dismiss
+
+        Returns:
+            bool: True if dismissed successfully
+        """
+        reminder = self.get_reminder(reminder_id)
+        if not reminder:
+            return False
+
+        if reminder.reminder_type == ReminderType.ONE_TIME:
+            # One-time reminder: mark as completed (will not trigger again)
+            reminder.complete()
+        else:
+            # Recurring reminder: advance to next occurrence
+            reminder.reset_for_next_occurrence()
+
+        return True
+
     def to_dict(self) -> dict:
         """Convert all reminders to dict for JSON storage"""
         return {"reminders": [r.to_dict() for r in self.reminders.values()]}
