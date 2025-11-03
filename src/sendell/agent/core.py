@@ -316,6 +316,106 @@ class SendellAgent:
                     "message": f"Failed to scan directory: {str(e)}"
                 }
 
+        @tool
+        def list_vscode_instances() -> dict:
+            """List all running VS Code instances with their open projects and terminals.
+
+            Detects VS Code processes (stable, Insiders, VSCodium, Cursor) and extracts:
+            - Which workspace/project is open
+            - Terminal processes running in that workspace
+            - Terminal types (PowerShell, CMD, Bash, WSL)
+            - Working directories of terminals
+
+            This allows you to understand Daniel's active development context.
+
+            Returns:
+                dict with:
+                - success: bool
+                - instances_found: int (number of VS Code windows)
+                - total_terminals: int (total terminals across all instances)
+                - instances: list of instance details with:
+                    - pid: VS Code process ID
+                    - workspace_name: Name of open project
+                    - workspace_path: Full path to project
+                    - workspace_type: 'folder', 'workspace', or 'none'
+                    - terminals: list of terminal details:
+                        - pid: Terminal process ID
+                        - shell_type: 'powershell', 'cmd', 'bash', 'wsl'
+                        - cwd: Current working directory
+                        - status: 'running', 'sleeping', etc.
+
+            Examples:
+                - "What VS Code projects are open?"
+                - "Show me my active projects"
+                - "Which terminals are running?"
+                - "What am I working on right now?"
+
+            Use Cases:
+                - Understand user's current work context
+                - Detect which projects have running processes
+                - Help user navigate between projects
+                - Monitor terminal activity
+            """
+            try:
+                from sendell.vscode import VSCodeMonitor
+
+                monitor = VSCodeMonitor()
+                instances = monitor.find_vscode_instances()
+
+                # Format instances for response
+                instances_list = []
+                total_terminals = 0
+
+                for instance in instances:
+                    # Format terminals
+                    terminals_list = []
+                    for term in instance.terminals:
+                        terminals_list.append({
+                            "pid": term.pid,
+                            "shell_type": term.shell_type,
+                            "cwd": term.cwd,
+                            "status": term.status,
+                            "created_at": term.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+                        })
+
+                    total_terminals += len(terminals_list)
+
+                    # Format instance
+                    instance_info = {
+                        "pid": instance.pid,
+                        "executable": instance.name,
+                        "is_insiders": instance.is_insiders,
+                        "workspace_type": instance.workspace.workspace_type,
+                        "workspace_name": instance.workspace.workspace_name,
+                        "workspace_path": instance.workspace.workspace_path,
+                        "terminals_count": len(terminals_list),
+                        "terminals": terminals_list,
+                    }
+
+                    # Add multi-root workspace info if applicable
+                    if instance.workspace.workspace_file:
+                        instance_info["workspace_file"] = instance.workspace.workspace_file
+                        if instance.workspace.folders:
+                            instance_info["folders"] = instance.workspace.folders
+
+                    instances_list.append(instance_info)
+
+                return {
+                    "success": True,
+                    "instances_found": len(instances),
+                    "total_terminals": total_terminals,
+                    "instances": instances_list,
+                    "message": f"Found {len(instances)} VS Code instance(s) with {total_terminals} terminal(s)",
+                }
+
+            except Exception as e:
+                logger.error(f"Failed to list VS Code instances: {e}")
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "message": f"Failed to detect VS Code: {str(e)}"
+                }
+
         return [
             get_system_health,
             get_active_window,
@@ -325,6 +425,7 @@ class SendellAgent:
             show_brain,
             add_reminder,
             discover_projects,
+            list_vscode_instances,
         ]
 
     async def run_proactive_cycle(self) -> dict:

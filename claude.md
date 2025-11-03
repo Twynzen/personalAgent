@@ -1,44 +1,45 @@
 # CLAUDE.MD - Memoria Permanente del Proyecto Sendell
 
-**Última actualización**: 2025-11-02 23:45
-**Estado del proyecto**: v0.2 Fase 2A COMPLETADA - Planificando v0.3 (Multi-Project Management)
-**Desarrolladores**: Daniel (Testing/PM) + Claude (Arquitectura/Desarrollo)
+**Última actualización**: 2025-11-02 (Sesión 16)
+**Estado del proyecto**: v0.2 Fase 2A COMPLETADA ✅ - v0.3 en espera de investigación de Daniel
+**Desarrolladores**: Daniel (Testing/PM/Research) + Claude (Desarrollo)
 
 ---
 
 ## 🚨 ESTADO ACTUAL DEL DESARROLLO (Para Reinicio de Contexto)
 
-**Branch actual**: `feature/reminder-system-integration` (Branch 6 de Fase 2A COMPLETADO - pushed por Daniel)
-**Siguiente**: v0.3 Fase 1 - Multi-Project Management System
+**Branch actual**: `main` (v0.2 completado y merged)
+**Siguiente**: v0.3 - Monitoreo de Procesos VS Code & Terminales (PENDIENTE DE INVESTIGACIÓN)
 
-**Workflow establecido**:
-1. Claude crea branch para tarea específica
-2. Claude desarrolla código
-3. Claude muestra código a Daniel para testing
-4. Daniel testea y da feedback ("funciona" o "ajusta X")
-5. Si funciona → Claude hace commit con mensaje descriptivo
-6. Daniel hace push
-7. Repetir para siguiente branch
-8. Documentar SIEMPRE en CLAUDE.md
+**⚠️ WORKFLOW ACTUALIZADO (Sesión 16)**:
+1. **Daniel hace investigaciones técnicas** (APIs, métodos, viabilidad)
+2. **Daniel proporciona documentación** a Claude
+3. Claude crea branch para tarea específica
+4. Claude desarrolla código basándose en docs de Daniel
+5. Claude muestra código a Daniel para testing
+6. **Daniel testea** ("funciona" o "ajusta X")
+7. Si funciona → Claude hace commit con mensaje descriptivo
+8. Daniel hace push
+9. Repetir para siguiente branch
+10. Documentar SIEMPRE en CLAUDE.md
 
-**✅ Fase 2A COMPLETADA**: Sistema de Notificaciones Visuales (6 branches completados)
-- ✅ Branch 1: UI Foundation (ventanas tkinter con 4 niveles)
-- ✅ Branch 2: ASCII Art Library (25 artes estáticos)
-- ✅ Branch 3: Integrate ASCII Art + Sounds (mapeo inteligente)
-- ✅ Branch 4 ESPECIAL: Animated ASCII Arts (8 artes animados, window sizing dinámico)
-- ✅ Branch 5: Snooze/Dismiss Integration (botones funcionales con callbacks)
-- ✅ Branch 6: Reminder System Integration (chat → visual notifications)
-- ⏳ Branch 7: Brain GUI Customization (OMITIDO - innecesario por ahora)
+**✅ v0.2 COMPLETADO**: Agente Proactivo con Notificaciones Visuales
+- ✅ Fase 1: Sistema Proactivo (identidad temporal, reminders, loop background)
+- ✅ Fase 2A: Notificaciones Visuales (6 branches - UI + ASCII art + sonidos + integración)
 
-**Logros de Fase 2A**:
-✅ Sistema completo de notificaciones visuales con ASCII art animado
-✅ 4 niveles de urgencia (INFO, ATTENTION, URGENT, AVATAR) con colores/sonidos únicos
-✅ Botones Snooze/Dismiss 100% funcionales e integrados con ReminderManager
-✅ Auto-detección de importancia basada en keywords + timing
-✅ Mapeo inteligente de contenido → ASCII art apropiado
-✅ Integración completa: Chat → Reminder → Visual Notification → User Action → Estado persistido
+**⏳ v0.3 EN PLANIFICACIÓN**: Multi-Project Management
+- **Objetivo clarificado**: Monitorear procesos ACTIVOS de VS Code y sus terminales
+- **NO es**: Descubrir proyectos estáticos en disco (ya implementado como secundario)
+- **ES**: Ver qué VS Code está corriendo, qué proyecto tiene abierto, qué terminales tiene activas, leer su output
+- **Bloqueador**: Requiere investigación de Daniel sobre APIs/métodos para acceder a procesos VS Code
 
-**Próximo objetivo**: v0.3 - Multi-Project Management & Dashboard Expansion
+**Estado del Project Scanner** (implementado en Sesión 16):
+- ✅ Código completo y funcional (scanner.py, parsers.py, models.py, types.py)
+- ✅ Tool `discover_projects` agregado a SendellAgent
+- ⚠️ **NO resuelve el objetivo principal** (monitoreo dinámico de procesos)
+- 📌 Útil como feature complementaria para descubrir proyectos en disco
+
+**Próximo paso crítico**: Daniel investiga cómo monitorear procesos VS Code y terminales
 
 ---
 
@@ -1294,6 +1295,105 @@ src/sendell/proactive/
 
 ---
 
+### Sesión 16 (2025-11-02): v0.3 Planning y Clarificación Crítica
+
+**Contexto inicial**: Daniel completó v0.2 Fase 2A (notificaciones visuales) y pidió planificar expansión de Sendell.
+
+**Solicitud de Daniel**:
+- Expandir Sendell más allá de asistente personal
+- Gestionar múltiples proyectos de desarrollo
+- Ver proyectos en VS Code
+- Ver consolas/terminales de proyectos
+- Ejecutar comandos en contexto de proyecto
+- Navegación web (scraping)
+- 3 dashboards: local (existente), web app, mobile app
+- Extensión de VS Code
+
+**Trabajo realizado**:
+
+1. **4 Investigaciones exhaustivas** (~55,000 palabras):
+   - Playwright vs Selenium para browser automation
+   - VS Code Extension con WebSocket architecture
+   - Angular + Ionic para dashboards web/mobile
+   - Multi-Project Management patterns
+
+2. **Roadmap completo v0.3 → v1.0** creado:
+   - v0.3: Multi-Project Management (8-10 semanas, 9 branches)
+   - v0.4: Browser + VS Code Extension (6-8 semanas, 8 branches)
+   - v0.5: Web/Mobile Dashboards (4-6 semanas, 6 branches)
+   - v1.0: Production Polish (3-4 semanas, 5 branches)
+
+3. **Implementación inicial**: Branch 1 de v0.3 - Project Scanner
+   - Creado módulo `src/sendell/projects/` completo
+   - `types.py`: ProjectType, Project, ProjectConfig models (275 líneas)
+   - `models.py`: 7 tablas SQLAlchemy (400 líneas)
+   - `parsers.py`: 7 parsers de configs (365 líneas)
+   - `scanner.py`: ProjectScanner con detección recursiva (240 líneas)
+   - Agregado tool `discover_projects` a SendellAgent
+   - Script de testing `test_project_scanner.py`
+
+**⚠️ CLARIFICACIÓN CRÍTICA DE DANIEL**:
+
+Después de implementar el scanner, Daniel aclaró el **verdadero objetivo**:
+
+> "okey vale es capaz de escanear directorios... eso no esta mal... pero! yo estaba pensando era que nuestro sendell sea es capaz de ver que programas estoy ejecutando especificamente proyectos de visual studio y vea el proyecto en general y aparte vea tambien terminales que se ejecutan en esos proyectos y sea capaz de leerlos"
+
+**Lo que Daniel REALMENTE quiere**:
+- ✅ Ver procesos de VS Code que están CORRIENDO
+- ✅ Detectar qué proyectos están ABIERTOS en VS Code
+- ✅ Ver TERMINALES que se ejecutan en esos proyectos
+- ✅ LEER output de esos terminales en tiempo real
+- ✅ Ejemplo: "Sendell, el proyecto 'sendell' tiene 3 terminales: una vacía, otra corriendo el proyecto, otra con sesión de claude code"
+
+**Lo que implementé (útil pero secundario)**:
+- ❌ Scanner de directorios para encontrar proyectos
+- ❌ Parsers de archivos de configuración
+- ❌ Database para metadata de proyectos
+
+**Diferencia clave**:
+- **Implementado**: Descubrimiento ESTÁTICO de proyectos (buscar archivos en disco)
+- **Requerido**: Monitoreo DINÁMICO de procesos (ver qué está ejecutándose AHORA)
+
+**Workflow clarificado**:
+1. ✅ Daniel hace investigaciones (NO Claude)
+2. ✅ Daniel hace testing (NO Claude)
+3. ✅ Claude solo desarrolla basándose en docs que Daniel provee
+
+**Próximos pasos**:
+
+**INMEDIATO**:
+1. ✅ Actualizar CLAUDE.md con clarificación (esta sesión)
+2. ⏳ Daniel investiga cómo:
+   - Detectar procesos de VS Code corriendo (psutil?)
+   - Identificar qué proyecto está abierto en cada instancia
+   - Capturar output de terminales de VS Code
+   - APIs o métodos para acceder a info de procesos de VS Code
+
+**DESPUÉS DE INVESTIGACIÓN**:
+- Implementar sistema de monitoreo de procesos basado en research de Daniel
+- Branch 1 real de v0.3: "Process & Terminal Monitor" (NO "Project Scanner")
+
+**Estado del Project Scanner**:
+- Implementación completa y funcional
+- Útil como feature secundaria (descubrir proyectos en disco)
+- NO resuelve el objetivo principal (monitorear procesos activos)
+- Puede integrarse después como complemento
+
+**Archivos creados** (útiles pero no prioritarios):
+- `src/sendell/projects/__init__.py`
+- `src/sendell/projects/types.py` (275 líneas)
+- `src/sendell/projects/models.py` (400 líneas)
+- `src/sendell/projects/parsers.py` (365 líneas)
+- `src/sendell/projects/scanner.py` (240 líneas)
+- `test_project_scanner.py` (245 líneas)
+
+**Lección aprendida**:
+- ✅ Confirmar requerimientos ANTES de implementar
+- ✅ Daniel hace investigaciones técnicas, no Claude
+- ✅ "Descubrir proyectos" ≠ "Monitorear proyectos activos"
+
+---
+
 ## 📅 ROADMAP COMPLETO DE DESARROLLO (v0.3 - v1.0)
 
 ### Visión General de Fases
@@ -1307,33 +1407,46 @@ Proactive Agent        Multi-Project Mgmt     VS Code + Browser      Web/Mobile 
 
 ## 🎯 v0.3 - MULTI-PROJECT MANAGEMENT SYSTEM (8-10 semanas)
 
-**Objetivo**: Capacidad de gestionar múltiples proyectos de desarrollo en esta máquina.
+**Objetivo**: Capacidad de monitorear y gestionar procesos activos de proyectos en desarrollo (especialmente VS Code).
 
-### Fase 3A: Project Discovery & Monitoring (Semanas 1-4)
+> ⚠️ **NOTA CRÍTICA (2025-11-02)**: Este roadmap fue creado basándose en investigaciones preliminares, pero Daniel aclaró que el enfoque debe ser **monitoreo de procesos activos** (VS Code corriendo, terminales activas), NO descubrimiento estático de proyectos en disco.
+>
+> **Roadmap pendiente de actualización** una vez Daniel complete investigación sobre:
+> - Cómo detectar procesos de VS Code
+> - Cómo identificar proyecto abierto en cada instancia
+> - Cómo capturar output de terminales de VS Code
+> - APIs/métodos para acceder a información de procesos
+>
+> Los branches abajo son ORIENTATIVOS y serán revisados basándose en hallazgos técnicos.
 
-**Branch 1: Project Scanner** (Semana 1)
-- Implementar `ProjectScanner` con detección de tipos (Python, Node.js, Go, Rust, Java, etc.)
+### Fase 3A: Process & Terminal Monitoring (Semanas 1-4) - PENDIENTE DE REDISEÑO
+
+**Branch 1: VS Code Process Detection** (Semana 1) - PRIORIDAD
+- ⏳ Detectar procesos de VS Code corriendo (psutil o alternativa)
+- ⏳ Identificar workspace/proyecto abierto en cada instancia
+- ⏳ Mapear PID → Proyecto
+- ⏳ Tool: `list_active_projects()` → procesos de VS Code activos
+
+**Branch 2: Terminal Monitor** (Semana 2) - PRIORIDAD
+- ⏳ Capturar output de terminales integradas de VS Code
+- ⏳ Real-time streaming de stdout/stderr
+- ⏳ Detectar terminales por proyecto
+- ⏳ Tool: `get_project_terminals(project_id)` → lista de terminales
+- ⏳ Tool: `read_terminal_output(terminal_id)` → últimas líneas
+
+**Branch 3: Project Scanner** (Semana 3) - SECUNDARIO
+- ✅ YA IMPLEMENTADO (ver Sesión 16)
+- `ProjectScanner` con detección de tipos (Python, Node.js, Go, Rust, Java, etc.)
 - Parser de archivos de configuración (package.json, pyproject.toml, Cargo.toml, pom.xml)
 - Database schema con SQLAlchemy (7 tablas)
 - Tool: `discover_projects(path)` para LangGraph
+- **Uso**: Complemento para descubrir proyectos en disco, NO para monitorear activos
 
-**Branch 2: Process Monitor** (Semana 2)
-- `ProcessMonitor` con asyncio subprocess
-- Real-time stdout/stderr streaming line-by-line
-- Multi-project concurrent monitoring con `asyncio.gather()`
-- Tool: `start_project(project_id)`, `stop_project(project_id)`
-
-**Branch 3: Error Detection** (Semana 3)
+**Branch 4: Error Detection** (Semana 4)
 - `ErrorDetector` con regex patterns por lenguaje
 - Detection automática de: compile errors, runtime errors, test failures
 - Storage en tabla `project_errors`
 - Tool: `detect_errors(project_id)` → lista de errores encontrados
-
-**Branch 4: Health Checker** (Semana 4)
-- `HealthChecker` con validaciones periódicas
-- Checks: build status, test status, dependency updates, security vulnerabilities
-- File watcher con `watchdog` para cambios
-- Tool: `get_project_health(project_id)` → status completo
 
 ### Fase 3B: AI Integration & UI (Semanas 5-8)
 
@@ -1717,5 +1830,5 @@ Todas las features dependen de:
 **FIN DE MEMORIA PERMANENTE**
 
 Este archivo refleja el estado REAL del proyecto Sendell.
-Última actualización: 2025-11-02 23:45
-Estado: v0.2 Fase 2A COMPLETADA ✅ - Planificando v0.3 Multi-Project Management 🚀
+Última actualización: 2025-11-02 (Sesión 16)
+Estado: v0.2 Fase 2A COMPLETADA ✅ - v0.3 requiere investigación de Daniel sobre monitoreo de procesos VS Code ⏳
