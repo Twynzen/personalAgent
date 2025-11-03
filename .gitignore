@@ -131,3 +131,11 @@ celerybeat.pid
 # uv
 .uv/
 uv.lock
+
+# Research Documentation (internal use only - not for version control)
+PLAYWRIGHT_BROWSER_GUIDE.md
+VSCODE_EXTENSION_GUIDE.md
+VSCODE_EXTENSION_SUMMARY.md
+ANGULAR_IONIC_GUIDE.md
+MULTI_PROJECT_MANAGEMENT_GUIDE.md
+PROJECT_MANAGEMENT_SUMMARY.md

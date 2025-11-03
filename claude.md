@@ -1,15 +1,15 @@
 # CLAUDE.MD - Memoria Permanente del Proyecto Sendell
 
-**Última actualización**: 2025-10-29 22:20
-**Estado del proyecto**: v0.2 Fase 2A en desarrollo - Sistema de Notificaciones Visuales
+**Última actualización**: 2025-11-02 23:45
+**Estado del proyecto**: v0.2 Fase 2A COMPLETADA - Planificando v0.3 (Multi-Project Management)
 **Desarrolladores**: Daniel (Testing/PM) + Claude (Arquitectura/Desarrollo)
 
 ---
 
 ## 🚨 ESTADO ACTUAL DEL DESARROLLO (Para Reinicio de Contexto)
 
-**Branch actual**: `feature/notification-sounds` (Branch 3 de Fase 2A completado, pendiente push)
-**Siguiente**: Branch 4 ESPECIAL - Mejorar ASCII arts con animaciones (leer asciiguia.txt)
+**Branch actual**: `feature/reminder-system-integration` (Branch 6 de Fase 2A COMPLETADO - pushed por Daniel)
+**Siguiente**: v0.3 Fase 1 - Multi-Project Management System
 
 **Workflow establecido**:
 1. Claude crea branch para tarea específica
@@ -21,22 +21,24 @@
 7. Repetir para siguiente branch
 8. Documentar SIEMPRE en CLAUDE.md
 
-**Fase actual**: Fase 2A - Sistema de Notificaciones Visuales (7 branches - ajustado)
-- ✅ Branch 1: UI Foundation (COMPLETADO - pushed por Daniel)
-- ✅ Branch 2: ASCII Art Library (COMPLETADO - pushed por Daniel)
-- ✅ Branch 3: Integrate ASCII Art + Sounds (COMPLETADO - pendiente push)
-- ⏳ Branch 4 ESPECIAL: Animated ASCII Arts (SIGUIENTE - leer asciiguia.txt)
-- ⏳ Branch 5: Snooze/Dismiss Integration
-- ⏳ Branch 6: Reminder System Integration
-- ⏳ Branch 7: Brain GUI Customization
+**✅ Fase 2A COMPLETADA**: Sistema de Notificaciones Visuales (6 branches completados)
+- ✅ Branch 1: UI Foundation (ventanas tkinter con 4 niveles)
+- ✅ Branch 2: ASCII Art Library (25 artes estáticos)
+- ✅ Branch 3: Integrate ASCII Art + Sounds (mapeo inteligente)
+- ✅ Branch 4 ESPECIAL: Animated ASCII Arts (8 artes animados, window sizing dinámico)
+- ✅ Branch 5: Snooze/Dismiss Integration (botones funcionales con callbacks)
+- ✅ Branch 6: Reminder System Integration (chat → visual notifications)
+- ⏳ Branch 7: Brain GUI Customization (OMITIDO - innecesario por ahora)
 
-**Nota**: Branch 4 ESPECIAL agregado - Daniel pidió mejorar ASCII arts con animaciones usando asciiguia.txt
+**Logros de Fase 2A**:
+✅ Sistema completo de notificaciones visuales con ASCII art animado
+✅ 4 niveles de urgencia (INFO, ATTENTION, URGENT, AVATAR) con colores/sonidos únicos
+✅ Botones Snooze/Dismiss 100% funcionales e integrados con ReminderManager
+✅ Auto-detección de importancia basada en keywords + timing
+✅ Mapeo inteligente de contenido → ASCII art apropiado
+✅ Integración completa: Chat → Reminder → Visual Notification → User Action → Estado persistido
 
-**Contexto de Fase 2A**:
-Daniel testeó sistema de reminders (v0.2 Fase 1) y pidió mejoras:
-- Reminders actuales abren notepad (funciona pero muy simple)
-- Necesita: Ventanas visuales llamativas con ASCII art, colores, sonidos
-- Objetivo: Hacer notificaciones más impactantes y personalizadas
+**Próximo objetivo**: v0.3 - Multi-Project Management & Dashboard Expansion
 
 ---
 
@@ -60,6 +62,149 @@ COMPLETADO. Todas las funcionalidades core están operativas:
 - **OpenAI GPT-4**: Razonamiento avanzado
 - **psutil**: Cross-platform system monitoring
 - **tkinter**: GUI nativa sin dependencias adicionales
+
+---
+
+## 🚀 VISIÓN EXPANDIDA: SENDELL v0.3+ (2025-11-02)
+
+### De Asistente Personal a Sistema de Gestión de Desarrollo
+
+Sendell evoluciona de un asistente personal de escritorio a un **sistema completo de gestión agentica de proyectos de desarrollo**, manteniendo su naturaleza privada para uso exclusivo de Daniel.
+
+### Capacidades Nuevas (Planificadas v0.3-v1.0)
+
+#### 1. Multi-Project Management
+**Gestionar todos los proyectos de VS Code en esta máquina**
+- Descubrir y listar proyectos automáticamente
+- Monitorear estado de consola/terminal en tiempo real
+- Ejecutar comandos en contexto de cada proyecto
+- Detectar errores y problemas proactivamente
+- Entender estructura y configuración de cada proyecto
+
+#### 2. Browser Automation (Agentic Web Actions)
+**Navegar y actuar en el navegador programáticamente**
+- Ver páginas web y extraer información
+- Hacer clicks y llenar formularios
+- Entender DOM structure
+- Realizar búsquedas y research automático
+- Monitorear cambios en sitios web
+
+#### 3. VS Code Extension
+**Integración profunda con editor**
+- Detectar proyecto activo en VS Code
+- Leer output de terminales integradas
+- Enviar comandos a terminal
+- Monitorear cambios de archivos
+- Comunicación bidireccional VS Code ↔ Sendell
+
+#### 4. Triple Dashboard System
+**Controlar Sendell desde cualquier dispositivo**
+- **Dashboard Local** (tkinter actual) - Principal, adaptable
+- **Dashboard Web** (Angular/Ionic) - Accesible desde navegador
+- **App Móvil** (Ionic) - Control desde celular (iOS/Android)
+
+Todos conectados al mismo backend de Sendell en esta máquina.
+
+### Arquitectura Futura (v0.3+)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│          DASHBOARDS (3 interfaces)                      │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐   │
+│  │   Local     │  │  Web App     │  │  Mobile App  │   │
+│  │  (tkinter)  │  │  (Angular)   │  │   (Ionic)    │   │
+│  └──────┬──────┘  └──────┬───────┘  └──────┬───────┘   │
+│         │                 │                  │           │
+│         └─────────────────┴──────────────────┘           │
+│                           │                              │
+│                    WebSocket/REST API                    │
+└────────────────────────────┬────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────┐
+│            SENDELL CORE (Python Backend)                │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  LangGraph Agent + OpenAI GPT-4                 │   │
+│  │  - Chat & Proactive Loop                         │   │
+│  │  - 15+ Tools (system, projects, browser, etc.)   │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │  Project     │  │   Browser    │  │  VS Code     │  │
+│  │  Manager     │  │   Agent      │  │  Bridge      │  │
+│  │  (asyncio)   │  │ (Playwright) │  │ (WebSocket)  │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+└─────────────────────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│          EXTERNAL INTEGRATIONS                          │
+│  ┌──────────┐  ┌────────────┐  ┌────────────────────┐  │
+│  │ VS Code  │  │  Web APIs  │  │ Multi-Projects     │  │
+│  │Extension │  │ (browser)  │  │ (on this machine)  │  │
+│  └──────────┘  └────────────┘  └────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Stack Tecnológico Expandido
+
+**Backend (Sendell Core)**
+- Python 3.10+, LangGraph, OpenAI GPT-4
+- **Playwright** (browser automation con LangChain integration)
+- **WebSocket Server** (comunicación con dashboards)
+- **FastAPI** (REST API para dashboards)
+- **SQLAlchemy** (database para proyectos/métricas)
+- **asyncio** (manejo concurrente de múltiples proyectos)
+
+**Frontend (Dashboards)**
+- **Angular 17+** (framework web)
+- **Ionic 7+** (componentes UI + capacitor para mobile)
+- **WebSocket Client** (real-time updates)
+- **Chart.js / D3.js** (visualizaciones)
+
+**Integration**
+- **VS Code Extension** (TypeScript)
+- **WebSocket** (VS Code ↔ Sendell)
+- **Git integration** (monitor commits, branches, etc.)
+
+### Documentación de Investigación Creada
+
+4 guías exhaustivas de investigación fueron creadas (2025-11-02):
+
+1. **`PLAYWRIGHT_BROWSER_GUIDE.md`** (~15,000 palabras)
+   - Comparación Playwright vs Selenium
+   - LangChain integration completa
+   - Ejemplos de código production-ready
+   - Arquitectura para AI agents
+
+2. **`VSCODE_EXTENSION_GUIDE.md`** (~12,000 palabras)
+   - WebSocket-based architecture
+   - API completa de VS Code
+   - Seguridad y best practices
+   - Implementación TypeScript + Python
+
+3. **`ANGULAR_IONIC_GUIDE.md`** (~13,000 palabras)
+   - Single codebase → Web + Mobile
+   - FastAPI backend integration
+   - Real-time WebSocket communication
+   - Deployment strategies
+
+4. **`MULTI_PROJECT_MANAGEMENT_GUIDE.md`** (~15,000 palabras)
+   - Async subprocess monitoring
+   - Project type detection
+   - Database schemas (7 tables)
+   - Security & sandboxing
+   - LangGraph tool integration
+
+**Total**: ~55,000 palabras de documentación técnica lista para implementación.
+
+### Principios de Diseño
+
+1. **Privado y Personal**: Software exclusivo para Daniel, no comercial
+2. **Incremental**: Desarrollo por fases bien definidas
+3. **Testeado**: Daniel testea cada feature antes de avanzar
+4. **Documentado**: CLAUDE.md siempre actualizado
+5. **Seguro**: Validación, sandboxing, permisos (L1-L5)
+6. **Modular**: Cada sistema funciona independiente y se integra
 
 ---
 
@@ -1149,8 +1294,428 @@ src/sendell/proactive/
 
 ---
 
+## 📅 ROADMAP COMPLETO DE DESARROLLO (v0.3 - v1.0)
+
+### Visión General de Fases
+
+```
+v0.2 (COMPLETADO)   →  v0.3 (8-10 semanas)  →  v0.4 (6-8 semanas)  →  v0.5 (4-6 semanas)  →  v1.0 (3-4 semanas)
+Proactive Agent        Multi-Project Mgmt     VS Code + Browser      Web/Mobile Dashboard    Production Release
+```
+
+---
+
+## 🎯 v0.3 - MULTI-PROJECT MANAGEMENT SYSTEM (8-10 semanas)
+
+**Objetivo**: Capacidad de gestionar múltiples proyectos de desarrollo en esta máquina.
+
+### Fase 3A: Project Discovery & Monitoring (Semanas 1-4)
+
+**Branch 1: Project Scanner** (Semana 1)
+- Implementar `ProjectScanner` con detección de tipos (Python, Node.js, Go, Rust, Java, etc.)
+- Parser de archivos de configuración (package.json, pyproject.toml, Cargo.toml, pom.xml)
+- Database schema con SQLAlchemy (7 tablas)
+- Tool: `discover_projects(path)` para LangGraph
+
+**Branch 2: Process Monitor** (Semana 2)
+- `ProcessMonitor` con asyncio subprocess
+- Real-time stdout/stderr streaming line-by-line
+- Multi-project concurrent monitoring con `asyncio.gather()`
+- Tool: `start_project(project_id)`, `stop_project(project_id)`
+
+**Branch 3: Error Detection** (Semana 3)
+- `ErrorDetector` con regex patterns por lenguaje
+- Detection automática de: compile errors, runtime errors, test failures
+- Storage en tabla `project_errors`
+- Tool: `detect_errors(project_id)` → lista de errores encontrados
+
+**Branch 4: Health Checker** (Semana 4)
+- `HealthChecker` con validaciones periódicas
+- Checks: build status, test status, dependency updates, security vulnerabilities
+- File watcher con `watchdog` para cambios
+- Tool: `get_project_health(project_id)` → status completo
+
+### Fase 3B: AI Integration & UI (Semanas 5-8)
+
+**Branch 5: LangGraph Tools** (Semana 5-6)
+- 7 nuevos tools para agente:
+  1. `discover_projects(path)` - Escanear directorio
+  2. `list_projects()` - Listar todos los proyectos
+  3. `get_project_status(id)` - Estado actual
+  4. `get_project_logs(id, lines=50)` - Últimos logs
+  5. `start_project(id, command)` - Iniciar proceso
+  6. `stop_project(id)` - Detener proceso
+  7. `run_command(id, command)` - Ejecutar comando en contexto
+- Integración con permissions (L3+ para start/stop)
+- Proactive loop monitoring (detectar errores automáticamente)
+
+**Branch 6: Brain GUI - Projects Tab** (Semana 7)
+- Nuevo tab "Projects" en brain_gui.py
+- Lista de proyectos con status (running/stopped/error)
+- Ver logs en tiempo real
+- Botones: Start, Stop, View Logs, Health Check
+- Métricas: CPU, RAM, uptime
+
+**Branch 7: Secure Command Executor** (Semana 8)
+- `SecureCommandExecutor` con validación
+- Forbidden commands blocked (rm, sudo, format, etc.)
+- Path traversal prevention
+- Resource limits (timeout, memory)
+- Audit logging de todos los comandos
+
+### Fase 3C: Polish & Testing (Semanas 9-10)
+
+**Branch 8: Integration Testing** (Semana 9)
+- Tests end-to-end de todos los flows
+- Mock projects para testing
+- Performance testing (10, 20, 50 proyectos concurrentes)
+- Documentación actualizada
+
+**Branch 9: Documentation & Examples** (Semana 10)
+- Guía de uso completa
+- Ejemplos de queries en lenguaje natural
+- Video demostrativo
+- Update CLAUDE.md
+
+**Deliverable v0.3**: Sendell puede gestionar múltiples proyectos, detectar errores, y ejecutar comandos de forma segura.
+
+---
+
+## 🌐 v0.4 - BROWSER AUTOMATION & VS CODE EXTENSION (6-8 semanas)
+
+**Objetivo**: Integración con navegador y VS Code para acciones agénticas avanzadas.
+
+### Fase 4A: Browser Automation (Semanas 1-3)
+
+**Branch 1: Playwright Setup** (Semana 1)
+- Instalar Playwright + LangChain integration
+- Implementar `BrowserAgent` con `PlayWrightBrowserToolkit`
+- Tool básico: `view_webpage(url)` → extraer título, texto, links
+- Integración con LangGraph agent
+
+**Branch 2: Advanced Browser Actions** (Semana 2)
+- Tool: `browse_web(task)` - natural language browser control
+  - Ejemplos: "Search Google for X", "Go to Y and extract Z"
+- Click, fill forms, navigate
+- Screenshot capability para debugging
+- Permissions L3+ required
+
+**Branch 3: Proactive Web Monitoring** (Semana 3)
+- Monitor website changes (polling)
+- Notify user when content changes
+- RSS/API integration opcional
+- Testing con sitios reales
+
+### Fase 4B: VS Code Extension (Semanas 4-6)
+
+**Branch 4: Extension Scaffold** (Semana 4)
+- Create extension with Yeoman generator
+- Basic WebSocket client (TypeScript)
+- Connect to Sendell WebSocket server (Python)
+- Bidirectional hello world
+
+**Branch 5: Workspace Integration** (Semana 5)
+- Detect active workspace/project
+- Monitor terminal output (Shell Integration API)
+- Send commands to terminal
+- File system watcher
+
+**Branch 6: Context Aggregation** (Semana 6)
+- Send context to Sendell:
+  - Current file open
+  - Terminal output
+  - Git status
+  - Active editor
+- Sendell understands developer context in real-time
+
+### Fase 4C: Security & Polish (Semanas 7-8)
+
+**Branch 7: Authentication & Security** (Semana 7)
+- Token-based auth (VS Code ↔ Sendell)
+- Validate all inputs from extension
+- Filter sensitive data (.env, API keys)
+- Whitelist allowed commands
+
+**Branch 8: Documentation & Publishing** (Semana 8)
+- User guide for extension
+- VS Code marketplace publishing (opcional, privado por ahora)
+- Integration testing
+- Update CLAUDE.md
+
+**Deliverable v0.4**: Sendell puede navegar web y está integrado con VS Code.
+
+---
+
+## 📱 v0.5 - WEB & MOBILE DASHBOARDS (4-6 semanas)
+
+**Objetivo**: Controlar Sendell desde navegador web y app móvil.
+
+### Fase 5A: Backend API (Semanas 1-2)
+
+**Branch 1: FastAPI Server** (Semana 1)
+- Implement FastAPI REST API
+- Endpoints: /projects, /status, /commands, /logs
+- JWT authentication
+- CORS configuration
+
+**Branch 2: WebSocket Server** (Semana 2)
+- Real-time updates vía WebSocket
+- Broadcast project status changes
+- Broadcast errors/notifications
+- Connection management (múltiples clientes)
+
+### Fase 5B: Angular/Ionic Frontend (Semanas 3-5)
+
+**Branch 3: Project Setup** (Semana 3)
+- Initialize Ionic + Angular project
+- Routing setup
+- HTTP service + WebSocket service
+- Authentication module (JWT)
+
+**Branch 4: Dashboard Pages** (Semana 4)
+- Home: Overview con cards (projects, health, notifications)
+- Projects: Lista con status, logs, actions
+- Chat: Interface de chat con Sendell
+- Settings: Config de usuario
+
+**Branch 5: Mobile Optimization** (Semana 5)
+- Responsive design
+- Mobile-specific gestures
+- Build for iOS/Android con Capacitor
+- Testing en emuladores
+
+### Fase 5C: Deployment (Semana 6)
+
+**Branch 6: Web Deployment** (Semana 6 - parte 1)
+- Deploy web app a Netlify/Vercel
+- Domain setup (opcional)
+- CI/CD con GitHub Actions
+
+**Branch 7: Mobile Build** (Semana 6 - parte 2)
+- iOS build con Xcode
+- Android build con Android Studio
+- App Store submission (opcional, privado)
+- Testing en dispositivos reales
+
+**Deliverable v0.5**: Dashboards web y móvil funcionales conectados a Sendell.
+
+---
+
+## 🚀 v1.0 - PRODUCTION RELEASE (3-4 semanas)
+
+**Objetivo**: Pulir todo, documentar, y tener sistema production-ready.
+
+### Fase 6: Final Polish
+
+**Branch 1: Performance Optimization** (Semana 1)
+- Profile y optimize código Python
+- Reduce memory footprint
+- Optimize database queries
+- Reduce latency en WebSocket
+
+**Branch 2: Security Audit** (Semana 2)
+- Revisar todos los endpoints con `bandit`
+- Dependency vulnerability scan con `safety`
+- Input validation exhaustiva
+- Audit logging completo
+
+**Branch 3: Documentation** (Semana 3)
+- User guide completo
+- Developer docs
+- API documentation (Swagger)
+- Video tutorials
+- Troubleshooting guide
+
+**Branch 4: Final Testing** (Semana 4)
+- E2E testing completo
+- Load testing (stress test)
+- User acceptance testing (Daniel)
+- Bug fixes finales
+
+**Deliverable v1.0**: Sistema completo, documentado, seguro, y listo para uso diario.
+
+---
+
+## 📊 MÉTRICAS DE ÉXITO
+
+### v0.3 Success Criteria
+- ✅ Detecta 10+ proyectos en máquina
+- ✅ Monitorea 5+ proyectos concurrentemente sin lag
+- ✅ Detecta errores en <5 segundos
+- ✅ GUI Projects tab muestra status en tiempo real
+- ✅ 0 comandos peligrosos ejecutados (security)
+
+### v0.4 Success Criteria
+- ✅ Puede navegar a URL y extraer información
+- ✅ VS Code extension conecta con Sendell
+- ✅ Detecta proyecto activo en VS Code
+- ✅ Lee terminal output en tiempo real
+- ✅ Sendell entiende contexto de desarrollo
+
+### v0.5 Success Criteria
+- ✅ Web dashboard accesible desde cualquier navegador
+- ✅ App móvil instalable en iPhone/Android
+- ✅ Real-time updates <1 segundo
+- ✅ Autenticación funciona correctamente
+- ✅ Puede controlar proyectos desde móvil
+
+### v1.0 Success Criteria
+- ✅ 0 bugs críticos
+- ✅ Documentación completa
+- ✅ Performance <100MB RAM base
+- ✅ Security audit passed
+- ✅ Daniel usa daily sin problemas
+
+---
+
+## 🎓 RECURSOS Y DOCUMENTACIÓN
+
+### Guías de Investigación Creadas (2025-11-02)
+
+Todas ubicadas en raíz del proyecto:
+
+1. **`PLAYWRIGHT_BROWSER_GUIDE.md`** (15,000 palabras)
+   - Playwright vs Selenium comparison
+   - LangChain PlayWrightBrowserToolkit integration
+   - Code examples (standalone y AI agent)
+   - Security considerations
+   - Recommended implementation for Sendell
+
+2. **`VSCODE_EXTENSION_GUIDE.md`** (12,000 palabras)
+   - WebSocket-based architecture
+   - Complete VS Code Extension API reference
+   - TypeScript extension implementation
+   - Python WebSocket server
+   - Security (authentication, validation)
+   - 4-phase development roadmap
+
+3. **`ANGULAR_IONIC_GUIDE.md`** (13,000 palabras)
+   - Ionic + Angular for web + mobile
+   - FastAPI backend integration
+   - WebSocket real-time communication
+   - JWT authentication flow
+   - Deployment strategies (Netlify, App Stores)
+   - Complete project structure
+
+4. **`MULTI_PROJECT_MANAGEMENT_GUIDE.md`** (15,000 palabras)
+   - Project discovery patterns
+   - Async subprocess monitoring
+   - Database schema (7 tables + SQLAlchemy ORM)
+   - Error detection regex patterns
+   - Security & sandboxing
+   - LangGraph tool integration
+   - Complete ProductionManager implementation
+
+### Quick Reference Docs
+
+- **`VSCODE_EXTENSION_SUMMARY.md`** - TL;DR de VS Code extension
+- **`PROJECT_MANAGEMENT_SUMMARY.md`** - TL;DR de multi-project management
+
+---
+
+## 🔄 WORKFLOW DE DESARROLLO
+
+### Para cada Branch
+
+1. **Claude crea branch** con nombre descriptivo
+2. **Claude implementa** feature completa
+3. **Claude muestra** código a Daniel
+4. **Daniel testea** funcionalidad
+5. **Si funciona** → Claude hace commit con mensaje detallado
+6. **Daniel hace push**
+7. **Documentar** avance en CLAUDE.md
+8. **Repetir** para siguiente branch
+
+### Commits
+
+Formato establecido:
+```
+feat: [Descripción corta de la feature] (Phase X - Task Y)
+
+SUMMARY:
+[Resumen de 1-2 líneas]
+
+CHANGES:
+1. [Cambio detallado]
+2. [Cambio detallado]
+
+TESTING:
+[Cómo testear]
+
+FILES MODIFIED:
+- file1.py (+X lines)
+- file2.py (NEW)
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
+
+## 🛡️ PRINCIPIOS DE SEGURIDAD
+
+### Aplican a TODAS las fases
+
+1. **Input Validation**
+   - Pydantic models para todos los inputs
+   - Path validation (prevent traversal)
+   - Command validation (block dangerous commands)
+
+2. **Sandboxing**
+   - Never use `shell=True` in subprocess
+   - Resource limits (CPU, memory, timeout)
+   - Separate processes for each project
+
+3. **Authentication**
+   - JWT tokens para dashboards
+   - Token-based auth para VS Code extension
+   - API keys rotables
+
+4. **Privacy**
+   - PII scrubbing en logs (mantener sistema actual)
+   - Filter sensitive files (.env, credentials)
+   - Respect autonomy levels L1-L5
+
+5. **Audit Logging**
+   - Log all commands executed
+   - Track all API calls
+   - User transparency (mostrar lo que hace)
+
+---
+
+## 📝 NOTAS IMPORTANTES
+
+### Decisiones Arquitectónicas Clave
+
+1. **Playwright over Selenium**: AI-native, mejor performance, LangChain integration
+2. **WebSocket over LSP** (VS Code): Simpler, bidirectional, language-agnostic
+3. **Ionic over React Native**: Single codebase, faster development, web + mobile
+4. **FastAPI over Flask**: Async native, better performance, auto-docs
+5. **SQLAlchemy over raw SQL**: ORM benefits, type safety, easier maintenance
+
+### Riesgos y Mitigaciones
+
+| Riesgo | Probabilidad | Impacto | Mitigación |
+|--------|--------------|---------|------------|
+| Complexity overload | Alta | Alto | Desarrollo incremental, testing constante |
+| Performance issues (multi-project) | Media | Medio | Async I/O, resource limits, profiling |
+| Security vulnerabilities | Media | Alto | Security audit, input validation, sandboxing |
+| Cross-platform issues | Baja | Medio | Test en Windows primary, Linux/Mac opcional |
+| Scope creep | Media | Medio | Roadmap estricto, Daniel aprueba cambios |
+
+### Dependencias Críticas
+
+Todas las features dependen de:
+- ✅ OpenAI API funcionando
+- ✅ Python 3.10+
+- ✅ LangGraph agent core estable
+- ✅ Sistema de memoria JSON
+- ✅ Permissions L1-L5
+
+---
+
 **FIN DE MEMORIA PERMANENTE**
 
 Este archivo refleja el estado REAL del proyecto Sendell.
-Última actualización: 2025-10-30 00:45 (Sesión 15 - Branch 1, 2, 3 Fase 2A completados)
-Estado: v0.1 MVP COMPLETADO - v0.2 FASE 1 COMPLETADA - v0.2 FASE 2A EN PROGRESO (3/6) ✅
+Última actualización: 2025-11-02 23:45
+Estado: v0.2 Fase 2A COMPLETADA ✅ - Planificando v0.3 Multi-Project Management 🚀
