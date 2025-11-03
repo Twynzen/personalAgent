@@ -245,6 +245,77 @@ class SendellAgent:
                     "message": f"Failed to create reminder: {str(e)}"
                 }
 
+        @tool
+        def discover_projects(path: str) -> dict:
+            """Discover development projects in a directory by scanning for project markers.
+
+            Scans recursively (max 3 levels deep) to find projects. Detects:
+            - Python (pyproject.toml, setup.py, requirements.txt)
+            - Node.js (package.json)
+            - Rust (Cargo.toml)
+            - Go (go.mod)
+            - Java (pom.xml, build.gradle)
+            - And more...
+
+            Args:
+                path: Directory path to scan (e.g., "C:/Users/Daniel/projects")
+
+            Returns:
+                dict with:
+                - success: bool
+                - projects_found: int
+                - projects: list of project summaries
+                - by_type: count by project type
+                - scan_duration: seconds
+
+            Examples:
+                - "Discover projects in C:/Users/Daniel"
+                - "Scan my projects folder"
+                - "Find all Node.js projects in C:/dev"
+            """
+            try:
+                from pathlib import Path
+                from sendell.projects import ProjectScanner
+
+                scanner = ProjectScanner(max_depth=3, timeout_seconds=30)
+                result = scanner.scan_directory(Path(path))
+
+                # Format projects for response
+                projects_list = []
+                for project in result.projects_found:
+                    project_summary = {
+                        "name": project.name,
+                        "path": str(project.path),
+                        "type": project.project_type.value,
+                        "config_file": str(project.config_file) if project.config_file else None,
+                    }
+
+                    # Add config details if available
+                    if project.config:
+                        if project.config.version:
+                            project_summary["version"] = project.config.version
+                        if project.config.description:
+                            project_summary["description"] = project.config.description
+
+                    projects_list.append(project_summary)
+
+                return {
+                    "success": True,
+                    "projects_found": result.total_projects,
+                    "projects": projects_list,
+                    "by_type": result.projects_by_type,
+                    "scan_duration": round(result.scan_duration_seconds, 2),
+                    "errors": result.errors if result.errors else [],
+                }
+
+            except Exception as e:
+                logger.error(f"Failed to discover projects: {e}")
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "message": f"Failed to scan directory: {str(e)}"
+                }
+
         return [
             get_system_health,
             get_active_window,
@@ -253,6 +324,7 @@ class SendellAgent:
             respond_to_user,
             show_brain,
             add_reminder,
+            discover_projects,
         ]
 
     async def run_proactive_cycle(self) -> dict:
