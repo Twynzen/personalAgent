@@ -144,6 +144,7 @@ investigacionvscodeextensionintegration.txt
 INVESTIGATION_PROMPT_VSCODE_MONITORING.md
 INVESTIGATION_PROMPT_VSCODE_EXTENSION_DEEP.md
 claude.md
+VSCODE_INTEGRATION_README
 
 # VS Code Extension
 sendell-vscode-extension/node_modules/

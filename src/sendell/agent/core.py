@@ -4,6 +4,7 @@ Sendell Agent Core using LangGraph.
 Implements ReAct pattern agent with MCP tools.
 """
 
+import asyncio
 import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -25,6 +26,14 @@ from sendell.proactive.proactive_loop import ProactiveLoop
 from sendell.proactive.reminders import Reminder, ReminderManager, ReminderType
 from sendell.proactive.temporal_clock import TemporalClock
 from sendell.utils.logger import get_logger
+from sendell.vscode_integration.tools import (
+    list_active_projects,
+    get_project_errors,
+    get_terminal_tail,
+    get_project_stats,
+    send_terminal_command,
+)
+from sendell.vscode_integration.websocket_server import get_server as get_vscode_server
 
 logger = get_logger(__name__)
 
@@ -91,7 +100,11 @@ class SendellAgent:
             prompt=get_system_prompt(),  # String convertido automaticamente a SystemMessage
         )
 
-        logger.info("Sendell agent initialized with LangGraph ReAct pattern + Proactive System")
+        # Initialize VS Code WebSocket server (will start when async context is available)
+        self.vscode_server = get_vscode_server()
+        self.vscode_server_task = None
+
+        logger.info("Sendell agent initialized with LangGraph ReAct pattern + Proactive System + VS Code Integration")
 
     def _create_tools(self) -> List:
         """
@@ -426,7 +439,44 @@ class SendellAgent:
             add_reminder,
             discover_projects,
             list_vscode_instances,
+            # VS Code Integration tools (via WebSocket)
+            list_active_projects,
+            get_project_errors,
+            get_terminal_tail,
+            get_project_stats,
+            send_terminal_command,
         ]
+
+    async def start_vscode_server(self) -> None:
+        """
+        Start VS Code WebSocket server in background.
+
+        Must be called from async context (e.g., in chat loop or proactive loop).
+        The server runs on ws://localhost:7000 and receives events from
+        the VS Code extension (terminal output, errors, etc.)
+        """
+        if self.vscode_server_task is not None:
+            logger.debug("VS Code server already running")
+            return
+
+        try:
+            # Create task in current event loop
+            self.vscode_server_task = asyncio.create_task(self.vscode_server.start())
+            logger.info("VS Code WebSocket server started on ws://localhost:7000")
+
+        except Exception as e:
+            logger.error(f"Failed to start VS Code server: {e}", exc_info=True)
+            logger.warning("VS Code integration will not be available")
+
+    async def stop_vscode_server(self) -> None:
+        """Stop VS Code WebSocket server"""
+        if self.vscode_server_task and not self.vscode_server_task.done():
+            self.vscode_server_task.cancel()
+            try:
+                await self.vscode_server_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("VS Code WebSocket server stopped")
 
     async def run_proactive_cycle(self) -> dict:
         """
