@@ -4,8 +4,14 @@ Deep integration between Sendell AI agent and VS Code for multi-project manageme
 
 ## Features
 
-- **WebSocket Connection**: Real-time bidirectional communication with Sendell Python server
-- **Terminal Monitoring**: Capture terminal output and execution events (coming in Phase 2)
+- **WebSocket Connection**: Real-time bidirectional communication with Sendell Python server ✅
+- **Terminal Monitoring**: Capture terminal output and execution events using Shell Integration API ✅
+  - Auto-detects all terminals in VS Code
+  - Monitors command execution (start/end/exit codes)
+  - Streams terminal output in real-time
+  - Tail buffering (keeps last 100 lines per terminal)
+  - Error detection and filtering
+  - Memory-efficient with automatic cleanup
 - **Claude Code Detection**: Identify and interact with Claude Code sessions (coming in Phase 3)
 - **Project Context**: Extract and cache project information efficiently (coming in Phase 4)
 - **Multi-Agent Coordination**: Collaborate with Claude Code sessions (coming in Phase 6)
@@ -53,6 +59,7 @@ Press `Ctrl+Shift+P` and type:
 - **Sendell: Disconnect from Server** - Disconnect from server
 - **Sendell: Show Connection Status** - Display current connection status
 - **Sendell: Show Logs** - Open Sendell extension logs
+- **Sendell: Show Terminal Statistics** - View terminal monitoring stats (Phase 2)
 
 ## Status Bar
 
@@ -67,16 +74,31 @@ Click the status bar item to see detailed status.
 
 ## Usage
 
-### Phase 1: Basic Connection (Current)
+### Phase 1-2: WebSocket Connection + Terminal Monitoring (Current)
 
 1. Start Sendell Python server with WebSocket support
 2. Open VS Code with Sendell extension installed
 3. Extension auto-connects to `ws://localhost:7000`
 4. Check status bar for connection confirmation
+5. **Terminal monitoring is active**:
+   - All terminals are automatically detected
+   - Commands and output are captured
+   - Events are sent to Sendell server via WebSocket
+   - Use `Sendell: Show Terminal Statistics` to view stats
 
-### Phase 2+: Advanced Features (Coming Soon)
+### Testing Terminal Monitoring
 
-- Terminal monitoring and command execution
+1. Open integrated terminal in VS Code (`Ctrl+` `)
+2. Run any command (e.g., `echo "Hello from terminal"`)
+3. Check Sendell logs: `Sendell: Show Logs`
+4. You should see:
+   - "Command started" event
+   - Output chunks received
+   - "Command ended" with exit code
+5. View stats: `Sendell: Show Terminal Statistics`
+
+### Phase 3+: Advanced Features (Coming Soon)
+
 - Claude Code session detection
 - Project context extraction
 - Multi-agent task delegation

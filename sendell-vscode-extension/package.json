@@ -63,6 +63,10 @@
       {
         "command": "sendell.showLogs",
         "title": "Sendell: Show Logs"
+      },
+      {
+        "command": "sendell.showTerminalStats",
+        "title": "Sendell: Show Terminal Statistics"
       }
     ]
   },

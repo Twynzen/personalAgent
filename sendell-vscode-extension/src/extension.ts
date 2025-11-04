@@ -7,10 +7,12 @@
 
 import * as vscode from 'vscode';
 import { SendellWebSocketClient } from './websocket';
+import { TerminalManager } from './terminal';
 import { initLogger, logger } from './logger';
 import { SendellConfig, ConnectionStatus } from './types';
 
 let wsClient: SendellWebSocketClient | undefined;
+let terminalManager: TerminalManager | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
 
 /**
@@ -58,6 +60,11 @@ export function activate(context: vscode.ExtensionContext) {
     // Register message handlers
     registerMessageHandlers(wsClient);
 
+    // Initialize Terminal Manager
+    terminalManager = new TerminalManager(wsClient, context);
+    terminalManager.initialize();
+    logger.info('Terminal Manager ready');
+
     // Auto-connect if configured
     if (config.autoConnect) {
         logger.info('Auto-connecting to Sendell server...');
@@ -89,6 +96,11 @@ export function activate(context: vscode.ExtensionContext) {
  */
 export function deactivate() {
     logger.info('Deactivating Sendell extension...');
+
+    if (terminalManager) {
+        terminalManager.dispose();
+        terminalManager = undefined;
+    }
 
     if (wsClient) {
         wsClient.dispose();
@@ -162,6 +174,34 @@ function registerCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('sendell.showLogs', () => {
             logger.show();
+        })
+    );
+
+    // Show terminal statistics command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sendell.showTerminalStats', () => {
+            if (!terminalManager) {
+                vscode.window.showWarningMessage('Terminal Manager not initialized');
+                return;
+            }
+
+            const stats = terminalManager.getStatistics();
+            const statsMessage = [
+                `Terminal Statistics:`,
+                `Total Terminals: ${stats.totalTerminals}`,
+                `Monitored: ${stats.monitoredTerminals}`,
+                '',
+                'Terminals:',
+                ...stats.terminals.map((t: any) =>
+                    `  ${t.name}: ${t.linesInBuffer} lines, ${t.errorsDetected} errors`
+                ),
+            ].join('\n');
+
+            vscode.window.showInformationMessage(statsMessage, 'Show Logs').then((choice) => {
+                if (choice === 'Show Logs') {
+                    logger.show();
+                }
+            });
         })
     );
 
