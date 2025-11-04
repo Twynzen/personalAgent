@@ -1399,104 +1399,200 @@ Después de implementar el scanner, Daniel aclaró el **verdadero objetivo**:
 ### Visión General de Fases
 
 ```
-v0.2 (COMPLETADO)   →  v0.3 (8-10 semanas)  →  v0.4 (6-8 semanas)  →  v0.5 (4-6 semanas)  →  v1.0 (3-4 semanas)
-Proactive Agent        Multi-Project Mgmt     VS Code + Browser      Web/Mobile Dashboard    Production Release
+v0.2 (COMPLETADO)   →  v0.3 (5-7 semanas)  →  v0.4 (3-4 semanas)  →  v0.5 (4-6 semanas)  →  v1.0 (3-4 semanas)
+Proactive Agent        VS Code Integration    Browser Automation     Web/Mobile Dashboard    Production Release
 ```
 
 ---
 
-## 🎯 v0.3 - MULTI-PROJECT MANAGEMENT SYSTEM (8-10 semanas)
+## 🎯 v0.3 - VS CODE DEEP INTEGRATION & MULTI-AGENT ORCHESTRATION (5-7 semanas)
 
-**Objetivo**: Capacidad de monitorear y gestionar procesos activos de proyectos en desarrollo (especialmente VS Code).
+**Objetivo**: Integración profunda con VS Code mediante extensión privada para monitorear proyectos activos, leer/escribir terminales, y orquestar colaboración con Claude Code sessions.
 
-> ⚠️ **NOTA CRÍTICA (2025-11-02)**: Este roadmap fue creado basándose en investigaciones preliminares, pero Daniel aclaró que el enfoque debe ser **monitoreo de procesos activos** (VS Code corriendo, terminales activas), NO descubrimiento estático de proyectos en disco.
->
-> **Roadmap pendiente de actualización** una vez Daniel complete investigación sobre:
-> - Cómo detectar procesos de VS Code
-> - Cómo identificar proyecto abierto en cada instancia
-> - Cómo capturar output de terminales de VS Code
-> - APIs/métodos para acceder a información de procesos
->
-> Los branches abajo son ORIENTATIVOS y serán revisados basándose en hallazgos técnicos.
+> ✅ **INVESTIGACIÓN COMPLETADA (2025-11-03)**: Daniel completó investigación exhaustiva (18,000 palabras) en `investigacionvscodeextensionintegration.txt`. Todos los aspectos técnicos están validados y listos para implementación.
 
-### Fase 3A: Process & Terminal Monitoring (Semanas 1-4) - PENDIENTE DE REDISEÑO
+**Hallazgos Clave de la Investigación**:
+- ✅ Extensiones privadas 100% legales (no requieren autorización Microsoft)
+- ✅ Shell Integration API estable desde v1.93+ (lectura de terminales)
+- ✅ `sendText()` API estable para escritura a terminales
+- ✅ WebSocket Client architecture (extensión → Sendell Python server)
+- ✅ Detección Claude Code 95%+ confiable (método combinado)
+- ✅ Token optimization strategies identificadas
+- ✅ NO HAY BLOCKERS TÉCNICOS
 
-**Branch 1: VS Code Process Detection** (Semana 1) - PRIORIDAD
-- ⏳ Detectar procesos de VS Code corriendo (psutil o alternativa)
-- ⏳ Identificar workspace/proyecto abierto en cada instancia
-- ⏳ Mapear PID → Proyecto
-- ⏳ Tool: `list_active_projects()` → procesos de VS Code activos
+**Arquitectura Implementada**:
+```
+Sendell Python (ws://localhost:7000) ← Servidor WebSocket
+        ↑
+        │ WebSocket Client
+        │
+Extensión VS Code (TypeScript)
+    ├── TerminalManager (Shell Integration API)
+    ├── ClaudeCodeDetector (95%+ accuracy)
+    ├── ProjectContextCache (<500 tokens/project)
+    └── SendellClaudeBridge (multi-agent coordination)
+        ↓
+    Terminales (read + write)
+```
 
-**Branch 2: Terminal Monitor** (Semana 2) - PRIORIDAD
-- ⏳ Capturar output de terminales integradas de VS Code
-- ⏳ Real-time streaming de stdout/stderr
-- ⏳ Detectar terminales por proyecto
-- ⏳ Tool: `get_project_terminals(project_id)` → lista de terminales
-- ⏳ Tool: `read_terminal_output(terminal_id)` → últimas líneas
+### Trabajo Previo Completado (Sesión 17)
 
-**Branch 3: Project Scanner** (Semana 3) - SECUNDARIO
-- ✅ YA IMPLEMENTADO (ver Sesión 16)
-- `ProjectScanner` con detección de tipos (Python, Node.js, Go, Rust, Java, etc.)
-- Parser de archivos de configuración (package.json, pyproject.toml, Cargo.toml, pom.xml)
-- Database schema con SQLAlchemy (7 tablas)
-- Tool: `discover_projects(path)` para LangGraph
-- **Uso**: Complemento para descubrir proyectos en disco, NO para monitorear activos
+**Branch**: `feature/vscode-process-monitor` ✅ MERGED
+- ✅ `VSCodeMonitor` - Detecta procesos VS Code con psutil
+- ✅ `TerminalFinder` - Encuentra terminales child processes
+- ✅ `WindowMatcher` - Agrupa terminales por CWD (workspace)
+- ✅ `WorkspaceParser` - Parsea cmdline args de VS Code
+- ✅ Tool `list_vscode_instances()` - Agente sabe qué VS Code está corriendo
+- ✅ Test script validado por Daniel
 
-**Branch 4: Error Detection** (Semana 4)
-- `ErrorDetector` con regex patterns por lenguaje
-- Detection automática de: compile errors, runtime errors, test failures
-- Storage en tabla `project_errors`
-- Tool: `detect_errors(project_id)` → lista de errores encontrados
+### Fase 3A: VS Code Extension Foundation (Semanas 1-2)
 
-### Fase 3B: AI Integration & UI (Semanas 5-8)
+**Branch 1: Extension Scaffold** (Semana 1 - Días 1-4)
+- Crear proyecto TypeScript de extensión
+- package.json con configuración completa
+- tsconfig.json y build scripts
+- WebSocket client básico conectando a `ws://localhost:7000`
+- Handshake inicial (enviar workspace info)
+- Auto-reconnect logic
+- Sistema de logging (OutputChannel)
+- **Entregable**: Extensión se conecta a Sendell y envía "hello"
 
-**Branch 5: LangGraph Tools** (Semana 5-6)
-- 7 nuevos tools para agente:
-  1. `discover_projects(path)` - Escanear directorio
-  2. `list_projects()` - Listar todos los proyectos
-  3. `get_project_status(id)` - Estado actual
-  4. `get_project_logs(id, lines=50)` - Últimos logs
-  5. `start_project(id, command)` - Iniciar proceso
-  6. `stop_project(id)` - Detener proceso
-  7. `run_command(id, command)` - Ejecutar comando en contexto
-- Integración con permissions (L3+ para start/stop)
-- Proactive loop monitoring (detectar errores automáticamente)
+**Branch 2: Terminal Monitoring** (Semana 1-2 - Días 5-10)
+- `TerminalManager` usando Shell Integration API v1.93+
+- Eventos:
+  - `onDidStartTerminalShellExecution` → comando iniciado
+  - `onDidEndTerminalShellExecution` → exit code
+  - `execution.read()` → streaming de output
+- Enviar eventos via WebSocket con formato:
+  ```typescript
+  {
+    type: 'event',
+    category: 'terminal',
+    payload: { terminal, command, output, exitCode }
+  }
+  ```
+- Optimización: TailBuffer (últimas 100 líneas)
+- Error filtering (solo líneas con "error:")
+- **Entregable**: Sendell recibe output de terminales en tiempo real
 
-**Branch 6: Brain GUI - Projects Tab** (Semana 7)
-- Nuevo tab "Projects" en brain_gui.py
-- Lista de proyectos con status (running/stopped/error)
-- Ver logs en tiempo real
-- Botones: Start, Stop, View Logs, Health Check
-- Métricas: CPU, RAM, uptime
+### Fase 3B: Claude Code Integration (Semana 3)
 
-**Branch 7: Secure Command Executor** (Semana 8)
-- `SecureCommandExecutor` con validación
-- Forbidden commands blocked (rm, sudo, format, etc.)
-- Path traversal prevention
-- Resource limits (timeout, memory)
-- Audit logging de todos los comandos
+**Branch 3: Claude Code Detection** (Semana 3 - Días 11-15)
+- `ClaudeCodeDetector` con 3 métodos combinados:
+  1. Terminal name contiene "claude" (30% confidence)
+  2. Command history detecta `claude` (40% confidence)
+  3. Output patterns: `Read(`, `Write(`, `Edit(`, `Bash(` (30% confidence)
+  - **Total**: 95%+ accuracy con approach combinado
+- `ClaudeCodeStateMachine`:
+  - Estados: ready, thinking, executing, waiting_permission
+  - Parser de output para detectar estado
+- `SendellClaudeBridge`:
+  - `sendCommand(message)` → envía texto a terminal Claude Code
+  - `waitForReady(timeout)` → espera estado ready
+  - `sendContext(files, selection)` → envía archivos con @mentions
+- **Entregable**: Sendell detecta Claude Code y puede enviarle comandos
 
-### Fase 3C: Polish & Testing (Semanas 9-10)
+### Fase 3C: Context Extraction & Optimization (Semana 4)
 
-**Branch 8: Integration Testing** (Semana 9)
-- Tests end-to-end de todos los flows
-- Mock projects para testing
-- Performance testing (10, 20, 50 proyectos concurrentes)
-- Documentación actualizada
+**Branch 4: Project Context** (Semana 4 - Días 16-20)
+- `ProjectContextCache` con detección inteligente:
+  - Node.js: package.json + descripción + deps
+  - Python: pyproject.toml + requirements.txt
+  - Rust: Cargo.toml
+  - Go: go.mod
+- Caching basado en file modification time
+- Invalidación solo si archivos clave cambian
+- Git integration (vscode.git API):
+  - Branch actual
+  - Últimos 3 commits
+  - Uncommitted changes count
+- LSP diagnostics (solo errores, no warnings)
+- **Target**: <500 tokens por proyecto
+- **Entregable**: Contexto minimal y eficiente de cada proyecto
 
-**Branch 9: Documentation & Examples** (Semana 10)
-- Guía de uso completa
-- Ejemplos de queries en lenguaje natural
-- Video demostrativo
-- Update CLAUDE.md
+### Fase 3D: WebSocket Server in Sendell (Semana 5)
 
-**Deliverable v0.3**: Sendell puede gestionar múltiples proyectos, detectar errores, y ejecutar comandos de forma segura.
+**Branch 5: WebSocket Server** (Semana 5 - Días 21-25)
+- Crear módulo `src/sendell/vscode_integration/`:
+  - `websocket_server.py` (asyncio + websockets library)
+  - `message_handler.py` (procesa eventos de extensión)
+  - `extension_client.py` (representa conexión)
+- Servidor en puerto 7000, maneja múltiples clientes
+- Handlers para:
+  - `terminal` → almacena output reciente en memoria
+  - `claude` → marca terminal como Claude Code session
+  - `project` → actualiza contexto de proyecto
+  - `file` → detecta cambios de archivos
+- Nuevas herramientas para agente:
+  - `get_terminal_output(project, terminal_name)` → últimas líneas
+  - `send_to_terminal(project, terminal_name, command)` → ejecutar comando
+  - `send_to_claude_code(project, message)` → enviar a Claude Code
+- **Entregable**: Sendell puede leer/escribir terminales desde chat
+
+### Fase 3E: Multi-Agent Coordination (Semana 6)
+
+**Branch 6: Coordination System** (Semana 6 - Días 26-30)
+- `CoordinationManager` con file-based locking:
+  - Prevenir edición simultánea mismo archivo
+  - `coordination.json` compartido entre agentes
+- Protocolo de delegación de tareas:
+  ```
+  [Task from Sendell: task_id]
+
+  Task description...
+
+  Files: file1.py, file2.py
+
+  [Acknowledge with: Task Complete: task_id]
+  ```
+- Task tracking en memoria de Sendell
+- GUI actualizada (brain_gui.py) → Tab "Proyectos":
+  - Lista de proyectos VS Code activos
+  - Estado de cada terminal
+  - Indicador "Claude Code Active"
+  - Botón "Send Message to Claude"
+- **Entregable**: Sendell coordina trabajo con múltiples Claude Code sessions
+
+### Fase 3F: Optimization & Testing (Semana 7)
+
+**Branch 7: Production Ready** (Semana 7 - Días 31-35)
+- Performance optimization:
+  - Streaming progresivo de terminal output
+  - Caching agresivo de project context
+  - Throttling para dev servers (high-output commands)
+- Testing exhaustivo:
+  - 4 proyectos VS Code simultáneos
+  - 2 Claude Code sessions activas
+  - Medición de tokens/hora
+- Packaging:
+  - Build script para .vsix
+  - Instalación: `code --install-extension sendell-extension-0.3.0.vsix`
+  - Auto-update opcional vía Sendell HTTP endpoint
+- Documentación:
+  - README de extensión
+  - Guía de instalación paso a paso
+  - Troubleshooting guide
+  - Update CLAUDE.md
+- **Entregable**: Sistema production-ready con costos optimizados
+
+### Métricas de Éxito v0.3
+
+- ✅ Detección de 4+ proyectos VS Code simultáneos
+- ✅ Lectura de terminal output <500ms latency
+- ✅ Detección Claude Code >95% accuracy
+- ✅ Contexto de proyecto <500 tokens cada uno
+- ✅ Coordinación multi-agente sin race conditions
+- ✅ Usuario pregunta "¿qué proyectos estoy ejecutando?" → Sendell responde correctamente usando herramientas
+
+**Deliverable v0.3**: Sendell orquesta múltiples proyectos en desarrollo, lee/escribe terminales, colabora con Claude Code sessions, y gestiona contexto multi-proyecto de forma eficiente.
 
 ---
 
-## 🌐 v0.4 - BROWSER AUTOMATION & VS CODE EXTENSION (6-8 semanas)
+## 🌐 v0.4 - BROWSER AUTOMATION (3-4 semanas)
 
-**Objetivo**: Integración con navegador y VS Code para acciones agénticas avanzadas.
+**Objetivo**: Capacidad de navegar web programáticamente y ejecutar acciones agénticas en navegador.
+
+> **NOTA**: VS Code Extension ya fue movido a v0.3 para implementación temprana.
 
 ### Fase 4A: Browser Automation (Semanas 1-3)
 
@@ -1519,43 +1615,16 @@ Proactive Agent        Multi-Project Mgmt     VS Code + Browser      Web/Mobile 
 - RSS/API integration opcional
 - Testing con sitios reales
 
-### Fase 4B: VS Code Extension (Semanas 4-6)
+### Fase 4B: Testing & Documentation (Semana 4)
 
-**Branch 4: Extension Scaffold** (Semana 4)
-- Create extension with Yeoman generator
-- Basic WebSocket client (TypeScript)
-- Connect to Sendell WebSocket server (Python)
-- Bidirectional hello world
-
-**Branch 5: Workspace Integration** (Semana 5)
-- Detect active workspace/project
-- Monitor terminal output (Shell Integration API)
-- Send commands to terminal
-- File system watcher
-
-**Branch 6: Context Aggregation** (Semana 6)
-- Send context to Sendell:
-  - Current file open
-  - Terminal output
-  - Git status
-  - Active editor
-- Sendell understands developer context in real-time
-
-### Fase 4C: Security & Polish (Semanas 7-8)
-
-**Branch 7: Authentication & Security** (Semana 7)
-- Token-based auth (VS Code ↔ Sendell)
-- Validate all inputs from extension
-- Filter sensitive data (.env, API keys)
-- Whitelist allowed commands
-
-**Branch 8: Documentation & Publishing** (Semana 8)
-- User guide for extension
-- VS Code marketplace publishing (opcional, privado por ahora)
-- Integration testing
+**Branch 4: Production Ready** (Semana 4)
+- Integration testing con sitios reales
+- Performance optimization
+- Error handling robusto
+- Documentation y ejemplos
 - Update CLAUDE.md
 
-**Deliverable v0.4**: Sendell puede navegar web y está integrado con VS Code.
+**Deliverable v0.4**: Sendell puede navegar web, extraer información, y ejecutar acciones en navegador de forma autónoma.
 
 ---
 

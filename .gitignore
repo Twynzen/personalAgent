@@ -140,5 +140,14 @@ ANGULAR_IONIC_GUIDE.md
 MULTI_PROJECT_MANAGEMENT_GUIDE.md
 PROJECT_MANAGEMENT_SUMMARY.md
 investigacionvscodemonitoring.txt
+investigacionvscodeextensionintegration.txt
 INVESTIGATION_PROMPT_VSCODE_MONITORING.md
+INVESTIGATION_PROMPT_VSCODE_EXTENSION_DEEP.md
 claude.md
+
+# VS Code Extension
+sendell-vscode-extension/node_modules/
+sendell-vscode-extension/out/
+sendell-vscode-extension/*.vsix
+sendell-vscode-extension/.vscode-test/
+sendell-vscode-extension/package-lock.json

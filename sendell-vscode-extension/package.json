@@ -1,0 +1,90 @@
+{
+  "name": "sendell-extension",
+  "displayName": "Sendell Multi-Project Orchestrator",
+  "description": "Deep integration between Sendell AI agent and VS Code for multi-project management and Claude Code collaboration",
+  "version": "0.3.0",
+  "publisher": "sendell-team",
+  "private": true,
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Sendell",
+      "properties": {
+        "sendell.serverUrl": {
+          "type": "string",
+          "default": "ws://localhost:7000",
+          "description": "Sendell Python server WebSocket URL"
+        },
+        "sendell.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically connect to Sendell server on startup"
+        },
+        "sendell.reconnectInterval": {
+          "type": "number",
+          "default": 5000,
+          "description": "Reconnection interval in milliseconds (default: 5000ms)"
+        },
+        "sendell.maxReconnectAttempts": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum number of reconnection attempts before giving up"
+        },
+        "sendell.logLevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "default": "info",
+          "description": "Logging level for Sendell extension"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "sendell.connect",
+        "title": "Sendell: Connect to Server"
+      },
+      {
+        "command": "sendell.disconnect",
+        "title": "Sendell: Disconnect from Server"
+      },
+      {
+        "command": "sendell.showStatus",
+        "title": "Sendell: Show Connection Status"
+      },
+      {
+        "command": "sendell.showLogs",
+        "title": "Sendell: Show Logs"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.93.0",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}
