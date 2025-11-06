@@ -13,6 +13,7 @@ from typing import List, Dict
 
 from sendell.agent.memory import get_memory
 from sendell.agent.prompts import get_system_prompt
+from sendell.dashboard import create_project_control_widget
 from sendell.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -26,6 +27,7 @@ class BrainGUI:
     - Memories: View/edit facts, conversations
     - Prompts: View/edit system prompt
     - Tools: View available tools/actions
+    - Proyectos: Multi-Project Control Center (NEW in v0.3)
     """
 
     def __init__(self, tools: List = None):
@@ -36,7 +38,7 @@ class BrainGUI:
         # Create main window
         self.root = tk.Tk()
         self.root.title("Sendell - Ver Cerebro")
-        self.root.geometry("900x700")
+        self.root.geometry("1200x700")
         self.root.configure(bg='#000000')
 
         # Create notebook (tabs)
@@ -57,8 +59,9 @@ class BrainGUI:
         self.create_memory_tab()
         self.create_prompts_tab()
         self.create_tools_tab()
+        self.create_projects_tab()
 
-        logger.info("Brain GUI initialized")
+        logger.info("Brain GUI initialized with 4 tabs")
 
     def create_memory_tab(self):
         """Create Memories tab"""
@@ -256,6 +259,17 @@ L5: Autonomía completa (usar solo si confías totalmente)""")
 
         # Load tools
         self.refresh_tools()
+
+    def create_projects_tab(self):
+        """Create Projects tab - Multi-Project Control Center"""
+        frame = tk.Frame(self.notebook, bg='#0a0a0a')
+        self.notebook.add(frame, text='Proyectos')
+
+        # Embed project control widget
+        self.project_widget = create_project_control_widget(frame)
+        self.project_widget.pack(fill='both', expand=True)
+
+        logger.info("Projects tab created - Multi-Project Control Center initialized")
 
     # ==================== MEMORY TAB FUNCTIONS ====================
 
