@@ -1,14 +1,28 @@
 # V0.3 SIMPLIFIED - PLAN DE IMPLEMENTACIÓN
 
-**Fecha**: 2025-11-06
-**Estado**: PLANIFICACIÓN
-**Objetivo**: Dashboard funcional con psutil + Tkinter (sin WebSocket como dependencia primaria)
+**Fecha**: 2025-11-06 (Actualizado)
+**Estado**: EN IMPLEMENTACIÓN
+**Branch**: `feature/brain-projects-tab`
+**Objetivo**: Centro de Control Multi-Proyecto como **Tab 4 del Brain GUI** (psutil + Tkinter)
 
 ---
 
 ## 🎯 VISIÓN GENERAL
 
-Crear un dashboard **HERMOSO** y **FUNCIONAL** inspirado en el diseño React cyberpunk, pero implementado en Tkinter con threading correcto.
+**Centro de Control Multi-Proyecto** integrado como **Tab 4 del Brain GUI**. Dashboard **hermoso** y **funcional** inspirado en el diseño React cyberpunk, implementado en Tkinter con threading correcto.
+
+### **Integración con Brain GUI:**
+```
+sendell brain (comando existente)
+├── Tab 1: 📝 Memorias (facts, reminders) ✅ Existente
+├── Tab 2: 🧠 Prompts (system prompt) ✅ Existente
+├── Tab 3: 🛠️ Herramientas (tools list) ✅ Existente
+└── Tab 4: 📦 PROYECTOS ← NUEVO (Centro de Control)
+    ├── Métricas del sistema en tiempo real
+    ├── Lista de proyectos VS Code
+    ├── Gráficos de actividad animados
+    └── Paneles de configuración expandibles
+```
 
 ### **Features Core**:
 1. ✅ Monitor de proyectos VS Code en tiempo real
@@ -17,6 +31,7 @@ Crear un dashboard **HERMOSO** y **FUNCIONAL** inspirado en el diseño React cyb
 4. ✅ Paneles de configuración expandibles
 5. ✅ NO se congela (threading + Queue pattern)
 6. ✅ psutil como fuente primaria (confiable 100%)
+7. ✅ **Integrado en Brain GUI** (no aplicación separada)
 
 ### **NO-Features** (Para v0.4+):
 - ❌ WebSocket como fuente primaria
@@ -210,19 +225,36 @@ def update_graph(self, project_data):
 
 ## 📋 PLAN DE IMPLEMENTACIÓN
 
-### **Fase 1: Setup & Core Architecture** (1 sesión)
+### **Fase 0: Integración Brain GUI** (0.5 sesión) ← **NUEVA**
 
-**Objetivo**: Estructura base funcionando sin UI fancy
+**Objetivo**: Agregar Tab 4 "Proyectos" al Brain GUI existente
 
 **Tasks**:
-1. ✅ Crear `src/sendell/dashboard/simple_dashboard.py`
-2. ✅ Implementar threading pattern (BackgroundWorker + Queue)
-3. ✅ Integrar `VSCodeMonitor` (psutil)
-4. ✅ Test: Detectar proyectos sin congelar UI
+1. ✅ Modificar `src/sendell/agent/brain_gui.py`
+2. ✅ Agregar 4to tab: "📦 Proyectos"
+3. ✅ Crear módulo `src/sendell/dashboard/`
+4. ✅ Crear `project_control.py` (widget embebido en tab)
+5. ✅ Test: Tab se abre sin romper tabs existentes
+
+**Criterio de éxito**:
+- Brain GUI tiene 4 tabs (Memorias, Prompts, Herramientas, **Proyectos**)
+- Tab "Proyectos" muestra mensaje placeholder
+- Tabs existentes funcionan normalmente
+
+---
+
+### **Fase 1: Setup & Core Architecture** (0.5 sesión)
+
+**Objetivo**: Threading pattern dentro del widget
+
+**Tasks**:
+1. ✅ Implementar threading pattern (BackgroundWorker + Queue)
+2. ✅ Integrar `VSCodeMonitor` (psutil)
+3. ✅ Test: Detectar proyectos sin congelar UI principal
 
 **Criterio de éxito**:
 - Background worker escanea cada 5s
-- UI no se congela
+- Brain GUI no se congela (ni tabs existentes)
 - Logs muestran: "Found X VS Code instances"
 
 ---
@@ -435,19 +467,21 @@ src/sendell/dashboard/
 
 ## 🚀 COMANDOS
 
-### **Iniciar Dashboard**:
+### **Abrir Brain GUI con Centro de Control**:
 ```bash
-uv run python -m sendell dashboard
+uv run python -m sendell brain
+# -> Se abre GUI con 4 tabs
+# -> Tab 4 "Proyectos" = Centro de Control Multi-Proyecto
 ```
 
-### **Iniciar Chat** (modo anterior):
+### **Iniciar Chat** (modo conversacional):
 ```bash
 uv run python -m sendell chat
 ```
 
-### **Ver Brain GUI** (modo config):
+### **Quick Health Check**:
 ```bash
-uv run python -m sendell brain
+uv run python -m sendell health
 ```
 
 ---
