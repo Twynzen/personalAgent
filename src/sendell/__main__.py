@@ -95,9 +95,6 @@ async def run_proactive_loop(interval: int, max_cycles: Optional[int] = None):
     agent = get_agent()
     cycle_count = 0
 
-    # Start VS Code WebSocket server
-    await agent.start_vscode_server()
-    console.print("[dim]🔌 VS Code WebSocket server started (ws://localhost:7000)[/dim]")
     console.print("[dim]Proactive loop started. Monitoring system...[/dim]\n")
 
     try:
@@ -167,10 +164,6 @@ async def run_chat_loop():
     agent = get_agent()
     conversation_history = []
 
-    # Start VS Code WebSocket server in background
-    await agent.start_vscode_server()
-    console.print("[dim]🔌 VS Code WebSocket server started (ws://localhost:7000)[/dim]")
-
     # Start proactive loop in background
     await agent.proactive_loop.start()
     console.print("[dim]⏰ Proactive reminders active (checking every 60s)[/dim]\n")
@@ -190,7 +183,6 @@ async def run_chat_loop():
             if user_input.lower() in ["/quit", "/exit", "/q"]:
                 console.print("[yellow]Stopping services...[/yellow]")
                 await agent.proactive_loop.stop()
-                await agent.stop_vscode_server()
                 console.print("[yellow]Goodbye![/yellow]")
                 break
 

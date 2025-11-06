@@ -1,17 +1,74 @@
 # CLAUDE.MD - Memoria Permanente del Proyecto Sendell
 
-**Última actualización**: 2025-11-03 (Sesión 18)
-**Estado del proyecto**: v0.3 Fase 3-4 IMPLEMENTADA ✅ - En testing/debugging extensión VS Code
+**Última actualización**: 2025-11-06 (Sesión 20 - RESET & REPLAN)
+**Estado del proyecto**: v0.3-SIMPLIFIED EN PLANIFICACIÓN 🎯
 **Desarrolladores**: Daniel (Testing/PM/Research) + Claude (Desarrollo)
 
 ---
 
 ## 🚨 ESTADO ACTUAL DEL DESARROLLO (Para Reinicio de Contexto)
 
-**Branch actual**: `feature/terminal-monitoring` (v0.3 Fases 3-4 implementadas)
-**Estado**: WebSocket server funcionando ✅ - Extensión VS Code tiene bug de conexión 🐛
+**Branch actual**: `feature/vscode-polish-phase5`
+**Último commit estable**: `b31c41e` (Nov 4) - WebSocket server funcional
+**Estado**: RESET COMPLETADO ✅ - Nueva arquitectura simplificada planificada 📋
 
-**⚠️ WORKFLOW ACTUALIZADO (Sesión 16)**:
+**⚠️ DECISIÓN ARQUITECTÓNICA CRÍTICA (Sesión 20 - Nov 6, 2025)**:
+
+### **🔄 RESET & SIMPLIFICATION**
+
+**Problema identificado**:
+- Phase 5/6 se convirtió en ciclo de refactorización sin progreso
+- Terminal sync no funcionaba (extensión vs server timing issues)
+- Dashboard se congelaba (threading mal optimizado)
+- Over-engineering: 1,900+ líneas TypeScript sin testing
+- Frustración creciente, sin avances estables
+
+**Decisión tomada**:
+- ✅ **RESET a commit `b31c41e`** (Nov 4) - Último estado estable
+- ✅ **Archivar investigación valiosa** (~3,500 líneas docs en `archive/phase6-research/`)
+- ✅ **Nueva dirección**: v0.3-SIMPLIFIED usando **psutil SOLAMENTE**
+- ❌ WebSocket pausado hasta v0.4+ (cuando realmente lo necesitemos)
+
+**Razón**:
+- psutil funciona **perfectamente** para detectar proyectos/terminales
+- WebSocket agrega complejidad SIN valor demostrado en v0.3
+- **Simple > Complex** para base sólida
+
+### **🎯 NUEVA DIRECCIÓN: v0.3-SIMPLIFIED**
+
+**Arquitectura**:
+```
+Sendell Dashboard (Tkinter cyberpunk)
+├── psutil monitor (primary source) ✅ 100% confiable
+├── Simple threading (Queue pattern) ✅ No congela UI
+├── Canvas animations (pulse graphs) ✅ React-inspired
+└── Real-time metrics ✅ CPU, RAM, Terminales
+```
+
+**Features v0.3**:
+1. ✅ Dashboard visual con proyectos VS Code detectados
+2. ✅ Gráficos de actividad animados (Canvas)
+3. ✅ Métricas del sistema en tiempo real
+4. ✅ Paneles de configuración expandibles
+5. ✅ NO se congela NUNCA (threading correcto)
+
+**NO-Features** (para v0.4+):
+- ❌ WebSocket como fuente primaria
+- ❌ Control de terminales (enviar comandos)
+- ❌ Multi-instance coordination
+- ❌ Features complejas sin valor claro
+
+**Documentación**:
+- Plan completo: `V03_SIMPLIFIED_PLAN.md` (6 fases, 4-5 sesiones estimadas)
+- Investigación archivada: `archive/phase6-research/` (consultar para futuro)
+- Diseño UI: Inspirado en React cyberpunk de Daniel
+
+**Próximo paso**: Implementar Fase 1 (Setup & Core Architecture)
+
+---
+
+## ✅ WORKFLOW ACTUALIZADO (Sesión 16)
+
 1. **Daniel hace investigaciones técnicas** (APIs, métodos, viabilidad)
 2. **Daniel proporciona documentación** a Claude
 3. Claude crea branch para tarea específica
@@ -23,23 +80,30 @@
 9. Repetir para siguiente branch
 10. Documentar SIEMPRE en CLAUDE.md
 
-**✅ v0.2 COMPLETADO**: Agente Proactivo con Notificaciones Visuales
-- ✅ Fase 1: Sistema Proactivo (identidad temporal, reminders, loop background)
-- ✅ Fase 2A: Notificaciones Visuales (6 branches - UI + ASCII art + sonidos + integración)
+---
 
-**⏳ v0.3 EN PLANIFICACIÓN**: Multi-Project Management
-- **Objetivo clarificado**: Monitorear procesos ACTIVOS de VS Code y sus terminales
-- **NO es**: Descubrir proyectos estáticos en disco (ya implementado como secundario)
-- **ES**: Ver qué VS Code está corriendo, qué proyecto tiene abierto, qué terminales tiene activas, leer su output
-- **Bloqueador**: Requiere investigación de Daniel sobre APIs/métodos para acceder a procesos VS Code
+## ✅ ESTADO DE VERSIONES
 
-**Estado del Project Scanner** (implementado en Sesión 16):
-- ✅ Código completo y funcional (scanner.py, parsers.py, models.py, types.py)
-- ✅ Tool `discover_projects` agregado a SendellAgent
-- ⚠️ **NO resuelve el objetivo principal** (monitoreo dinámico de procesos)
-- 📌 Útil como feature complementaria para descubrir proyectos en disco
+**✅ v0.1 COMPLETADO**: MVP básico
+- Core agent con 6 tools
+- Chat interactivo
+- Memoria JSON
+- Brain GUI simple
 
-**Próximo paso crítico**: ~~Daniel investiga cómo monitorear procesos VS Code y terminales~~ ✅ COMPLETADO
+**✅ v0.2 COMPLETADO**: Agente Proactivo + Notificaciones Visuales
+- Fase 1: Sistema Proactivo (identidad temporal, reminders, loop background)
+- Fase 2A: Notificaciones Visuales (6 branches - UI + ASCII art + sonidos + integración)
+
+**🎯 v0.3-SIMPLIFIED EN PLANIFICACIÓN**: Dashboard Visual con psutil
+- **Objetivo**: Dashboard funcional estilo cyberpunk para monitorear proyectos
+- **Método**: psutil SOLAMENTE (sin WebSocket dependency)
+- **Diseño**: Inspirado en React UI de Daniel (Canvas animations + threading correcto)
+- **Estado**: Plan completo en `V03_SIMPLIFIED_PLAN.md`
+
+**❌ v0.3 Phase 5/6 ABANDONADO**: WebSocket integration
+- **Razón**: Inestable, bugs recurrentes, over-engineered
+- **Investigación**: Archivada en `archive/phase6-research/` (3,500+ líneas)
+- **Lecciones**: Simple > Complex, test antes de commit, no refactorizar infinitamente
 
 ---
 

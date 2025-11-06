@@ -26,14 +26,6 @@ from sendell.proactive.proactive_loop import ProactiveLoop
 from sendell.proactive.reminders import Reminder, ReminderManager, ReminderType
 from sendell.proactive.temporal_clock import TemporalClock
 from sendell.utils.logger import get_logger
-from sendell.vscode_integration.tools import (
-    list_active_projects,
-    get_project_errors,
-    get_terminal_tail,
-    get_project_stats,
-    send_terminal_command,
-)
-from sendell.vscode_integration.websocket_server import get_server as get_vscode_server
 
 logger = get_logger(__name__)
 
@@ -100,11 +92,7 @@ class SendellAgent:
             prompt=get_system_prompt(),  # String convertido automaticamente a SystemMessage
         )
 
-        # Initialize VS Code WebSocket server (will start when async context is available)
-        self.vscode_server = get_vscode_server()
-        self.vscode_server_task = None
-
-        logger.info("Sendell agent initialized with LangGraph ReAct pattern + Proactive System + VS Code Integration")
+        logger.info("Sendell agent initialized with LangGraph ReAct pattern + Proactive System")
 
     def _create_tools(self) -> List:
         """
@@ -259,85 +247,12 @@ class SendellAgent:
                 }
 
         @tool
-        def discover_projects(path: str) -> dict:
-            """Discover development projects in a directory by scanning for project markers.
-
-            Scans recursively (max 3 levels deep) to find projects. Detects:
-            - Python (pyproject.toml, setup.py, requirements.txt)
-            - Node.js (package.json)
-            - Rust (Cargo.toml)
-            - Go (go.mod)
-            - Java (pom.xml, build.gradle)
-            - And more...
-
-            Args:
-                path: Directory path to scan (e.g., "C:/Users/Daniel/projects")
-
-            Returns:
-                dict with:
-                - success: bool
-                - projects_found: int
-                - projects: list of project summaries
-                - by_type: count by project type
-                - scan_duration: seconds
-
-            Examples:
-                - "Discover projects in C:/Users/Daniel"
-                - "Scan my projects folder"
-                - "Find all Node.js projects in C:/dev"
-            """
-            try:
-                from pathlib import Path
-                from sendell.projects import ProjectScanner
-
-                scanner = ProjectScanner(max_depth=3, timeout_seconds=30)
-                result = scanner.scan_directory(Path(path))
-
-                # Format projects for response
-                projects_list = []
-                for project in result.projects_found:
-                    project_summary = {
-                        "name": project.name,
-                        "path": str(project.path),
-                        "type": project.project_type.value,
-                        "config_file": str(project.config_file) if project.config_file else None,
-                    }
-
-                    # Add config details if available
-                    if project.config:
-                        if project.config.version:
-                            project_summary["version"] = project.config.version
-                        if project.config.description:
-                            project_summary["description"] = project.config.description
-
-                    projects_list.append(project_summary)
-
-                return {
-                    "success": True,
-                    "projects_found": result.total_projects,
-                    "projects": projects_list,
-                    "by_type": result.projects_by_type,
-                    "scan_duration": round(result.scan_duration_seconds, 2),
-                    "errors": result.errors if result.errors else [],
-                }
-
-            except Exception as e:
-                logger.error(f"Failed to discover projects: {e}")
-                return {
-                    "success": False,
-                    "error": str(e),
-                    "message": f"Failed to scan directory: {str(e)}"
-                }
-
-        @tool
         def list_vscode_instances() -> dict:
-            """List all running VS Code instances with their open projects and terminals.
+            """List all running VS Code instances with their open projects.
 
             Detects VS Code processes (stable, Insiders, VSCodium, Cursor) and extracts:
             - Which workspace/project is open
-            - Terminal processes running in that workspace
-            - Terminal types (PowerShell, CMD, Bash, WSL)
-            - Working directories of terminals
+            - Full path to the project folder
 
             This allows you to understand Daniel's active development context.
 
@@ -345,29 +260,22 @@ class SendellAgent:
                 dict with:
                 - success: bool
                 - instances_found: int (number of VS Code windows)
-                - total_terminals: int (total terminals across all instances)
                 - instances: list of instance details with:
                     - pid: VS Code process ID
+                    - executable: VS Code executable name
                     - workspace_name: Name of open project
                     - workspace_path: Full path to project
                     - workspace_type: 'folder', 'workspace', or 'none'
-                    - terminals: list of terminal details:
-                        - pid: Terminal process ID
-                        - shell_type: 'powershell', 'cmd', 'bash', 'wsl'
-                        - cwd: Current working directory
-                        - status: 'running', 'sleeping', etc.
 
             Examples:
                 - "What VS Code projects are open?"
                 - "Show me my active projects"
-                - "Which terminals are running?"
                 - "What am I working on right now?"
 
             Use Cases:
                 - Understand user's current work context
-                - Detect which projects have running processes
+                - Detect which projects are being worked on
                 - Help user navigate between projects
-                - Monitor terminal activity
             """
             try:
                 from sendell.vscode import VSCodeMonitor
@@ -377,22 +285,8 @@ class SendellAgent:
 
                 # Format instances for response
                 instances_list = []
-                total_terminals = 0
 
                 for instance in instances:
-                    # Format terminals
-                    terminals_list = []
-                    for term in instance.terminals:
-                        terminals_list.append({
-                            "pid": term.pid,
-                            "shell_type": term.shell_type,
-                            "cwd": term.cwd,
-                            "status": term.status,
-                            "created_at": term.create_time.strftime("%Y-%m-%d %H:%M:%S"),
-                        })
-
-                    total_terminals += len(terminals_list)
-
                     # Format instance
                     instance_info = {
                         "pid": instance.pid,
@@ -401,8 +295,6 @@ class SendellAgent:
                         "workspace_type": instance.workspace.workspace_type,
                         "workspace_name": instance.workspace.workspace_name,
                         "workspace_path": instance.workspace.workspace_path,
-                        "terminals_count": len(terminals_list),
-                        "terminals": terminals_list,
                     }
 
                     # Add multi-root workspace info if applicable
@@ -416,9 +308,8 @@ class SendellAgent:
                 return {
                     "success": True,
                     "instances_found": len(instances),
-                    "total_terminals": total_terminals,
                     "instances": instances_list,
-                    "message": f"Found {len(instances)} VS Code instance(s) with {total_terminals} terminal(s)",
+                    "message": f"Found {len(instances)} VS Code instance(s)",
                 }
 
             except Exception as e:
@@ -437,46 +328,9 @@ class SendellAgent:
             respond_to_user,
             show_brain,
             add_reminder,
-            discover_projects,
             list_vscode_instances,
-            # VS Code Integration tools (via WebSocket)
-            list_active_projects,
-            get_project_errors,
-            get_terminal_tail,
-            get_project_stats,
-            send_terminal_command,
         ]
 
-    async def start_vscode_server(self) -> None:
-        """
-        Start VS Code WebSocket server in background.
-
-        Must be called from async context (e.g., in chat loop or proactive loop).
-        The server runs on ws://localhost:7000 and receives events from
-        the VS Code extension (terminal output, errors, etc.)
-        """
-        if self.vscode_server_task is not None:
-            logger.debug("VS Code server already running")
-            return
-
-        try:
-            # Create task in current event loop
-            self.vscode_server_task = asyncio.create_task(self.vscode_server.start())
-            logger.info("VS Code WebSocket server started on ws://localhost:7000")
-
-        except Exception as e:
-            logger.error(f"Failed to start VS Code server: {e}", exc_info=True)
-            logger.warning("VS Code integration will not be available")
-
-    async def stop_vscode_server(self) -> None:
-        """Stop VS Code WebSocket server"""
-        if self.vscode_server_task and not self.vscode_server_task.done():
-            self.vscode_server_task.cancel()
-            try:
-                await self.vscode_server_task
-            except asyncio.CancelledError:
-                pass
-            logger.info("VS Code WebSocket server stopped")
 
     async def run_proactive_cycle(self) -> dict:
         """

@@ -1,20 +1,20 @@
 """
 VS Code Process Detector
 
-Detect running VS Code instances, identify workspaces, and find terminals.
-Main orchestrator for VS Code monitoring.
+Detect running VS Code instances and identify their open workspaces.
+Uses terminal processes internally to infer workspaces (not exposed in API).
 
 Based on investigation: investigacionvscodemonitoring.txt (Part 1 + Part 5)
 """
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import psutil
 
 from sendell.utils.logger import get_logger
-from sendell.vscode.terminal_finder import TerminalFinder, TerminalInfo
+from sendell.vscode.terminal_finder import TerminalFinder
 from sendell.vscode.window_matcher import WindowMatcher
 from sendell.vscode.workspace_parser import WorkspaceInfo, WorkspaceParser
 
@@ -24,9 +24,10 @@ logger = get_logger(__name__)
 @dataclass
 class VSCodeInstance:
     """
-    Complete information about a VS Code instance.
+    Information about a VS Code instance.
 
-    Combines process info, workspace info, and terminal info.
+    Focused on workspace/project identification only.
+    Terminal info is used internally but not exposed.
     """
 
     pid: int
@@ -37,7 +38,6 @@ class VSCodeInstance:
     cwd: str
     is_insiders: bool
     workspace: WorkspaceInfo
-    terminals: List[TerminalInfo]
 
 
 class VSCodeMonitor:
@@ -45,9 +45,8 @@ class VSCodeMonitor:
     Monitor VS Code instances on Windows.
 
     Features:
-    - Detect all running VS Code instances (stable + Insiders)
+    - Detect all running VS Code instances (stable + Insiders + Cursor)
     - Identify workspace/project for each instance
-    - Find terminal processes spawned by each instance
     - Filter out helper processes (renderer, gpu, etc.)
 
     Usage:
@@ -57,7 +56,7 @@ class VSCodeMonitor:
         for instance in instances:
             print(f"VS Code PID {instance.pid}")
             print(f"  Workspace: {instance.workspace.workspace_name}")
-            print(f"  Terminals: {len(instance.terminals)}")
+            print(f"  Path: {instance.workspace.workspace_path}")
     """
 
     # Target VS Code executables
@@ -76,27 +75,21 @@ class VSCodeMonitor:
 
     def find_vscode_instances(self) -> List[VSCodeInstance]:
         """
-        Find all VS Code instances with complete information.
+        Find all VS Code instances with their open workspaces.
 
-        NEW STRATEGY (Fixed for multi-window detection):
-        1. Find the MAIN VS Code process (oldest, no --type)
-        2. Get ALL terminals from that main process
-        3. Group terminals by their CWD (working directory)
-        4. Create virtual "instances" for each unique CWD
-        5. Each CWD represents a different VS Code window
-
-        Why this works:
-        - VS Code spawns all terminals from ONE main process
-        - Each window opens terminals in its workspace directory
-        - Grouping by CWD identifies which terminals belong to which window
+        STRATEGY:
+        1. Find main VS Code process
+        2. Get all terminal processes (used internally to detect workspaces)
+        3. Group terminals by CWD to identify different workspaces
+        4. Create one instance per workspace (terminals not exposed)
 
         Returns:
-            List of VSCodeInstance objects (one per workspace/window)
+            List of VSCodeInstance objects (one per workspace)
         """
         instances = []
 
         try:
-            # Step 1: Find main VS Code process
+            # Find main VS Code process
             main_process = self._find_main_vscode_process()
 
             if not main_process:
@@ -105,66 +98,56 @@ class VSCodeMonitor:
 
             logger.debug(f"Found main VS Code process: PID={main_process['pid']}")
 
-            # Step 2: Get ALL terminals from main process
+            # Get all terminals (used internally only)
             all_terminals = self.terminal_finder.find_terminals(main_process["pid"])
-            logger.debug(f"Found {len(all_terminals)} total terminals")
+            logger.debug(f"Found {len(all_terminals)} terminal(s)")
 
             if not all_terminals:
-                logger.info("No terminals found in VS Code")
+                logger.info("No terminals found - no workspaces to detect")
                 return instances
 
-            # Step 3: Group terminals by CWD (working directory)
+            # Group terminals by workspace (CWD)
             terminal_groups = WindowMatcher.group_terminals_by_workspace(all_terminals)
             logger.debug(f"Grouped into {len(terminal_groups)} workspace(s)")
 
-            # Step 4: Create virtual instances for each workspace
+            # Create one instance per workspace
             for workspace_path, terminals in terminal_groups.items():
                 workspace_name = workspace_path.split("\\")[-1] if workspace_path else "unknown"
 
-                # Create workspace info (based on CWD)
+                # Create workspace info based on CWD
                 workspace = WorkspaceInfo(
                     workspace_type="folder",
                     workspace_path=workspace_path,
                     workspace_name=workspace_name,
                 )
 
-                # Create instance
+                # Create instance (no terminal info exposed)
                 instance = VSCodeInstance(
-                    pid=main_process["pid"],  # All share same main PID
+                    pid=main_process["pid"],
                     name=main_process["name"],
                     executable=main_process["exe"],
                     cmdline=main_process["cmdline"],
                     create_time=main_process["create_time"],
-                    cwd=workspace_path,  # Use terminal's CWD
+                    cwd=workspace_path,
                     is_insiders="Insiders" in main_process["name"],
                     workspace=workspace,
-                    terminals=terminals,
                 )
 
                 instances.append(instance)
 
                 logger.debug(
-                    f"Created instance for workspace='{workspace_name}', "
-                    f"terminals={len(terminals)}"
+                    f"Found workspace: '{workspace_name}' with {len(terminals)} terminal(s) (not exposed)"
                 )
 
         except Exception as e:
             logger.error(f"Error scanning for VS Code processes: {e}", exc_info=True)
 
-        logger.info(
-            f"Found {len(instances)} VS Code workspace(s) with "
-            f"{sum(len(inst.terminals) for inst in instances)} terminal(s)"
-        )
+        logger.info(f"Found {len(instances)} VS Code workspace(s)")
         return instances
 
-    def _find_main_vscode_process(self) -> Optional[Dict]:
+    def _find_main_vscode_process(self) -> Optional[dict]:
         """
         Find the MAIN VS Code process (not helper processes).
-
-        Strategy:
-        - Look for Code.exe without --type= argument
-        - Choose the OLDEST process (earliest create_time)
-        - This is the parent that spawns all terminals
 
         Returns:
             Dictionary with process info or None if not found
@@ -209,7 +192,6 @@ class VSCodeMonitor:
             return None
 
         # Return the OLDEST process (earliest create_time)
-        # This is most likely the main parent process
         candidates.sort(key=lambda x: x["create_time"])
         return candidates[0]
 
@@ -233,16 +215,6 @@ class VSCodeMonitor:
                 return instance
 
         return None
-
-    def get_terminal_count(self) -> int:
-        """
-        Get total number of terminals across all VS Code instances.
-
-        Returns:
-            Total terminal count
-        """
-        instances = self.find_vscode_instances()
-        return sum(len(inst.terminals) for inst in instances)
 
     def _is_vscode_process(self, process_name: str) -> bool:
         """
@@ -300,15 +272,7 @@ class VSCodeMonitor:
             else:
                 print("  Workspace: None (no folder open)")
 
-            print(f"  Terminals: {len(inst.terminals)}")
-
-            for term in inst.terminals:
-                print(
-                    f"    - PID {term.pid}: {term.shell_type} "
-                    f"({term.status}) in {term.cwd}"
-                )
-
             print()
 
-        print(f"Total: {len(instances)} instance(s), {self.get_terminal_count()} terminal(s)")
+        print(f"Total: {len(instances)} instance(s)")
         print("=" * 70)

@@ -13,7 +13,9 @@
       "WebFetch(domain:python.langchain.com)",
       "WebFetch(domain:medium.com)",
       "Bash(git checkout:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(test:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
