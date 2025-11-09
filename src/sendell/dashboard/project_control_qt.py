@@ -5,9 +5,6 @@ High-performance version using PyQt6 for smooth 60 FPS animations.
 Embedded in Brain GUI Tab 4.
 """
 
-import queue
-import threading
-
 import psutil
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont, QColor
@@ -35,7 +32,7 @@ class ProjectControlWidgetQt(QWidget):
     - Real-time VS Code project detection
     - GPU-accelerated animated graphs (60 FPS)
     - System metrics monitoring
-    - Background threading for non-blocking updates
+    - QTimer-based updates (no threading, GIL-safe)
     """
 
     def __init__(self, parent=None):
@@ -50,28 +47,24 @@ class ProjectControlWidgetQt(QWidget):
         self.ram_percent = 0
         self.terminal_count = 0
 
-        # Threading
-        self.update_queue = queue.Queue()
-        self.stop_event = threading.Event()
-
         # VS Code monitor
         self.vscode_monitor = VSCodeMonitor()
 
         # Build UI
         self._build_ui()
 
-        # Start background worker
-        self._start_background_worker()
-
-        # Timer for checking queue (100ms)
-        self.queue_timer = QTimer(self)
-        self.queue_timer.timeout.connect(self._check_queue)
-        self.queue_timer.start(100)
+        # Timer for data updates (5 seconds)
+        self.data_timer = QTimer(self)
+        self.data_timer.timeout.connect(self._update_data)
+        self.data_timer.start(5000)  # Update every 5 seconds
 
         # Timer for clock (1 second)
         self.clock_timer = QTimer(self)
         self.clock_timer.timeout.connect(self._update_clock)
         self.clock_timer.start(1000)
+
+        # Initial data load
+        self._update_data()
 
     def _build_ui(self):
         """Build main UI layout"""
@@ -259,62 +252,31 @@ class ProjectControlWidgetQt(QWidget):
         current_time = datetime.now().strftime("%H:%M:%S")
         self.clock_label.setText(current_time)
 
-    def _start_background_worker(self):
-        """Start background thread to scan VS Code projects"""
-        def worker():
-            logger.info("Background worker started")
-            while not self.stop_event.is_set():
-                try:
-                    # Scan VS Code instances
-                    instances = self.vscode_monitor.find_vscode_instances()
-
-                    # Get system metrics
-                    cpu = psutil.cpu_percent(interval=0.1)
-                    ram = psutil.virtual_memory().percent
-
-                    # Terminal count = project count
-                    terminal_count = len(instances)
-
-                    # Put data in queue
-                    self.update_queue.put({
-                        "type": "update",
-                        "projects": instances,
-                        "cpu": cpu,
-                        "ram": ram,
-                        "terminals": terminal_count
-                    })
-
-                except Exception as e:
-                    logger.error(f"Error in background worker: {e}")
-
-                # Wait 5 seconds before next scan
-                self.stop_event.wait(5)
-
-            logger.info("Background worker stopped")
-
-        # Start worker thread
-        self.worker_thread = threading.Thread(target=worker, daemon=True)
-        self.worker_thread.start()
-
-    def _check_queue(self):
-        """Check queue for updates from background thread"""
+    def _update_data(self):
+        """Update data from VS Code monitor and system metrics"""
         try:
-            while True:
-                update = self.update_queue.get_nowait()
+            # Scan VS Code instances
+            instances = self.vscode_monitor.find_vscode_instances()
 
-                if update["type"] == "update":
-                    # Update data
-                    self.projects = update["projects"]
-                    self.cpu_percent = update["cpu"]
-                    self.ram_percent = update["ram"]
-                    self.terminal_count = update["terminals"]
+            # Get system metrics (non-blocking)
+            cpu = psutil.cpu_percent(interval=0)
+            ram = psutil.virtual_memory().percent
 
-                    # Update UI
-                    self._update_metrics()
-                    self._render_projects()
+            # Terminal count = project count
+            terminal_count = len(instances)
 
-        except queue.Empty:
-            pass
+            # Update data
+            self.projects = instances
+            self.cpu_percent = cpu
+            self.ram_percent = ram
+            self.terminal_count = terminal_count
+
+            # Update UI
+            self._update_metrics()
+            self._render_projects()
+
+        except Exception as e:
+            logger.error(f"Error updating data: {e}")
 
     def _update_metrics(self):
         """Update metrics panel with real data"""
@@ -423,10 +385,9 @@ class ProjectControlWidgetQt(QWidget):
 
     def closeEvent(self, event):
         """Cleanup when widget is closed"""
-        logger.info("Stopping background worker...")
-        self.stop_event.set()
-        if hasattr(self, 'worker_thread'):
-            self.worker_thread.join(timeout=2)
+        logger.info("Stopping timers...")
+        self.data_timer.stop()
+        self.clock_timer.stop()
         super().closeEvent(event)
 
 
