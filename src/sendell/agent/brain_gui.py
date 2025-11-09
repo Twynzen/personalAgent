@@ -277,7 +277,10 @@ L5: Autonomía completa (usar solo si confías totalmente)""")
             # Use high-performance PySide6 widget (GPU-accelerated)
             logger.info("Using PySide6 dashboard (GPU-accelerated)")
 
-            # Create PySide6 widget
+            # Initialize QApplication FIRST (before creating any Qt widgets)
+            QtBridge.get_qapp()
+
+            # Create PySide6 widget (now QApplication exists)
             self.qt_project_widget = create_project_control_widget_qt()
 
             # Embed in tkinter frame
