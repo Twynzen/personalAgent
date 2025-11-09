@@ -152,3 +152,9 @@ sendell-vscode-extension/out/
 sendell-vscode-extension/*.vsix
 sendell-vscode-extension/.vscode-test/
 sendell-vscode-extension/package-lock.json
+
+# Angular Dashboard
+sendell-dashboard/node_modules/
+sendell-dashboard/dist/
+sendell-dashboard/.angular/
+sendell-dashboard/.vscode/
