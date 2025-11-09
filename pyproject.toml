@@ -57,6 +57,9 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "tomli>=2.0.0; python_version < '3.11'",
     "pyside6==6.7.2",
+    "fastapi>=0.121.1",
+    "uvicorn>=0.38.0",
+    "python-multipart>=0.0.20",
 ]
 
 [project.optional-dependencies]

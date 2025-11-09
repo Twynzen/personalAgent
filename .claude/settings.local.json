@@ -15,7 +15,18 @@
       "Bash(git checkout:*)",
       "Bash(git stash:*)",
       "Bash(test:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git reset:*)",
+      "Bash(git branch:*)",
+      "Bash(uv add:*)",
+      "Bash(uv remove:*)",
+      "Bash(uv run uvicorn:*)",
+      "Bash(curl:*)",
+      "Bash(ng version:*)",
+      "Bash(nvm list:*)",
+      "Bash(node --version:*)",
+      "Bash(ng new:*)",
+      "Bash(ng build:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,155 @@
+<div class="sendell-container">
+  <!-- Header -->
+  <header class="sendell-header">
+    <h1>SENDELL CEREBRO</h1>
+    <span class="live-indicator">● LIVE</span>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="sendell-tabs">
+    <button
+      [class.active]="activeTab() === 'memorias'"
+      (click)="setActiveTab('memorias')">
+      MEMORIAS
+    </button>
+    <button
+      [class.active]="activeTab() === 'prompts'"
+      (click)="setActiveTab('prompts')">
+      PROMPTS
+    </button>
+    <button
+      [class.active]="activeTab() === 'herramientas'"
+      (click)="setActiveTab('herramientas')">
+      HERRAMIENTAS
+    </button>
+    <button
+      [class.active]="activeTab() === 'proyectos'"
+      (click)="setActiveTab('proyectos')">
+      PROYECTOS
+    </button>
+  </nav>
+
+  <!-- Tab Content -->
+  <main class="sendell-content">
+    <!-- TAB 1: MEMORIAS -->
+    @if (activeTab() === 'memorias') {
+      <div class="tab-panel">
+        <h2>MEMORIAS - FACTS APRENDIDOS</h2>
+
+        <!-- Add Fact Form -->
+        <div class="add-fact-form">
+          <input
+            type="text"
+            [(ngModel)]="newFactText"
+            placeholder="Nuevo fact..."
+            class="cyber-input"
+          />
+          <select [(ngModel)]="newFactCategory" class="cyber-select">
+            <option value="general">General</option>
+            <option value="work">Trabajo</option>
+            <option value="personal">Personal</option>
+          </select>
+          <button (click)="addFact()" class="cyber-button">AGREGAR</button>
+        </div>
+
+        <!-- Facts List -->
+        <div class="facts-list">
+          @for (fact of facts(); track $index) {
+            <div class="fact-card">
+              <div class="fact-category">{{ fact.category }}</div>
+              <div class="fact-text">{{ fact.fact }}</div>
+              <button (click)="deleteFact($index)" class="delete-button">ELIMINAR</button>
+            </div>
+          } @empty {
+            <div class="empty-state">No hay facts todavía</div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: PROMPTS -->
+    @if (activeTab() === 'prompts') {
+      <div class="tab-panel">
+        <h2>SYSTEM PROMPT</h2>
+        <textarea
+          [(ngModel)]="promptText"
+          class="cyber-textarea"
+          rows="20"
+        ></textarea>
+        <button (click)="savePrompt()" class="cyber-button">GUARDAR PROMPT</button>
+      </div>
+    }
+
+    <!-- TAB 3: HERRAMIENTAS -->
+    @if (activeTab() === 'herramientas') {
+      <div class="tab-panel">
+        <h2>HERRAMIENTAS DISPONIBLES</h2>
+        <div class="tools-list">
+          @for (tool of tools(); track $index) {
+            <div class="tool-card">
+              <div class="tool-name">{{ tool.name }}</div>
+              <div class="tool-desc">{{ tool.description }}</div>
+            </div>
+          } @empty {
+            <div class="empty-state">Cargando herramientas...</div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- TAB 4: PROYECTOS -->
+    @if (activeTab() === 'proyectos') {
+      <div class="tab-panel proyectos-layout">
+        <div class="proyectos-header">
+          <h2>PROYECTOS ACTIVOS</h2>
+          <div class="clock">{{ currentTime() }}</div>
+        </div>
+
+        <!-- Metrics Panel -->
+        <div class="metrics-panel">
+          <div class="metric-card">
+            <div class="metric-label">CPU TOTAL</div>
+            <div class="metric-value">{{ metrics().cpu.toFixed(1) }}%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">MEMORIA</div>
+            <div class="metric-value">{{ metrics().ram.toFixed(1) }}%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">TERMINALES</div>
+            <div class="metric-value">{{ metrics().terminals }}</div>
+          </div>
+        </div>
+
+        <!-- Projects List -->
+        <div class="projects-list">
+          @for (project of projects(); track project.pid) {
+            <div class="project-card"
+                 [class.running]="project.is_running">
+              <div class="project-header">
+                <div class="project-name"
+                     [class.running-name]="project.is_running">
+                  [{{ $index + 1 }}] {{ project.workspace_name }}
+                </div>
+                <div class="project-status"
+                     [class.status-running]="project.is_running">
+                  [{{ project.is_running ? 'RUNNING' : 'OFFLINE' }}]
+                </div>
+              </div>
+              <div class="project-info">
+                <div>Path: {{ project.workspace_path }}</div>
+                <div>PID: {{ project.pid }}</div>
+                <div>Type: {{ project.workspace_type }}</div>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">
+              No hay proyectos VS Code activos<br>
+              Abre un proyecto en VS Code para verlo aquí
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </main>
+</div>
