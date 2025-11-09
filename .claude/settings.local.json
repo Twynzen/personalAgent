@@ -2,7 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(tree:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(uv run python:*)",
+      "Bash(mkdir:*)",
+      "Bash(git commit:*)",
+      "WebSearch",
+      "WebFetch(domain:playwright.dev)",
+      "WebFetch(domain:python.langchain.com)",
+      "WebFetch(domain:medium.com)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

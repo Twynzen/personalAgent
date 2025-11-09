@@ -66,6 +66,22 @@ class SendellMemory:
     def _create_empty_memory(self) -> Dict[str, Any]:
         """Create empty memory structure"""
         return {
+            # Agent Identity (NEW in v0.2)
+            "agent_identity": None,  # Will be initialized on first run
+
+            # Reminders (NEW in v0.2)
+            "reminders": [],  # Personal reminders
+
+            # Personal Memory (NEW in v0.2 - placeholder for future)
+            "personal_memory": {
+                "habits": [],
+                "routines": [],
+                "personal_projects": [],
+                "goals": [],
+                "patterns": [],
+            },
+
+            # Existing v0.1 structure
             "facts": [],  # Things learned about Daniel
             "preferences": {
                 "favorite_apps": [],
@@ -254,6 +270,55 @@ class SendellMemory:
         except Exception as e:
             logger.error(f"Failed to import memory: {e}")
             return False
+
+    # ==================== AGENT IDENTITY (NEW v0.2) ====================
+
+    def get_agent_identity(self) -> Optional[Dict]:
+        """Get agent identity data"""
+        return self.memory.get("agent_identity")
+
+    def set_agent_identity(self, identity_data: Dict) -> None:
+        """Save agent identity data"""
+        self.memory["agent_identity"] = identity_data
+        self.save()
+        logger.info("Agent identity saved")
+
+    def has_agent_identity(self) -> bool:
+        """Check if agent has been initialized (has birth_date)"""
+        return self.memory.get("agent_identity") is not None
+
+    # ==================== REMINDERS (NEW v0.2) ====================
+
+    def get_reminders(self) -> List[Dict]:
+        """Get all reminders"""
+        return self.memory.get("reminders", [])
+
+    def set_reminders(self, reminders_data: List[Dict]) -> None:
+        """Save all reminders"""
+        self.memory["reminders"] = reminders_data
+        self.save()
+        logger.debug(f"Saved {len(reminders_data)} reminders")
+
+    def add_reminder(self, reminder_data: Dict) -> None:
+        """Add a single reminder"""
+        if "reminders" not in self.memory:
+            self.memory["reminders"] = []
+        self.memory["reminders"].append(reminder_data)
+        self.save()
+        logger.info(f"Added reminder: {reminder_data.get('content')}")
+
+    def delete_reminder(self, reminder_id: str) -> bool:
+        """Delete a reminder by ID"""
+        reminders = self.memory.get("reminders", [])
+        original_count = len(reminders)
+        self.memory["reminders"] = [r for r in reminders if r.get("reminder_id") != reminder_id]
+
+        if len(self.memory["reminders"]) < original_count:
+            self.save()
+            logger.info(f"Deleted reminder: {reminder_id}")
+            return True
+
+        return False
 
 
 # Global memory instance

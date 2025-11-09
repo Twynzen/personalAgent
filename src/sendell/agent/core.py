@@ -4,13 +4,16 @@ Sendell Agent Core using LangGraph.
 Implements ReAct pattern agent with MCP tools.
 """
 
+import asyncio
 import json
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
+from sendell.agent.memory import get_memory
 from sendell.agent.prompts import get_chat_mode_prompt, get_proactive_loop_prompt, get_system_prompt
 from sendell.config import get_settings
 from sendell.mcp.tools.conversation import respond_to_user as respond_to_user_func
@@ -18,7 +21,19 @@ from sendell.mcp.tools.monitoring import get_active_window as get_active_window_
 from sendell.mcp.tools.monitoring import get_system_health as get_system_health_func
 from sendell.mcp.tools.process import list_top_processes as list_top_processes_func
 from sendell.mcp.tools.process import open_application as open_application_func
+from sendell.proactive.identity import AgentIdentity
+from sendell.proactive.proactive_loop import ProactiveLoop
+from sendell.proactive.reminders import Reminder, ReminderManager, ReminderType
+from sendell.proactive.temporal_clock import TemporalClock
 from sendell.utils.logger import get_logger
+from sendell.vscode_integration.tools import (
+    list_active_projects,
+    get_project_errors,
+    get_terminal_tail,
+    get_project_stats,
+    send_terminal_command,
+)
+from sendell.vscode_integration.websocket_server import get_server as get_vscode_server
 
 logger = get_logger(__name__)
 
@@ -42,6 +57,39 @@ class SendellAgent:
             max_tokens=self.settings.openai.max_tokens,
         )
 
+        # Initialize memory system
+        self.memory = get_memory()
+
+        # Initialize or load agent identity
+        if self.memory.has_agent_identity():
+            identity_data = self.memory.get_agent_identity()
+            self.identity = AgentIdentity.from_dict(identity_data)
+            logger.info(f"Agent identity loaded: {self.identity.relationship_age_days} days old")
+        else:
+            # First time - create new identity
+            self.identity = AgentIdentity(user_name=None)
+            self.memory.set_agent_identity(self.identity.to_dict())
+            logger.info("New agent identity created - this is my birth!")
+
+        # Initialize temporal clock
+        self.temporal_clock = TemporalClock()
+
+        # Initialize reminder manager
+        self.reminder_manager = ReminderManager()
+        reminders_data = self.memory.get_reminders()
+        if reminders_data:
+            self.reminder_manager = ReminderManager.from_dict({"reminders": reminders_data})
+            logger.info(f"Loaded {len(reminders_data)} reminders from memory")
+
+        # Initialize proactive loop (don't auto-start)
+        self.proactive_loop = ProactiveLoop(
+            identity=self.identity,
+            reminder_manager=self.reminder_manager,
+            temporal_clock=self.temporal_clock,
+            check_interval_seconds=60,  # Check every 60 seconds
+            on_reminder_callback=self._on_reminder_triggered,
+        )
+
         # Create tools list for LangGraph
         self.tools = self._create_tools()
 
@@ -52,7 +100,11 @@ class SendellAgent:
             prompt=get_system_prompt(),  # String convertido automaticamente a SystemMessage
         )
 
-        logger.info("Sendell agent initialized with LangGraph ReAct pattern")
+        # Initialize VS Code WebSocket server (will start when async context is available)
+        self.vscode_server = get_vscode_server()
+        self.vscode_server_task = None
+
+        logger.info("Sendell agent initialized with LangGraph ReAct pattern + Proactive System + VS Code Integration")
 
     def _create_tools(self) -> List:
         """
@@ -152,6 +204,231 @@ class SendellAgent:
                     "message": "Failed to open Brain GUI. Check logs for details."
                 }
 
+        @tool
+        async def add_reminder(content: str, minutes_from_now: int, actions: str = "visual_notification") -> dict:
+            """Add a personal reminder that will trigger at a specific time.
+
+            This creates a reminder that will execute one or more actions when the time arrives.
+            The proactive loop monitors reminders and triggers them automatically.
+
+            Args:
+                content: What to remind about (e.g., "call grandma", "take a break")
+                minutes_from_now: How many minutes from now to trigger (e.g., 30, 60, 120)
+                actions: Comma-separated action types:
+                    - visual_notification: Rich visual window with animated ASCII art (RECOMMENDED, default)
+                    - chat_message: Send message in chat
+                    - popup: Simple Windows toast notification (legacy)
+                    - notepad: Open notepad with message (legacy)
+                    - sound: Play notification sound
+                    Example: "visual_notification" or "visual_notification,sound"
+
+            Examples:
+                - "Remind me to call in 30 minutes" -> add_reminder("call", 30)
+                  (Uses visual_notification by default - shows animated window with ASCII art)
+                - "Remind me to take a break in 60 minutes" -> add_reminder("take a break", 60)
+                  (Visual notification with auto-selected ASCII art based on content)
+                - "Remind me to check project in 2 minutes" -> add_reminder("check project", 2)
+                  (Urgency automatically detected, shows appropriate colors/sounds)
+
+            Returns:
+                dict: Success status, reminder details, and trigger time
+            """
+            try:
+                # Parse actions
+                actions_list = [a.strip() for a in actions.split(",")]
+
+                # Create reminder using agent's method
+                reminder = await self.add_reminder_from_chat(content, minutes_from_now, actions_list)
+
+                # Format response
+                due_time = reminder.due_at.strftime("%I:%M %p")
+
+                return {
+                    "success": True,
+                    "message": f"Reminder set: '{content}' at {due_time} (in {minutes_from_now} min) with actions: {actions_list}",
+                    "reminder_id": reminder.reminder_id,
+                    "due_at": reminder.due_at.isoformat(),
+                    "actions": actions_list,
+                }
+            except Exception as e:
+                logger.error(f"Failed to add reminder: {e}")
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "message": f"Failed to create reminder: {str(e)}"
+                }
+
+        @tool
+        def discover_projects(path: str) -> dict:
+            """Discover development projects in a directory by scanning for project markers.
+
+            Scans recursively (max 3 levels deep) to find projects. Detects:
+            - Python (pyproject.toml, setup.py, requirements.txt)
+            - Node.js (package.json)
+            - Rust (Cargo.toml)
+            - Go (go.mod)
+            - Java (pom.xml, build.gradle)
+            - And more...
+
+            Args:
+                path: Directory path to scan (e.g., "C:/Users/Daniel/projects")
+
+            Returns:
+                dict with:
+                - success: bool
+                - projects_found: int
+                - projects: list of project summaries
+                - by_type: count by project type
+                - scan_duration: seconds
+
+            Examples:
+                - "Discover projects in C:/Users/Daniel"
+                - "Scan my projects folder"
+                - "Find all Node.js projects in C:/dev"
+            """
+            try:
+                from pathlib import Path
+                from sendell.projects import ProjectScanner
+
+                scanner = ProjectScanner(max_depth=3, timeout_seconds=30)
+                result = scanner.scan_directory(Path(path))
+
+                # Format projects for response
+                projects_list = []
+                for project in result.projects_found:
+                    project_summary = {
+                        "name": project.name,
+                        "path": str(project.path),
+                        "type": project.project_type.value,
+                        "config_file": str(project.config_file) if project.config_file else None,
+                    }
+
+                    # Add config details if available
+                    if project.config:
+                        if project.config.version:
+                            project_summary["version"] = project.config.version
+                        if project.config.description:
+                            project_summary["description"] = project.config.description
+
+                    projects_list.append(project_summary)
+
+                return {
+                    "success": True,
+                    "projects_found": result.total_projects,
+                    "projects": projects_list,
+                    "by_type": result.projects_by_type,
+                    "scan_duration": round(result.scan_duration_seconds, 2),
+                    "errors": result.errors if result.errors else [],
+                }
+
+            except Exception as e:
+                logger.error(f"Failed to discover projects: {e}")
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "message": f"Failed to scan directory: {str(e)}"
+                }
+
+        @tool
+        def list_vscode_instances() -> dict:
+            """List all running VS Code instances with their open projects and terminals.
+
+            Detects VS Code processes (stable, Insiders, VSCodium, Cursor) and extracts:
+            - Which workspace/project is open
+            - Terminal processes running in that workspace
+            - Terminal types (PowerShell, CMD, Bash, WSL)
+            - Working directories of terminals
+
+            This allows you to understand Daniel's active development context.
+
+            Returns:
+                dict with:
+                - success: bool
+                - instances_found: int (number of VS Code windows)
+                - total_terminals: int (total terminals across all instances)
+                - instances: list of instance details with:
+                    - pid: VS Code process ID
+                    - workspace_name: Name of open project
+                    - workspace_path: Full path to project
+                    - workspace_type: 'folder', 'workspace', or 'none'
+                    - terminals: list of terminal details:
+                        - pid: Terminal process ID
+                        - shell_type: 'powershell', 'cmd', 'bash', 'wsl'
+                        - cwd: Current working directory
+                        - status: 'running', 'sleeping', etc.
+
+            Examples:
+                - "What VS Code projects are open?"
+                - "Show me my active projects"
+                - "Which terminals are running?"
+                - "What am I working on right now?"
+
+            Use Cases:
+                - Understand user's current work context
+                - Detect which projects have running processes
+                - Help user navigate between projects
+                - Monitor terminal activity
+            """
+            try:
+                from sendell.vscode import VSCodeMonitor
+
+                monitor = VSCodeMonitor()
+                instances = monitor.find_vscode_instances()
+
+                # Format instances for response
+                instances_list = []
+                total_terminals = 0
+
+                for instance in instances:
+                    # Format terminals
+                    terminals_list = []
+                    for term in instance.terminals:
+                        terminals_list.append({
+                            "pid": term.pid,
+                            "shell_type": term.shell_type,
+                            "cwd": term.cwd,
+                            "status": term.status,
+                            "created_at": term.create_time.strftime("%Y-%m-%d %H:%M:%S"),
+                        })
+
+                    total_terminals += len(terminals_list)
+
+                    # Format instance
+                    instance_info = {
+                        "pid": instance.pid,
+                        "executable": instance.name,
+                        "is_insiders": instance.is_insiders,
+                        "workspace_type": instance.workspace.workspace_type,
+                        "workspace_name": instance.workspace.workspace_name,
+                        "workspace_path": instance.workspace.workspace_path,
+                        "terminals_count": len(terminals_list),
+                        "terminals": terminals_list,
+                    }
+
+                    # Add multi-root workspace info if applicable
+                    if instance.workspace.workspace_file:
+                        instance_info["workspace_file"] = instance.workspace.workspace_file
+                        if instance.workspace.folders:
+                            instance_info["folders"] = instance.workspace.folders
+
+                    instances_list.append(instance_info)
+
+                return {
+                    "success": True,
+                    "instances_found": len(instances),
+                    "total_terminals": total_terminals,
+                    "instances": instances_list,
+                    "message": f"Found {len(instances)} VS Code instance(s) with {total_terminals} terminal(s)",
+                }
+
+            except Exception as e:
+                logger.error(f"Failed to list VS Code instances: {e}")
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "message": f"Failed to detect VS Code: {str(e)}"
+                }
+
         return [
             get_system_health,
             get_active_window,
@@ -159,7 +436,47 @@ class SendellAgent:
             open_application,
             respond_to_user,
             show_brain,
+            add_reminder,
+            discover_projects,
+            list_vscode_instances,
+            # VS Code Integration tools (via WebSocket)
+            list_active_projects,
+            get_project_errors,
+            get_terminal_tail,
+            get_project_stats,
+            send_terminal_command,
         ]
+
+    async def start_vscode_server(self) -> None:
+        """
+        Start VS Code WebSocket server in background.
+
+        Must be called from async context (e.g., in chat loop or proactive loop).
+        The server runs on ws://localhost:7000 and receives events from
+        the VS Code extension (terminal output, errors, etc.)
+        """
+        if self.vscode_server_task is not None:
+            logger.debug("VS Code server already running")
+            return
+
+        try:
+            # Create task in current event loop
+            self.vscode_server_task = asyncio.create_task(self.vscode_server.start())
+            logger.info("VS Code WebSocket server started on ws://localhost:7000")
+
+        except Exception as e:
+            logger.error(f"Failed to start VS Code server: {e}", exc_info=True)
+            logger.warning("VS Code integration will not be available")
+
+    async def stop_vscode_server(self) -> None:
+        """Stop VS Code WebSocket server"""
+        if self.vscode_server_task and not self.vscode_server_task.done():
+            self.vscode_server_task.cancel()
+            try:
+                await self.vscode_server_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("VS Code WebSocket server stopped")
 
     async def run_proactive_cycle(self) -> dict:
         """
@@ -289,6 +606,127 @@ class SendellAgent:
         except Exception as e:
             logger.error(f"Command execution failed: {e}")
             return {"success": False, "error": str(e), "command": command}
+
+    async def add_reminder_from_chat(
+        self, content: str, minutes_from_now: int, actions: Optional[List[str]] = None
+    ) -> Reminder:
+        """
+        Add reminder from chat conversation.
+
+        Args:
+            content: What to remind about
+            minutes_from_now: Minutes from now to trigger
+            actions: List of action types (visual_notification, chat_message, popup, notepad, sound)
+
+        Returns:
+            Reminder: The created reminder
+        """
+        if actions is None:
+            actions = ["visual_notification"]
+
+        due_at = datetime.now() + timedelta(minutes=minutes_from_now)
+
+        # Auto-detect importance based on keywords in content
+        importance = self._calculate_reminder_importance(content, minutes_from_now)
+
+        reminder = Reminder(
+            content=content,
+            reminder_type=ReminderType.ONE_TIME,
+            due_at=due_at,
+            actions=actions,
+            importance=importance,
+        )
+
+        self.reminder_manager.add_reminder(reminder)
+        self.memory.set_reminders(self.reminder_manager.to_dict()["reminders"])
+
+        logger.debug(f"Reminder added: {content} at {due_at.strftime('%I:%M %p')} (importance: {importance})")
+
+        return reminder
+
+    def _calculate_reminder_importance(self, content: str, minutes_from_now: int) -> float:
+        """
+        Calculate importance level based on content and timing.
+
+        Args:
+            content: Reminder content
+            minutes_from_now: Minutes until reminder triggers
+
+        Returns:
+            float: Importance level 0.0-1.0
+        """
+        content_lower = content.lower()
+        importance = 0.5  # Default medium
+
+        # High importance keywords
+        high_importance_keywords = [
+            "urgent", "important", "critical", "asap", "immediately",
+            "deadline", "meeting", "appointment", "call", "urgente",
+            "importante", "critico", "reunion", "cita"
+        ]
+
+        # Medium-high importance keywords
+        medium_high_keywords = [
+            "remember", "don't forget", "make sure", "check", "review",
+            "recordar", "no olvides", "revisar", "verificar"
+        ]
+
+        # Check for high importance
+        if any(keyword in content_lower for keyword in high_importance_keywords):
+            importance = 0.85
+
+        # Check for medium-high importance
+        elif any(keyword in content_lower for keyword in medium_high_keywords):
+            importance = 0.65
+
+        # Adjust based on timing (sooner = more important)
+        if minutes_from_now <= 5:
+            importance = min(1.0, importance + 0.15)  # Very soon = boost importance
+        elif minutes_from_now <= 15:
+            importance = min(1.0, importance + 0.10)
+        elif minutes_from_now >= 240:  # 4+ hours
+            importance = max(0.3, importance - 0.15)  # Far away = reduce importance
+
+        return round(importance, 2)
+
+    async def _on_reminder_triggered(self, reminder: Reminder, results: List[Dict]) -> None:
+        """
+        Callback when a reminder is triggered by the proactive loop.
+
+        Args:
+            reminder: The reminder that was triggered
+            results: Results from executing the reminder actions
+        """
+        logger.debug(f"Reminder triggered callback: {reminder.content}")
+
+        # Save updated reminder state to memory
+        self.memory.set_reminders(self.reminder_manager.to_dict()["reminders"])
+
+        # Log action results (only errors)
+        for result in results:
+            if not result["success"]:
+                logger.warning(f"Reminder action failed: {result['action']} - {result.get('error')}")
+
+    def get_proactive_status(self) -> dict:
+        """
+        Get status of proactive system.
+
+        Returns:
+            dict: Agent identity, loop status, upcoming reminders
+        """
+        return {
+            "identity": {
+                "age_days": self.identity.relationship_age_days,
+                "phase": self.identity.relationship_phase.value,
+                "confidence": self.identity.confidence_level,
+            },
+            "loop": self.proactive_loop.get_status(),
+            "reminders": {
+                "total": len(self.reminder_manager.get_all_reminders()),
+                "due": len(self.reminder_manager.get_due_reminders()),
+                "upcoming_24h": len(self.reminder_manager.get_upcoming_reminders(hours=24)),
+            },
+        }
 
 
 # Global agent instance (singleton)
