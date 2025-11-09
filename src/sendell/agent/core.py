@@ -173,7 +173,7 @@ class SendellAgent:
             """
             try:
                 import threading
-                from sendell.agent.brain_gui import show_brain as show_brain_gui
+                from sendell.agent.brain_gui_qt import show_brain as show_brain_gui
 
                 # Run GUI in separate thread to not block agent
                 gui_thread = threading.Thread(target=lambda: show_brain_gui(self.tools))

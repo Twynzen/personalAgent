@@ -283,7 +283,7 @@ def brain():
     try:
         console.print("\n[bold green]Opening Sendell Brain...[/bold green]\n")
 
-        from sendell.agent.brain_gui import show_brain
+        from sendell.agent.brain_gui_qt import show_brain
         from sendell.agent.core import get_agent
 
         # Get agent to pass tools
@@ -293,7 +293,7 @@ def brain():
         except:
             tools = []
 
-        # Show GUI
+        # Show GUI (Qt6 version)
         show_brain(tools=tools)
 
     except Exception as e:
