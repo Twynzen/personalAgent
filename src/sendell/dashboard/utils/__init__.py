@@ -12,6 +12,7 @@ from sendell.dashboard.utils.colors import (
     TEXT_SECONDARY,
     STATUS_RUNNING,
     STATUS_IDLE,
+    STATUS_ERROR,
 )
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "TEXT_SECONDARY",
     "STATUS_RUNNING",
     "STATUS_IDLE",
+    "STATUS_ERROR",
 ]

@@ -13,8 +13,16 @@ from typing import List, Dict
 
 from sendell.agent.memory import get_memory
 from sendell.agent.prompts import get_system_prompt
-from sendell.dashboard import create_project_control_widget
 from sendell.utils.logger import get_logger
+
+# Try PySide6 first, fallback to tkinter
+try:
+    from sendell.dashboard.project_control_qt import create_project_control_widget_qt
+    from sendell.dashboard.qt_tkinter_bridge import QtBridge
+    PYSIDE6_AVAILABLE = True
+except ImportError:
+    from sendell.dashboard import create_project_control_widget
+    PYSIDE6_AVAILABLE = False
 
 logger = get_logger(__name__)
 
@@ -38,7 +46,7 @@ class BrainGUI:
         # Create main window
         self.root = tk.Tk()
         self.root.title("Sendell - Ver Cerebro")
-        self.root.geometry("1200x700")
+        self.root.geometry("1400x900")  # Increased for better visibility
         self.root.configure(bg='#000000')
 
         # Create notebook (tabs)
@@ -261,15 +269,35 @@ L5: Autonomía completa (usar solo si confías totalmente)""")
         self.refresh_tools()
 
     def create_projects_tab(self):
-        """Create Projects tab - Multi-Project Control Center"""
+        """Create Projects tab - Multi-Project Control Center (PySide6 GPU-accelerated)"""
         frame = tk.Frame(self.notebook, bg='#0a0a0a')
         self.notebook.add(frame, text='Proyectos')
 
-        # Embed project control widget
-        self.project_widget = create_project_control_widget(frame)
-        self.project_widget.pack(fill='both', expand=True)
+        if PYSIDE6_AVAILABLE:
+            # Use high-performance PySide6 widget (GPU-accelerated)
+            logger.info("Using PySide6 dashboard (GPU-accelerated)")
 
-        logger.info("Projects tab created - Multi-Project Control Center initialized")
+            # Create PySide6 widget
+            self.qt_project_widget = create_project_control_widget_qt()
+
+            # Embed in tkinter frame
+            QtBridge.embed_widget(frame, self.qt_project_widget)
+
+            # Process Qt events periodically
+            def process_qt():
+                QtBridge.process_qt_events()
+                self.root.after(16, process_qt)  # ~60 FPS
+
+            process_qt()
+
+            logger.info("PySide6 Projects tab created - GPU-accelerated rendering active")
+        else:
+            # Fallback to tkinter version
+            logger.warning("PySide6 not available, using tkinter fallback")
+            from sendell.dashboard import create_project_control_widget
+            self.project_widget = create_project_control_widget(frame)
+            self.project_widget.pack(fill='both', expand=True)
+            logger.info("Tkinter Projects tab created")
 
     # ==================== MEMORY TAB FUNCTIONS ====================
 
