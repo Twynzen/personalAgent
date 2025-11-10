@@ -24,6 +24,7 @@ export class ActivityGraphComponent implements AfterViewInit, OnDestroy {
   private dataPoints: number[] = [];
   private readonly maxPoints = 60;
   private time = 0;
+  private heartbeatCounter = 0;
 
   ngAfterViewInit() {
     this.initCanvas();
@@ -71,12 +72,27 @@ export class ActivityGraphComponent implements AfterViewInit, OnDestroy {
     let newPoint = 50;
 
     if (this.status === 'running') {
-      // Green pulsing wave (slower and smoother)
-      this.time += 0.015; // Even slower (6x slower than original)
-      const pulse = Math.sin(this.time) * 30;
-      const randomness = (Math.random() - 0.5) * 8; // Even smoother
-      newPoint = 50 + pulse + randomness;
-      newPoint = Math.max(10, Math.min(90, newPoint));
+      this.heartbeatCounter++;
+
+      // ECG-style heartbeat pattern
+      // Heartbeat occurs every 50 frames (~5 seconds at current speed)
+      const beatInterval = 50;
+      const positionInBeat = this.heartbeatCounter % beatInterval;
+
+      if (positionInBeat < 8) {
+        // Heartbeat spike sequence
+        if (positionInBeat === 0) newPoint = 55; // Start rise
+        else if (positionInBeat === 1) newPoint = 70; // Sharp rise
+        else if (positionInBeat === 2) newPoint = 85; // Peak
+        else if (positionInBeat === 3) newPoint = 75; // Start fall
+        else if (positionInBeat === 4) newPoint = 40; // Dip below baseline
+        else if (positionInBeat === 5) newPoint = 60; // Small rebound
+        else if (positionInBeat === 6) newPoint = 52; // Return to baseline
+        else if (positionInBeat === 7) newPoint = 50; // Baseline
+      } else {
+        // Baseline with minimal variation between beats
+        newPoint = 50 + (Math.random() - 0.5) * 3;
+      }
     } else if (this.status === 'idle') {
       // Blue flat line with minimal variation
       newPoint = 50 + (Math.random() - 0.5) * 5;
