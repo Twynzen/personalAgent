@@ -125,17 +125,28 @@
         <div class="projects-list">
           @for (project of projects(); track project.pid) {
             <div class="project-card"
-                 [class.running]="project.is_running">
+                 [class.running]="project.status === 'running'"
+                 [class.idle]="project.status === 'idle'"
+                 [class.offline]="project.status === 'offline'">
               <div class="project-header">
                 <div class="project-name"
-                     [class.running-name]="project.is_running">
+                     [class.running-name]="project.status === 'running'"
+                     [class.idle-name]="project.status === 'idle'">
                   [{{ $index + 1 }}] {{ project.workspace_name }}
                 </div>
                 <div class="project-status"
-                     [class.status-running]="project.is_running">
-                  [{{ project.is_running ? 'RUNNING' : 'OFFLINE' }}]
+                     [class.status-running]="project.status === 'running'"
+                     [class.status-idle]="project.status === 'idle'"
+                     [class.status-offline]="project.status === 'offline'">
+                  [{{ project.status.toUpperCase() }}]
                 </div>
               </div>
+
+              <!-- Activity Graph -->
+              <div class="activity-graph-container">
+                <activity-graph [status]="project.status"></activity-graph>
+              </div>
+
               <div class="project-info">
                 <div>Path: {{ project.workspace_path }}</div>
                 <div>PID: {{ project.pid }}</div>
