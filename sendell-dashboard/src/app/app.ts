@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from './core/services/api.service';
 import { WebSocketService } from './core/services/websocket.service';
 import { Fact } from './core/models/fact.model';
-import { Project, Metrics, Tool } from './core/models/project.model';
+import { Project, Metrics, Tool, ProjectStatus } from './core/models/project.model';
+import { ActivityGraphComponent } from './components/activity-graph.component';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ActivityGraphComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })
@@ -44,7 +45,8 @@ export class App implements OnInit, OnDestroy {
     // Subscribe to WebSocket updates
     this.ws.messages$.subscribe((message) => {
       if (message.type === 'update') {
-        this.projects.set(message.data.projects);
+        const projectsWithStatus = this.mapProjectsWithStatus(message.data.projects);
+        this.projects.set(projectsWithStatus);
         this.metrics.set(message.data.metrics);
       }
     });
@@ -56,6 +58,26 @@ export class App implements OnInit, OnDestroy {
 
     // Load initial data based on active tab
     this.loadTabData();
+  }
+
+  private mapProjectsWithStatus(projects: Project[]): Project[] {
+    // For now, assign mock statuses for visual testing
+    // TODO: Replace with real detection logic
+    return projects.map((project, index) => {
+      let status: ProjectStatus = 'offline';
+
+      // Mock logic for testing:
+      // - First project: running
+      // - Second project: idle
+      // - Rest: offline
+      if (index === 0) {
+        status = 'running';
+      } else if (index === 1) {
+        status = 'idle';
+      }
+
+      return { ...project, status };
+    });
   }
 
   ngOnDestroy() {

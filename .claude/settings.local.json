@@ -26,7 +26,8 @@
       "Bash(nvm list:*)",
       "Bash(node --version:*)",
       "Bash(ng new:*)",
-      "Bash(ng build:*)"
+      "Bash(ng build:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

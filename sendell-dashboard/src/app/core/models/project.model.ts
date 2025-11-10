@@ -1,10 +1,13 @@
+export type ProjectStatus = 'running' | 'idle' | 'offline';
+
 export interface Project {
   pid: number;
   name: string;
   workspace_name: string;
   workspace_path: string;
   workspace_type: string;
-  is_running?: boolean;
+  status: ProjectStatus;
+  is_running?: boolean; // Keep for backward compatibility
 }
 
 export interface Metrics {
