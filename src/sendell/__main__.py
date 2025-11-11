@@ -397,12 +397,19 @@ def brain():
                     stderr=subprocess.DEVNULL
                 )
 
-            # Wait for server to start
-            time.sleep(3)
+            # Wait for server to start (with retry logic)
+            console.print("[dim]Waiting for server to initialize...[/dim]")
+            max_retries = 15  # 15 seconds total
+            for i in range(max_retries):
+                time.sleep(1)
+                if is_server_running():
+                    break
+                if i % 3 == 0:  # Show progress every 3 seconds
+                    console.print(f"[dim]Still waiting... ({i+1}s)[/dim]")
 
-            # Verify it started
+            # Final verify
             if not is_server_running():
-                console.print("[bold red]Error:[/bold red] Server failed to start")
+                console.print("[bold red]Error:[/bold red] Server failed to start within 15 seconds")
                 console.print("Please start manually: [cyan]uv run uvicorn sendell.web.server:app --port 8765[/cyan]")
                 sys.exit(1)
 

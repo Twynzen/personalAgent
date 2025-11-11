@@ -360,14 +360,18 @@ class SendellAgent:
                             stderr=subprocess.DEVNULL
                         )
 
-                    # Wait for server to start
-                    time.sleep(2)
+                    # Wait for server to start (with retry logic)
+                    max_retries = 15  # 15 seconds total
+                    for i in range(max_retries):
+                        time.sleep(1)
+                        if is_server_running():
+                            break
 
-                    # Verify it started
+                    # Final verify
                     if not is_server_running():
                         return {
                             "success": False,
-                            "error": "Server failed to start",
+                            "error": "Server failed to start within 15 seconds",
                             "message": "Dashboard server failed to start. Please start manually with: uv run uvicorn sendell.web.server:app --port 8765"
                         }
 
