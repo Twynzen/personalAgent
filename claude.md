@@ -1,2146 +1,661 @@
 # CLAUDE.MD - Memoria Permanente del Proyecto Sendell
 
-**Última actualización**: 2025-11-06 (Sesión 20 - RESET & REPLAN)
-**Estado del proyecto**: v0.3-SIMPLIFIED EN PLANIFICACIÓN 🎯
+**Última actualización**: 2025-11-11 (Post-Sesión 21)
+**Estado del proyecto**: v0.3 Dashboard con Terminales Embebidos (95% completo)
 **Desarrolladores**: Daniel (Testing/PM/Research) + Claude (Desarrollo)
 
 ---
 
-## 🚨 ESTADO ACTUAL DEL DESARROLLO (Para Reinicio de Contexto)
+## 🚨 ESTADO ACTUAL (Quick Context)
 
-**Branch actual**: `feature/vscode-polish-phase5`
-**Último commit estable**: `b31c41e` (Nov 4) - WebSocket server funcional
-**Estado**: RESET COMPLETADO ✅ - Nueva arquitectura simplificada planificada 📋
+**Branch actual**: `feature/claude-terminal-control`
+**Última sesión**: Terminales embebidos con xterm.js - Fases 1-3 completadas
+**Estado**: ⚠️ PENDIENTE: Build + Testing + Fase 4
 
-**⚠️ DECISIÓN ARQUITECTÓNICA CRÍTICA (Sesión 20 - Nov 6, 2025)**:
+### Sistema Actual (v0.3)
 
-### **🔄 RESET & SIMPLIFICATION**
-
-**Problema identificado**:
-- Phase 5/6 se convirtió en ciclo de refactorización sin progreso
-- Terminal sync no funcionaba (extensión vs server timing issues)
-- Dashboard se congelaba (threading mal optimizado)
-- Over-engineering: 1,900+ líneas TypeScript sin testing
-- Frustración creciente, sin avances estables
-
-**Decisión tomada**:
-- ✅ **RESET a commit `b31c41e`** (Nov 4) - Último estado estable
-- ✅ **Archivar investigación valiosa** (~3,500 líneas docs en `archive/phase6-research/`)
-- ✅ **Nueva dirección**: v0.3-SIMPLIFIED usando **psutil SOLAMENTE**
-- ❌ WebSocket pausado hasta v0.4+ (cuando realmente lo necesitemos)
-
-**Razón**:
-- psutil funciona **perfectamente** para detectar proyectos/terminales
-- WebSocket agrega complejidad SIN valor demostrado en v0.3
-- **Simple > Complex** para base sólida
-
-### **🎯 NUEVA DIRECCIÓN: v0.3-SIMPLIFIED**
+**Angular Dashboard Web** funcionando con:
+- ✅ Detección de proyectos VS Code vía psutil
+- ✅ Gráficos de actividad ECG-style (3 estados: OFFLINE/READY/WORKING)
+- ✅ Terminales embebidos con xterm.js
+- ✅ TerminalManager backend (subprocess.Popen + threading)
+- ✅ WebSocket bidireccional para I/O
+- ✅ Click en proyecto → abre terminal cmd.exe en navegador
+- ✅ Enviar comandos desde dashboard
 
 **Arquitectura**:
 ```
-Sendell Dashboard (Tkinter cyberpunk)
-├── psutil monitor (primary source) ✅ 100% confiable
-├── Simple threading (Queue pattern) ✅ No congela UI
-├── Canvas animations (pulse graphs) ✅ React-inspired
-└── Real-time metrics ✅ CPU, RAM, Terminales
+Frontend (Angular + xterm.js)
+    ↕ WebSocket /ws/terminal/{pid}
+Backend (FastAPI + Python)
+    ├── TerminalManager (singleton)
+    │   └── ManagedTerminalProcess (cmd.exe)
+    ├── VSCodeDetector (psutil)
+    └── ProjectStateDetector
 ```
 
-**Features v0.3**:
-1. ✅ Dashboard visual con proyectos VS Code detectados
-2. ✅ Gráficos de actividad animados (Canvas)
-3. ✅ Métricas del sistema en tiempo real
-4. ✅ Paneles de configuración expandibles
-5. ✅ NO se congela NUNCA (threading correcto)
+**Pendiente v0.3**:
+1. ⏳ Build dashboard: `npm run build` + deploy
+2. ⏳ Testing E2E completo
+3. ⏳ Fase 4: Actualizar `project_states.py` para usar TerminalManager
 
-**NO-Features** (para v0.4+):
-- ❌ WebSocket como fuente primaria
-- ❌ Control de terminales (enviar comandos)
-- ❌ Multi-instance coordination
-- ❌ Features complejas sin valor claro
-
-**Documentación**:
-- Plan completo: `V03_SIMPLIFIED_PLAN.md` (6 fases, 4-5 sesiones estimadas)
-- Investigación archivada: `archive/phase6-research/` (consultar para futuro)
-- Diseño UI: Inspirado en React cyberpunk de Daniel
-
-**Próximo paso**: Implementar Fase 1 (Setup & Core Architecture)
+**Documentación de referencia**:
+- `NEXT_SESSION_PLAN.md` - Instrucciones completas para continuar (450 líneas)
+- `CLAUDE_CODE_INTEGRATION_PLAN.md` - Plan de integración con Claude Code
+- `V03_RESUMEN.md` - Resumen ejecutivo del dashboard
 
 ---
 
-## ✅ WORKFLOW ACTUALIZADO (Sesión 16)
+## ✅ WORKFLOW ESTABLECIDO
 
-1. **Daniel hace investigaciones técnicas** (APIs, métodos, viabilidad)
-2. **Daniel proporciona documentación** a Claude
-3. Claude crea branch para tarea específica
-4. Claude desarrolla código basándose en docs de Daniel
-5. Claude muestra código a Daniel para testing
-6. **Daniel testea** ("funciona" o "ajusta X")
-7. Si funciona → Claude hace commit con mensaje descriptivo
-8. Daniel hace push
-9. Repetir para siguiente branch
-10. Documentar SIEMPRE en CLAUDE.md
+1. **Daniel investiga** (APIs, métodos, viabilidad técnica)
+2. **Daniel provee docs** a Claude con findings
+3. Claude crea branch específico
+4. Claude implementa basándose en docs de Daniel
+5. Claude muestra código para review
+6. **Daniel testea** en local
+7. Si funciona → Claude commit + Daniel push
+8. Documentar cambios en CLAUDE.md
+9. Repetir para siguiente feature
+
+**Regla de oro**: Claude NO debe investigar o asumir APIs. Daniel investiga primero.
 
 ---
 
-## ✅ ESTADO DE VERSIONES
+## 📦 RESUMEN EJECUTIVO DEL PROYECTO
 
-**✅ v0.1 COMPLETADO**: MVP básico
-- Core agent con 6 tools
+**Sendell** es un agente AI autónomo que monitorea y controla tu entorno de desarrollo Windows. Usa LangGraph para orquestación y combina monitoreo del sistema (psutil) con control de terminales para gestionar proyectos VS Code.
+
+### Stack Tecnológico
+
+**Backend (Python)**:
+- LangGraph 0.2+ (ReAct agent pattern)
+- OpenAI GPT-4 Turbo
+- FastAPI (REST API + WebSocket)
+- psutil (system monitoring)
+- subprocess.Popen (terminal control)
+
+**Frontend (Web Dashboard)**:
+- Angular 17+ standalone
+- xterm.js 5.5 (embedded terminals)
+- WebSocket client (real-time updates)
+- Canvas API (animated graphs)
+
+**GUI (Desktop)**:
+- tkinter (Brain GUI - config/memory management)
+
+### Capacidades Actuales
+
+**Agent Core** (v0.1):
+- 7 herramientas LangChain
 - Chat interactivo
-- Memoria JSON
-- Brain GUI simple
+- Memoria JSON persistente
+- Sistema de autonomía L1-L5
+- Brain GUI para configuración
 
-**✅ v0.2 COMPLETADO**: Agente Proactivo + Notificaciones Visuales
-- Fase 1: Sistema Proactivo (identidad temporal, reminders, loop background)
-- Fase 2A: Notificaciones Visuales (6 branches - UI + ASCII art + sonidos + integración)
+**Sistema Proactivo** (v0.2):
+- Identidad temporal del agente
+- Reminders (one-time, recurring)
+- Notificaciones visuales con ASCII art
+- Loop background no bloqueante
 
-**🎯 v0.3-SIMPLIFIED EN PLANIFICACIÓN**: Dashboard Visual con psutil
-- **Objetivo**: Dashboard funcional estilo cyberpunk para monitorear proyectos
-- **Método**: psutil SOLAMENTE (sin WebSocket dependency)
-- **Diseño**: Inspirado en React UI de Daniel (Canvas animations + threading correcto)
-- **Estado**: Plan completo en `V03_SIMPLIFIED_PLAN.md`
-
-**❌ v0.3 Phase 5/6 ABANDONADO**: WebSocket integration
-- **Razón**: Inestable, bugs recurrentes, over-engineered
-- **Investigación**: Archivada en `archive/phase6-research/` (3,500+ líneas)
-- **Lecciones**: Simple > Complex, test antes de commit, no refactorizar infinitamente
-
----
-
-## 🚀 SESIÓN 17-18 (2025-11-03): v0.3 Fases 3-4 - WebSocket Server + Integration
-
-### Trabajo Completado
-
-**Branch**: `feature/terminal-monitoring` (continuación de Fases 1-2)
-
-#### ✅ Fase 3: WebSocket Server en Python (COMPLETADA)
-
-**Implementado**:
-1. **Módulo `vscode_integration/`** completo (~1130 líneas):
-   - `types.py` (240 líneas) - Estructuras de datos memory-efficient
-   - `manager.py` (320 líneas) - Filtrado inteligente anti-saturación
-   - `websocket_server.py` (280 líneas) - Servidor asyncio puerto 7000
-   - `tools.py` (260 líneas) - 5 LangChain tools token-optimized
-   - `__init__.py` (30 líneas) - Exports
-
-2. **Sistema Anti-Saturación**:
-   - ✅ TailBuffer: Solo últimas 20 líneas por terminal (deque maxlen=20)
-   - ✅ Error extraction: Max 5 errores por terminal, regex detection
-   - ✅ Dev server filtering: Ignora 95%+ ruido (webpack, vite, HMR)
-   - ✅ LRU eviction: Max 10 proyectos en memoria
-   - ✅ Token optimization: Ahorro 90-98% vs approach naive
-
-3. **5 Nuevas Tools para Agente**:
-   ```python
-   list_active_projects()       # Resumen ejecutivo (~200 tokens)
-   get_project_errors(project)  # Solo errores (~300 tokens)
-   get_terminal_tail(project, terminal, lines=20)  # Tail (~400 tokens)
-   get_project_stats(project)   # Stats (~300 tokens)
-   send_terminal_command(project, terminal, cmd)  # Ejecutar
-   ```
-
-4. **Integración con SendellAgent**:
-   - ✅ Imports agregados en `core.py`
-   - ✅ 5 tools agregadas a lista del agente
-   - ✅ `start_vscode_server()` / `stop_vscode_server()` async methods
-   - ✅ Auto-inicio en `__main__.py` (chat loop + proactive loop)
-
-5. **Dependencies**:
-   - ✅ `websockets>=12.0` agregado a `pyproject.toml`
-
-6. **Testing Scripts**:
-   - ✅ `test_vscode_integration.py` (330 líneas) - E2E testing
-   - ✅ `test_websocket_simple.py` (50 líneas) - Quick connection test
-   - ✅ `VSCODE_INTEGRATION_README.md` - Guía completa de testing
-
-#### ✅ Fase 4: Integration & Testing (EN PROGRESO)
-
-**Completado**:
-- ✅ WebSocket server funciona 100% (verificado con `test_websocket_simple.py`)
-- ✅ Servidor acepta conexiones, recibe mensajes, envía acknowledgments
-- ✅ Puerto 7000 listening correctamente
-
-**Bloqueador actual** 🐛:
-- ❌ Extensión VS Code NO conecta al servidor
-- Error: `AggregateError` en `internalConnectMultiple`
-- Error code: `1006 - Unknown reason` (conexión cierra inmediatamente)
-- Causa probable: Bug en extensión TypeScript con paquete `ws`
-
-**Estado de debugging**:
-- ✅ Server Python: FUNCIONA (test script conecta OK)
-- ❌ Extensión VS Code: Bug de conexión (error 1006)
-- 🔍 Próximo: Revisar código TypeScript de extensión
-
-### Archivos Modificados/Creados (Sesión 17-18)
-
-**Nuevos**:
-- `src/sendell/vscode_integration/__init__.py`
-- `src/sendell/vscode_integration/types.py`
-- `src/sendell/vscode_integration/manager.py`
-- `src/sendell/vscode_integration/websocket_server.py`
-- `src/sendell/vscode_integration/tools.py`
-- `test_vscode_integration.py`
-- `test_websocket_simple.py`
-- `VSCODE_INTEGRATION_README.md`
-
-**Modificados**:
-- `src/sendell/agent/core.py` (+80 líneas):
-  - Imports de vscode_integration
-  - 5 tools agregadas
-  - `start_vscode_server()` / `stop_vscode_server()` async
-- `src/sendell/__main__.py` (+10 líneas):
-  - Auto-inicio de WebSocket server en chat/proactive loops
-  - Cleanup al salir
-- `pyproject.toml` (+1 línea):
-  - Dependency: `websockets>=12.0`
-
-### Decisiones Técnicas Importantes
-
-#### 1. Event Loop Fix (Sesión 18)
-**Problema inicial**: WebSocket server se iniciaba sincrónicamente antes de event loop
-**Solución**: Cambiar a async `start_vscode_server()` llamado desde contexto async
-**Resultado**: Server ahora inicia correctamente con asyncio
-
-#### 2. Arquitectura Anti-Saturación
-**Decisión**: Filtrado en 3 capas (extensión → servidor → tools)
-**Razón**: Prevenir saturación de tokens con dev servers ruidosos
-**Beneficio**: 90-98% reducción de tokens
-
-#### 3. TailBuffer con deque
-**Decisión**: `deque(maxlen=20)` en lugar de lista manual
-**Razón**: Auto-eviction O(1), memory-efficient
-**Beneficio**: Sin memory leaks, performance constante
-
-#### 4. Error Detection con Regex
-**Decisión**: Patterns predefinidos vs ML
-**Razón**: Simplicidad, confiabilidad, no requiere training
-**Patterns**: `\berror\b`, `failed`, `exception`, `TypeError`, etc.
-
-#### 5. WebSocket Client-Side (Extensión)
-**Decisión**: Extensión conecta a server (no server → extensión)
-**Razón**: Evita port conflicts, mejor lifecycle management
-**Resultado**: Múltiples VS Code pueden conectar al mismo server
-
-### Testing Realizado
-
-#### ✅ Tests Pasados:
-1. **Python syntax check**: Todos los archivos compilan sin errores
-2. **WebSocket server**: Acepta conexiones, procesa mensajes, responde ACKs
-3. **Port listening**: `netstat` confirma puerto 7000 activo
-4. **Simple connection test**: Script Python conecta exitosamente
-
-#### ❌ Tests Pendientes:
-1. **Extensión VS Code**: Bug de conexión (error 1006)
-2. **E2E flow**: Extensión → Server → Manager → Tools → Agent
-3. **Dev server filtering**: 1000 líneas ruido vs 1 error
-4. **Token usage**: Verificar ahorro real en queries
-
-### ✅ RESOLUCIÓN DE BUGS (Sesión 18 - continuación)
-
-#### Bug 1: Extensión no conectaba (RESUELTO ✅)
-**Problema**: Error `1006 - Unknown reason` al conectar
-**Causa**: Event loop timing - server iniciaba antes de event loop activo
-**Solución**: Cambiar a async `start_vscode_server()` en contexto async
-**Resultado**: Extensión conecta exitosamente
-
-#### Bug 2: Server se desconectaba después de 1 minuto (RESUELTO ✅)
-**Problema**: `Disconnected from Sendell server: 1006` después de ~60s
-**Causa**: `async with websockets.serve()` se cerraba automáticamente
-**Solución**: Guardar `self.server` y usar `await websockets.serve()` sin context manager
-**Resultado**: Server permanece activo indefinidamente
-
-#### Bug 3: Terminal events no se capturaban (PARCIALMENTE RESUELTO ⚠️)
-**Problema**: Extensión no enviaba eventos de terminal al servidor
-**Estado**:
-- ✅ Extensión conecta
-- ✅ Handshake exitoso
-- ✅ Server recibe ALGUNOS eventos (detectó 5 errores)
-- ⚠️ Datos incorrectos (workspace "unknown", nombres raros)
-**Pendiente**: Fase 5 - Corregir parsing de workspace y nombres de terminales
-
-### Testing Final (Sesión 18)
-
-**✅ Tests Exitosos**:
-1. Extensión conecta y permanece conectada
-2. Server no se desconecta (probado >5 minutos)
-3. Tool `get_project_errors()` funciona (detectó 5 errores)
-4. Flujo completo: Terminal → Extensión → Server → Manager → Tools → Agent
-
-**⚠️ Tests Parciales**:
-1. Workspace detection: Muestra "unknown" en lugar del nombre real
-2. Terminal names: Muestra "uv" en lugar del nombre correcto
-3. Error parsing: Captura líneas de log internos de Sendell como errores
-
-**❌ Tests No Realizados**:
-1. Dev server filtering (1000 líneas ruido vs 1 error)
-2. `get_terminal_tail()` con nombres correctos
-3. `send_terminal_command()`
-4. Token usage real en queries
-
-### Fase 5: Polish & Improvements (PLANEADA)
-
-**Objetivo**: Pulir y mejorar la integración VS Code para producción
-
-**Tareas identificadas**:
-
-1. **Workspace Detection Fix** (ALTA PRIORIDAD)
-   - [ ] Corregir detección de workspace name
-   - [ ] Enviar workspace path correcto desde extensión
-   - [ ] Usar workspace folder de VS Code API correctamente
-
-2. **Terminal Naming Fix** (ALTA PRIORIDAD)
-   - [ ] Usar nombres reales de terminales
-   - [ ] Mapear terminal.name de VS Code correctamente
-   - [ ] Sincronizar nombres entre extensión y servidor
-
-3. **Error Detection Improvement** (MEDIA PRIORIDAD)
-   - [ ] Mejorar regex patterns para errores
-   - [ ] Filtrar logs internos de Sendell
-   - [ ] Distinguir entre errores reales vs logs informativos
-
-4. **Shell Integration Verification** (MEDIA PRIORIDAD)
-   - [ ] Verificar que Shell Integration API está activo
-   - [ ] Documentar cómo habilitar Shell Integration
-   - [ ] Fallback si Shell Integration no disponible
-
-5. **Dev Server Filtering Test** (BAJA PRIORIDAD)
-   - [ ] Test con 1000 líneas de HMR noise
-   - [ ] Verificar que solo errores se almacenan
-   - [ ] Medir ahorro real de tokens
-
-6. **Terminal Command Execution** (BAJA PRIORIDAD)
-   - [ ] Probar `send_terminal_command()`
-   - [ ] Verificar permisos L3+
-   - [ ] Test con comandos seguros
-
-7. **Documentation** (ALTA PRIORIDAD)
-   - [ ] README con instrucciones completas
-   - [ ] Troubleshooting guide
-   - [ ] Video/GIF de demostración
-
-8. **Performance & Cleanup** (MEDIA PRIORIDAD)
-   - [ ] Verificar memory usage con múltiples proyectos
-   - [ ] Optimizar polling intervals
-   - [ ] Cleanup de terminales cerradas
-
-### Estado Final Sesión 18
-
-**✅ LOGROS PRINCIPALES**:
-1. WebSocket server funcionando y estable
-2. Extensión VS Code conectada y comunicándose
-3. Flujo E2E completo operativo
-4. Sistema anti-saturación implementado
-5. 5 tools LangChain integradas con agente
-6. Detección de errores funcionando (aunque imperfecta)
-
-**📊 MÉTRICAS**:
-- Código Python: ~1200 líneas (módulo vscode_integration)
-- Código TypeScript: ~500 líneas (extensión, ya existía)
-- Tests: 2 scripts de testing funcionales
-- Tools: 5 nuevas herramientas para el agente
-- Proyectos detectados: 5 workspaces, 21 terminales
-- Errores detectados: 5 (en testing)
-
-**🎯 PRÓXIMO MILESTONE**: Fase 5 - Polish & Improvements (estimado: 1-2 sesiones)
-
-### Lecciones Aprendidas (Sesión 17-18)
-
-1. **Asyncio event loop timing es crítico**
-   - No iniciar tasks asyncio antes de tener event loop activo
-   - Usar `asyncio.create_task()` en contexto async, no `loop.create_task()` externo
-
-2. **Testing incremental es esencial**
-   - Test simple de conexión reveló que server funciona
-   - Permitió aislar problema a la extensión TypeScript
-
-3. **Deque con maxlen es poderoso**
-   - Auto-eviction sin código manual
-   - Memory-safe por diseño
-
-4. **WebSocket debugging requiere logs de ambos lados**
-   - Server Python: `logger.info()`
-   - Extensión VS Code: Output channel
-   - Ambos necesarios para diagnosticar
+**Dashboard & Terminales** (v0.3):
+- Monitoreo multi-proyecto en tiempo real
+- Gráficos de actividad animados
+- Terminales embebidos en navegador
+- Control bidireccional de cmd.exe
+- Estados: OFFLINE → READY → WORKING
 
 ---
 
-## RESUMEN EJECUTIVO DEL PROYECTO
+## 🏗️ ARQUITECTURA ACTUAL
 
-**Sendell** es un agente autónomo AI que monitorea y controla dispositivos Windows, usando LangGraph para orquestación y psutil para monitoreo del sistema.
-
-### Estado Actual del MVP (v0.1)
-COMPLETADO. Todas las funcionalidades core están operativas:
-- ✅ Monitoreo del sistema (CPU, RAM, disco) en tiempo real
-- ✅ Detección de aplicación activa (respetando privacidad)
-- ✅ Lista de procesos por uso de recursos
-- ✅ Apertura de aplicaciones por comando
-- ✅ Chat interactivo con Sendell
-- ✅ GUI "Ver Cerebro" para gestionar memoria y configuración
-- ✅ Sistema de autonomía L1-L5 configurable desde GUI
-- ✅ Sistema de memoria JSON persistente
-
-### Por qué este stack
-- **LangGraph**: Patrón ReAct con estado persistente
-- **OpenAI GPT-4**: Razonamiento avanzado
-- **psutil**: Cross-platform system monitoring
-- **tkinter**: GUI nativa sin dependencias adicionales
-
----
-
-## 🚀 VISIÓN EXPANDIDA: SENDELL v0.3+ (2025-11-02)
-
-### De Asistente Personal a Sistema de Gestión de Desarrollo
-
-Sendell evoluciona de un asistente personal de escritorio a un **sistema completo de gestión agentica de proyectos de desarrollo**, manteniendo su naturaleza privada para uso exclusivo de Daniel.
-
-### Capacidades Nuevas (Planificadas v0.3-v1.0)
-
-#### 1. Multi-Project Management
-**Gestionar todos los proyectos de VS Code en esta máquina**
-- Descubrir y listar proyectos automáticamente
-- Monitorear estado de consola/terminal en tiempo real
-- Ejecutar comandos en contexto de cada proyecto
-- Detectar errores y problemas proactivamente
-- Entender estructura y configuración de cada proyecto
-
-#### 2. Browser Automation (Agentic Web Actions)
-**Navegar y actuar en el navegador programáticamente**
-- Ver páginas web y extraer información
-- Hacer clicks y llenar formularios
-- Entender DOM structure
-- Realizar búsquedas y research automático
-- Monitorear cambios en sitios web
-
-#### 3. VS Code Extension
-**Integración profunda con editor**
-- Detectar proyecto activo en VS Code
-- Leer output de terminales integradas
-- Enviar comandos a terminal
-- Monitorear cambios de archivos
-- Comunicación bidireccional VS Code ↔ Sendell
-
-#### 4. Triple Dashboard System
-**Controlar Sendell desde cualquier dispositivo**
-- **Dashboard Local** (tkinter actual) - Principal, adaptable
-- **Dashboard Web** (Angular/Ionic) - Accesible desde navegador
-- **App Móvil** (Ionic) - Control desde celular (iOS/Android)
-
-Todos conectados al mismo backend de Sendell en esta máquina.
-
-### Arquitectura Futura (v0.3+)
+### Módulos Python
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│          DASHBOARDS (3 interfaces)                      │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   Local     │  │  Web App     │  │  Mobile App  │   │
-│  │  (tkinter)  │  │  (Angular)   │  │   (Ionic)    │   │
-│  └──────┬──────┘  └──────┬───────┘  └──────┬───────┘   │
-│         │                 │                  │           │
-│         └─────────────────┴──────────────────┘           │
-│                           │                              │
-│                    WebSocket/REST API                    │
-└────────────────────────────┬────────────────────────────┘
-                             │
-┌────────────────────────────▼────────────────────────────┐
-│            SENDELL CORE (Python Backend)                │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │  LangGraph Agent + OpenAI GPT-4                 │   │
-│  │  - Chat & Proactive Loop                         │   │
-│  │  - 15+ Tools (system, projects, browser, etc.)   │   │
-│  └──────────────────────────────────────────────────┘   │
-│                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │  Project     │  │   Browser    │  │  VS Code     │  │
-│  │  Manager     │  │   Agent      │  │  Bridge      │  │
-│  │  (asyncio)   │  │ (Playwright) │  │ (WebSocket)  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────┐
-│          EXTERNAL INTEGRATIONS                          │
-│  ┌──────────┐  ┌────────────┐  ┌────────────────────┐  │
-│  │ VS Code  │  │  Web APIs  │  │ Multi-Projects     │  │
-│  │Extension │  │ (browser)  │  │ (on this machine)  │  │
-│  └──────────┘  └────────────┘  └────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Stack Tecnológico Expandido
-
-**Backend (Sendell Core)**
-- Python 3.10+, LangGraph, OpenAI GPT-4
-- **Playwright** (browser automation con LangChain integration)
-- **WebSocket Server** (comunicación con dashboards)
-- **FastAPI** (REST API para dashboards)
-- **SQLAlchemy** (database para proyectos/métricas)
-- **asyncio** (manejo concurrente de múltiples proyectos)
-
-**Frontend (Dashboards)**
-- **Angular 17+** (framework web)
-- **Ionic 7+** (componentes UI + capacitor para mobile)
-- **WebSocket Client** (real-time updates)
-- **Chart.js / D3.js** (visualizaciones)
-
-**Integration**
-- **VS Code Extension** (TypeScript)
-- **WebSocket** (VS Code ↔ Sendell)
-- **Git integration** (monitor commits, branches, etc.)
-
-### Documentación de Investigación Creada
-
-4 guías exhaustivas de investigación fueron creadas (2025-11-02):
-
-1. **`PLAYWRIGHT_BROWSER_GUIDE.md`** (~15,000 palabras)
-   - Comparación Playwright vs Selenium
-   - LangChain integration completa
-   - Ejemplos de código production-ready
-   - Arquitectura para AI agents
-
-2. **`VSCODE_EXTENSION_GUIDE.md`** (~12,000 palabras)
-   - WebSocket-based architecture
-   - API completa de VS Code
-   - Seguridad y best practices
-   - Implementación TypeScript + Python
-
-3. **`ANGULAR_IONIC_GUIDE.md`** (~13,000 palabras)
-   - Single codebase → Web + Mobile
-   - FastAPI backend integration
-   - Real-time WebSocket communication
-   - Deployment strategies
-
-4. **`MULTI_PROJECT_MANAGEMENT_GUIDE.md`** (~15,000 palabras)
-   - Async subprocess monitoring
-   - Project type detection
-   - Database schemas (7 tables)
-   - Security & sandboxing
-   - LangGraph tool integration
-
-**Total**: ~55,000 palabras de documentación técnica lista para implementación.
-
-### Principios de Diseño
-
-1. **Privado y Personal**: Software exclusivo para Daniel, no comercial
-2. **Incremental**: Desarrollo por fases bien definidas
-3. **Testeado**: Daniel testea cada feature antes de avanzar
-4. **Documentado**: CLAUDE.md siempre actualizado
-5. **Seguro**: Validación, sandboxing, permisos (L1-L5)
-6. **Modular**: Cada sistema funciona independiente y se integra
-
----
-
-## ARQUITECTURA TÉCNICA REAL
-
-### Arquitectura Implementada (Simplificada)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 CAPA DE ORQUESTACIÓN                         │
-│   LangGraph Agent (ReAct) + OpenAI GPT-4 Turbo             │
-│   - Chat interactivo y loop proactivo                        │
-│   - 6 herramientas (tools) directamente integradas          │
-│   - Sistema de memoria JSON persistente                      │
-│   - GUI tkinter para configuración                          │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      │ (Tools llamados directamente,
-                      │  MCP server existe pero no activo)
-                      │
-┌─────────────────────▼───────────────────────────────────────┐
-│              CAPA DE DISPOSITIVO                             │
-│      Monitoreo y Control (psutil + pywin32)                 │
-│   - Monitoreo: CPU, RAM, disco, ventanas activas           │
-│   - Control: Abrir aplicaciones                             │
-│   - Validación: Sistema L1-L5 de permisos                  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Nota importante**: El servidor MCP está implementado (mcp/server.py) pero NO está activo en v0.1. Las herramientas son llamadas directamente por el agente LangGraph. MCP será activado en v0.2 para extensibilidad.
-
-### Stack Tecnológico Real
-
-**Core Framework**:
-- Python 3.10+
-- LangGraph 0.2.0+ con create_react_agent
-- OpenAI GPT-4 Turbo (gpt-4-turbo-preview)
-- LangChain Core 0.3.0+
-- Transport: Directo (tools como funciones Python)
-
-**Sistema & Automatización**:
-- psutil (cross-platform monitoring)
-- pywin32 (Windows específico para ventanas)
-- tkinter (GUI nativa)
-
-**Memoria & Datos**:
-- JSON persistente (data/sendell_memory.json)
-- No usa bases de datos externas en v0.1
-- Sistema simple y funcional
-
-**Seguridad & Config**:
-- Pydantic v2 (validación)
-- python-dotenv (.env para configuración)
-- Sistema L1-L5 de permisos (permissions.py)
-- PII scrubbing en logs
-
-**CLI & UX**:
-- Typer (comandos CLI)
-- Rich (formateo de output)
-
----
-
-## ESTRUCTURA DE ARCHIVOS (ACTUAL - 2025-10-29)
-
-```
-sendell/
-├── pyproject.toml              # Dependencias con uv
-├── README.md                   # Documentación usuario
-├── CLAUDE.md                   # Este archivo - Memoria permanente
-├── .env                        # Configuración (crear desde .env.example)
-├── .env.example                # Template de configuración
-├── test_notification.py        # Testing script para UI (v0.2 Fase 2A)
+src/sendell/
+├── agent/                     # Core LangGraph Agent
+│   ├── core.py               # SendellAgent con 7 tools
+│   ├── prompts.py            # System prompts
+│   ├── memory.py             # JSON persistence
+│   ├── brain_gui.py          # tkinter GUI (config/memory)
+│   └── loops.py              # Proactive loop
 │
-├── data/
-│   └── sendell_memory.json     # Memoria persistente (facts, conversaciones, reminders, identity)
+├── terminal_manager/          # Terminal Control (v0.3)
+│   ├── manager.py            # TerminalManager singleton
+│   ├── process.py            # ManagedTerminalProcess
+│   └── types.py              # Pydantic models
 │
-├── src/
-│   └── sendell/
-│       ├── __init__.py
-│       ├── __main__.py         # Entry: uv run python -m sendell (comandos: chat, status, brain, health)
-│       ├── config.py           # Pydantic Settings
-│       │
-│       ├── agent/              # 🧠 ORQUESTACIÓN
-│       │   ├── __init__.py
-│       │   ├── core.py         # SendellAgent con LangGraph (7 tools)
-│       │   ├── prompts.py      # System prompts (chat, proactive, base)
-│       │   ├── memory.py       # Sistema JSON de memoria
-│       │   └── brain_gui.py    # GUI tkinter (3 tabs: Memorias, Prompts, Herramientas)
-│       │
-│       ├── proactive/          # ⏰ SISTEMA PROACTIVO (v0.2 Fase 1)
-│       │   ├── __init__.py
-│       │   ├── identity.py              # AgentIdentity, RelationshipPhase
-│       │   ├── temporal_clock.py        # TimeContext, optimal timing
-│       │   ├── reminders.py             # Reminder, ReminderManager
-│       │   ├── reminder_actions.py      # popup, notepad, sound, chat_message
-│       │   └── proactive_loop.py        # ProactiveLoop asyncio background
-│       │
-│       ├── ui/                 # 🎨 SISTEMA UI (v0.2 Fase 2A - EN DESARROLLO)
-│       │   ├── __init__.py              # ✅ Branch 1 completado
-│       │   └── notification_window.py   # ✅ NotificationWindow con 4 niveles
-│       │
-│       ├── mcp/                # 🔌 CAPA MCP (implementado, no activo)
-│       │   ├── __init__.py
-│       │   ├── server.py       # Servidor MCP (para v0.2+)
-│       │   └── tools/          # Implementación de herramientas
-│       │       ├── __init__.py
-│       │       ├── monitoring.py    # get_system_health, get_active_window
-│       │       ├── process.py       # list_top_processes, open_application
-│       │       └── conversation.py  # respond_to_user
-│       │
-│       ├── device/             # 💻 DISPOSITIVO
-│       │   ├── __init__.py
-│       │   ├── monitor.py      # SystemMonitor (wrapper psutil)
-│       │   ├── automation.py   # AppController (abrir apps)
-│       │   └── platform/
-│       │       ├── __init__.py
-│       │       └── windows.py  # APIs Windows (pywin32)
-│       │
-│       ├── security/           # 🔒 SEGURIDAD
-│       │   ├── __init__.py
-│       │   └── permissions.py  # L1-L5 autonomy levels
-│       │
-│       └── utils/
-│           ├── __init__.py
-│           ├── logger.py       # Logging con PII scrubbing
-│           └── errors.py       # Excepciones custom
+├── project_manager/           # VS Code Detection
+│   ├── vscode_detector.py    # psutil-based detection
+│   └── project_states.py     # State machine (OFFLINE/READY/WORKING)
+│
+├── web/                       # FastAPI Server
+│   ├── server.py             # Main app + WebSocket endpoints
+│   ├── routes.py             # REST API
+│   ├── websocket.py          # WebSocket manager
+│   └── background.py         # Background scanner
+│
+├── device/                    # System Monitoring
+│   ├── monitor.py            # psutil wrapper
+│   └── automation.py         # App launching
+│
+├── proactive/                 # Proactive System (v0.2)
+│   ├── identity.py           # Temporal identity
+│   ├── reminders.py          # Reminder manager
+│   └── proactive_loop.py     # Background loop
+│
+└── ui/                        # Notification UI (v0.2)
+    ├── notification_window.py # tkinter notifications
+    └── ascii_art.py           # ASCII art library
+```
+
+### Angular Dashboard
+
+```
+sendell-dashboard/src/app/
+├── app.ts                     # Main component + project detection
+├── app.html                   # Template (projects + terminals)
+├── app.scss                   # Cyberpunk styling
+│
+├── components/
+│   ├── activity-graph.component.ts  # ECG-style graphs
+│   └── terminal.component.ts        # xterm.js embedded terminal
+│
+└── core/
+    ├── models/
+    │   ├── project.model.ts         # Project interface
+    │   └── fact.model.ts            # Memory fact
+    │
+    └── services/
+        ├── api.service.ts           # HTTP client
+        ├── websocket.service.ts     # WebSocket client
+        └── terminal.service.ts      # Terminal visibility state
 ```
 
 ---
 
-## FUNCIONALIDADES IMPLEMENTADAS
+## 🎯 ESTADO DE VERSIONES
 
-### 6 Herramientas Funcionales
+### ✅ v0.1 - MVP Básico (COMPLETADO)
 
-Todas 100% operativas:
+**Octubre 2025** - 12 sesiones
 
-1. **get_system_health**
-   - Retorna: CPU%, RAM%, Disco% con detección de umbrales
-   - Uso: Monitoreo rápido del sistema
-   - Permiso: L1+ (read-only)
+Core functionality:
+- LangGraph agent con 6 herramientas
+- Chat interactivo CLI
+- Memoria JSON persistente
+- Brain GUI (3 tabs: Memorias, Prompts, Herramientas)
+- Sistema de permisos L1-L5 configurable
+- Health monitoring (CPU, RAM, Disk)
 
-2. **get_active_window**
-   - Retorna: Título ventana, proceso, PID
-   - Uso: Entender contexto del usuario
-   - Permiso: L1+ (read-only)
-   - Privacidad: Respeta apps bloqueadas en config
+**Lecciones aprendidas**:
+- Solo ASCII en código Python (Windows encoding issues)
+- LangGraph `create_react_agent()` usa parámetro `prompt`, no `state_modifier`
+- Memoria JSON simple > Database compleja para MVP
+- tkinter suficiente para GUI básico
 
-3. **list_top_processes**
-   - Parámetros: n (cantidad), sort_by (memory/cpu)
-   - Retorna: Top N procesos con uso de recursos
-   - Uso: Identificar apps que consumen recursos
-   - Permiso: L1+ (read-only)
+### ✅ v0.2 - Sistema Proactivo (COMPLETADO)
 
-4. **open_application**
-   - Parámetros: app_name, args (opcional)
-   - Uso: Abrir aplicaciones (notepad, chrome, vscode, etc.)
-   - Permiso: L3+ (acción con estado)
-   - Validación: Respeta apps bloqueadas
+**Octubre-Noviembre 2025** - 3 sesiones
 
-5. **respond_to_user**
-   - Parámetros: message, requires_approval (bool)
-   - Uso: Comunicación proactiva del agente
-   - Permiso: Siempre permitido
+**Fase 1: Identidad & Reminders**
+- AgentIdentity con birth_date y relationship phases
+- Sistema de reminders (one-time, recurring)
+- Loop proactivo asyncio no bloqueante
+- Integration con LangGraph agent (7ma tool: `add_reminder`)
 
-6. **show_brain** (NUEVO en v0.1)
-   - Sin parámetros
-   - Abre GUI tkinter para gestionar memoria y config
-   - Tabs: Memorias, Prompts, Herramientas
-   - Permite configurar autonomía L1-L5 desde GUI
-   - Uso: "show me your brain", "open brain interface"
+**Fase 2: Notificaciones Visuales**
+- NotificationWindow con 4 niveles de urgencia
+- 25 ASCII arts categorizados
+- Sistema de sonidos Windows (winsound)
+- Auto-selección de arte basada en contexto
 
-### Sistema de Permisos (L1-L5) - CONFIGURABLE
+**Estado**: Funcional 100%, usado diariamente por Daniel
 
-**Configurable desde**: `sendell brain` -> Tab Memorias -> Selector desplegable
+### 🎯 v0.3 - Dashboard & Terminales (95% COMPLETO)
 
-- **L1 - Monitor Only**: Solo observar, nunca actuar
-- **L2 - Ask Permission**: Preguntar antes de cualquier acción (DEFAULT)
-- **L3 - Safe Actions**: Auto-ejecutar acciones seguras (abrir apps)
-- **L4 - Modify State**: Cerrar apps, modificar archivos
-- **L5 - Full Autonomy**: Autonomía completa (peligroso)
+**Noviembre 2025** - 21 sesiones
 
-**Cómo funciona**:
-1. Usuario selecciona nivel en GUI
-2. Nivel se guarda en .env (SENDELL_AUTONOMY_LEVEL)
-3. Agente debe reiniciarse para aplicar cambios
-4. Cada tool valida permisos antes de ejecutar
+**Fase 0-2: Dashboard Base**
+- Migración Tkinter → Qt6 → **Angular** (decisión final)
+- Detección de proyectos VS Code con psutil
+- Gráficos de actividad ECG-style
+- Backend FastAPI + WebSocket
 
-### Sistema de Memoria (JSON)
+**Fase 3: Terminales Embebidos** ✅
+- TerminalManager con subprocess.Popen
+- ManagedTerminalProcess (threading para I/O)
+- WebSocket `/ws/terminal/{pid}` bidireccional
+- xterm.js frontend con tema cyberpunk
+- Click behavior: OFFLINE → crea terminal, READY/WORKING → toggle
 
-**Ubicación**: `data/sendell_memory.json`
+**Pendiente**:
+- Build y deploy: `npm run build` → `src/sendell/web/static/`
+- Testing end-to-end completo
+- Fase 4: Actualizar `project_states.py` con TerminalManager
 
-**Estructura**:
-```json
-{
-  "facts": [
-    {
-      "fact": "Daniel trabaja en AI",
-      "category": "work",
-      "learned_at": "2025-10-28T14:30:00"
-    }
-  ],
-  "preferences": {
-    "favorite_apps": ["vscode"],
-    "work_hours": "14:00-18:00"
-  },
-  "conversations": [
-    {
-      "timestamp": "2025-10-28T14:35:00",
-      "messages": [...]
-    }
-  ],
-  "sessions": [
-    {
-      "start": "2025-10-28T14:00:00",
-      "end": "2025-10-28T15:00:00",
-      "actions_taken": 5
-    }
-  ]
-}
-```
+**Archivos clave**:
+- Backend: `src/sendell/terminal_manager/` (4 archivos)
+- Frontend: `sendell-dashboard/src/app/components/terminal.component.ts`
+- Server: `src/sendell/web/server.py` (WebSocket endpoint)
 
-**Estado actual (v0.1)**:
-- ✅ Estructura JSON implementada
-- ✅ CRUD de facts desde GUI
-- ✅ Persistencia en disco
-- ⏳ Auto-aprendizaje de facts (v0.2)
-- ⏳ Facts cargados automáticamente en conversaciones (v0.2)
+### 🔮 v0.4+ - Futuro (Planificado)
 
-### GUI "Ver Cerebro" (brain_gui.py)
+Posibles features:
+- Integración Claude Code (enviar comandos a sesiones Claude)
+- Browser automation con Playwright
+- Mobile dashboard con Ionic
+- Monitoreo de múltiples máquinas
 
-**Cómo abrir**:
-- Comando: `uv run python -m sendell brain`
-- Chat: "show me your brain", "open brain interface"
+**Filosofía**: Solo implementar features con valor demostrado. Simple > Complex.
 
-**Tab 1: MEMORIAS**
-- Vista de facts aprendidos con categoría y fecha
-- Botón "Agregar Fact" para añadir manualmente
-- Botón "Eliminar Fact" para borrar seleccionado
-- Estadísticas: Total facts, conversaciones, sesiones
-- **SELECTOR DE AUTONOMÍA**: Dropdown L1-L5 con botón "Guardar Nivel"
+---
 
-**Tab 2: PROMPTS**
-- Vista/edición del system prompt completo
-- Permite personalizar personalidad de Sendell
-- Botón "Guardar Prompt"
-- Nota: Reiniciar agente para aplicar cambios
+## 🛠️ CONFIGURACIÓN Y USO
 
-**Tab 3: HERRAMIENTAS**
-- Lista de las 6 herramientas disponibles
-- Muestra nombre y descripción de cada una
-- Read-only (informativo)
+### Setup Inicial
 
-### Comandos CLI Disponibles
+```bash
+# Clone repository
+git clone [repo-url]
+cd sendell
 
-```powershell
-# Chequeo rápido del sistema (sin agente)
-uv run python -m sendell health
+# Install dependencies
+uv sync
 
-# Chat interactivo (COMANDO PRINCIPAL)
+# Create .env from template
+cp .env.example .env
+# Edit .env: agregar OPENAI_API_KEY
+
+# Run agent (CLI chat)
 uv run python -m sendell chat
 
-# Abrir GUI de configuración/memoria
+# Open Brain GUI (config/memory)
 uv run python -m sendell brain
 
-# Loop proactivo OODA (testing)
-uv run python -m sendell start --interval 30 --max-cycles 3
+# Start web dashboard
+uv run uvicorn sendell.web.server:app --reload --port 8765
+# Abrir http://localhost:8765
+```
+
+### Comandos CLI
+
+```bash
+# Chat interactivo con agente
+uv run python -m sendell chat
+
+# Status del sistema (health check)
+uv run python -m sendell status
+
+# Abrir Brain GUI
+uv run python -m sendell brain
 
 # Ver versión
 uv run python -m sendell version
 ```
 
----
-
-## DECISIONES ARQUITECTÓNICAS IMPORTANTES
-
-### 1. LangGraph create_react_agent - CORRECCIÓN CRÍTICA
-
-**Error inicial**: Usé parámetro `state_modifier` que no existe
-**Corrección**: El parámetro correcto es `prompt` (acepta string, se convierte automáticamente a SystemMessage)
-
-```python
-# CORRECTO
-self.agent = create_react_agent(
-    self.llm,
-    self.tools,
-    prompt=get_system_prompt(),  # String convertido a SystemMessage
-)
-
-# INCORRECTO (no existe)
-self.agent = create_react_agent(
-    self.llm,
-    self.tools,
-    state_modifier=...,  # Error!
-)
-```
-
-**Aprendizaje**: No asumir APIs sin verificar documentación oficial.
-
-### 2. MCP Server: Implementado pero No Activo
-
-**Decisión**: Tools llamados directamente por LangGraph, MCP server existe pero no se usa en v0.1
-**Razón**:
-- Simplicidad para MVP
-- Menos overhead
-- MCP será activado en v0.2 para permitir extensibilidad (plugins externos)
-
-**Ubicación**: `src/sendell/mcp/server.py` (listo para activarse)
-
-### 3. Memoria JSON vs Base de Datos
-
-**Decisión**: JSON simple en v0.1
-**Razón**:
-- Rapidez de desarrollo
-- Sin dependencias adicionales
-- Suficiente para MVP
-- PostgreSQL/SQLite en v0.2+ si es necesario
-
-### 4. Encoding: Solo ASCII
-
-**Decisión**: Todos los archivos Python usan solo ASCII
-**Razón**: Windows tuvo problemas con UTF-8 fancy characters (→, ✅, ⚠️)
-**Implementación**:
-- Flechas: -> en lugar de →
-- Status: [OK], [!] High en lugar de ✅, ⚠️
-- Sin emojis en código
-
-**Errores resueltos**:
-- UnicodeDecodeError en README.md (byte 0xd3)
-- UnicodeDecodeError en core.py (byte 0x92)
-- UnicodeDecodeError en __main__.py (byte 0xa0)
-
-### 5. GUI con tkinter
-
-**Decisión**: tkinter para GUI (no Electron, no web)
-**Razón**:
-- Incluido en Python (sin dependencias)
-- Nativo
-- Suficiente para gestión de config y memoria
-
-### 6. Agente Único (No Multi-Agente)
-
-**Decisión**: Un solo agente bien diseñado
-**Razón**: Research de Anthropic muestra que multi-agente usa 15x más tokens con beneficios marginales
-
----
-
-## CONFIGURACIÓN (.env)
+### Configuración (.env)
 
 ```bash
 # OpenAI (OBLIGATORIO)
-OPENAI_API_KEY=sk-tu-api-key-aqui
+OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4-turbo-preview
 
-# Agente
-SENDELL_AUTONOMY_LEVEL=2  # L1-L5 (configurable desde GUI)
-SENDELL_LOOP_INTERVAL=60  # Segundos para loop proactivo
+# Autonomía (L1-L5, configurable desde Brain GUI)
+SENDELL_AUTONOMY_LEVEL=2
+
+# Proactive loop
+SENDELL_LOOP_INTERVAL=60
 SENDELL_PROACTIVE_MODE=true
 
-# Privacidad
+# Privacy
 SENDELL_BLOCKED_APPS=1password,keepass,banking
 SENDELL_SCRUB_PII=true
 
 # Logs
 SENDELL_LOG_LEVEL=INFO
-
-# LangChain (opcional)
-LANGCHAIN_TRACING_V2=false
 ```
-
-**IMPORTANTE**: No editar .env manualmente para autonomía. Usar `sendell brain` -> Tab Memorias -> Selector.
 
 ---
 
-## DEPENDENCIAS REALES (pyproject.toml)
+## 🧰 HERRAMIENTAS DEL AGENTE
 
-```toml
-[project]
-name = "sendell"
-version = "0.1.0"
-requires-python = ">=3.10"
+### 7 Tools Actuales
 
-dependencies = [
-    # Core LangGraph
-    "langgraph>=0.2.0",
-    "langchain-core>=0.3.0",
-    "langchain-openai>=0.2.0",
-    "openai>=1.0.0",
+1. **get_system_health** - CPU/RAM/Disk metrics (L1+)
+2. **get_active_window** - Current window title/process (L1+)
+3. **list_top_processes** - Top N by CPU/RAM (L1+)
+4. **open_application** - Launch apps (L3+)
+5. **respond_to_user** - Proactive messaging (L1+)
+6. **show_brain** - Open Brain GUI (L1+)
+7. **add_reminder** - Create reminders (L2+)
 
-    # MCP (implementado, no activo en v0.1)
-    "mcp>=0.9.0",
+### Sistema de Permisos (L1-L5)
 
-    # System Monitoring
-    "psutil>=5.9.0",
-    "pywin32>=306; sys_platform == 'win32'",
+Configurable desde Brain GUI → Tab Memorias → Dropdown
 
-    # Configuration
-    "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
-    "python-dotenv>=1.0.0",
+- **L1 - Monitor Only**: Solo observar, nunca actuar
+- **L2 - Ask Permission**: Preguntar antes de acciones (DEFAULT)
+- **L3 - Safe Actions**: Auto-ejecutar acciones seguras
+- **L4 - Modify State**: Cerrar apps, modificar archivos
+- **L5 - Full Autonomy**: Control completo (usar con precaución)
 
-    # CLI & UX
-    "typer>=0.9.0",
-    "rich>=13.0.0",
+---
+
+## 📝 DECISIONES ARQUITECTÓNICAS CLAVE
+
+### 1. Reset de v0.3 Phase 5/6 (Noviembre 2025)
+
+**Contexto**: Phase 5/6 se convirtió en ciclo de refactorización infinita. WebSocket + VS Code Extension causaba bugs recurrentes, over-engineering sin progreso visible.
+
+**Decisión**:
+- ✅ Reset a commit estable `b31c41e`
+- ✅ Archivar investigación en `archive/phase6-research/`
+- ✅ Nueva dirección: **v0.3-SIMPLIFIED** con psutil SOLAMENTE
+- ❌ Pausar VS Code Extension hasta v0.4+
+
+**Resultado**: Angular Dashboard + TerminalManager funcionando en 21 sesiones. Arquitectura limpia, testing funcional, progreso visible.
+
+**Lección**: Simple > Complex. Test antes de commit. No refactorizar infinitamente.
+
+### 2. Angular Standalone vs Qt6 vs Tkinter
+
+**Evaluación**:
+- Tkinter: Simple pero limitado, gráficos estáticos
+- Qt6: Poderoso pero GIL issues, crashes en threading
+- Angular: Web-based, responsive, mejor para dashboards
+
+**Decisión**: Angular con FastAPI backend
+
+**Pros**:
+- Accesible desde cualquier navegador
+- No GIL issues (backend async)
+- Mejor ecosistema de gráficos (Chart.js, D3.js)
+- Preparado para mobile (Ionic)
+
+**Contras**:
+- Requiere build step
+- Más complejo que Tkinter
+
+**Resultado**: Dashboard profesional, estable, escalable
+
+### 3. TerminalManager con subprocess.Popen
+
+**Contexto**: Necesitamos controlar terminales cmd.exe desde Python
+
+**Opciones evaluadas**:
+- pty (Unix-only, no funciona en Windows)
+- winpty (complejo, dependencias externas)
+- subprocess.Popen (built-in, cross-platform)
+
+**Decisión**: subprocess.Popen + threading
+
+**Implementación**:
+```python
+process = subprocess.Popen(
+    ['cmd.exe'],
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    cwd=workspace_path,
+    text=True,
+    bufsize=1,
+    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+)
+
+# Threading para I/O no bloqueante
+threading.Thread(target=self._read_stdout, daemon=True).start()
+threading.Thread(target=self._read_stderr, daemon=True).start()
+threading.Thread(target=self._process_stdin, daemon=True).start()
+```
+
+**Pros**:
+- 98% reliability
+- No dependencias externas
+- Cross-platform (funciona en Windows)
+- Control completo de I/O
+
+**Contras**:
+- Requiere threading manual
+- No pseudo-terminal features (pero no necesarias)
+
+### 4. WebSocket vs REST Polling
+
+**Para**: Real-time terminal I/O
+
+**Decisión**: WebSocket bidireccional
+
+**Razón**:
+- Latencia <50ms (vs 1-5s con polling)
+- Eficiente (no overhead HTTP)
+- Bidireccional nativo (cliente ↔ servidor)
+- Built-in en FastAPI
+
+**Protocolo**:
+```json
+// Cliente → Servidor (enviar comando)
+{"type": "input", "data": "npm run dev\n"}
+
+// Servidor → Cliente (output)
+{"type": "output", "stream": "stdout", "data": "...", "timestamp": "..."}
+```
+
+---
+
+## 🐛 PROBLEMAS COMUNES & SOLUCIONES
+
+### Problema: Dashboard no muestra proyectos
+
+**Síntomas**: Dashboard abierto, pero lista de proyectos vacía
+
+**Checks**:
+1. Servidor corriendo: `http://localhost:8765/api/projects`
+2. VS Code abierto con proyectos
+3. Console errors en DevTools
+
+**Solución común**: Olvidaste hacer build después de cambios
+```bash
+cd sendell-dashboard
+npm run build
+cd ..
+./build-dashboard.sh
+```
+
+### Problema: Terminal no aparece al hacer click
+
+**Síntomas**: Click en proyecto OFFLINE, spinner, pero no se ve terminal
+
+**Checks**:
+1. DevTools → Network → WS → Ver WebSocket conectado
+2. Backend logs: ¿TerminalManager creó terminal?
+3. Frontend logs: ¿xterm.js inicializó?
+
+**Solución común**: CSS de xterm.js no cargó. Verificar en `angular.json`:
+```json
+"styles": [
+  "node_modules/@xterm/xterm/css/xterm.css",
+  "src/styles.scss"
 ]
 ```
 
-**Instalación**: `uv sync`
+### Problema: Comandos no se ejecutan
+
+**Síntomas**: Escribes en terminal pero no pasa nada
+
+**Checks**:
+1. WebSocket conectado: `ws.readyState === WebSocket.OPEN`
+2. Backend recibe mensaje tipo "input"
+3. stdin thread corriendo en ManagedTerminalProcess
+
+**Solución común**: Falta `\n` al final del comando. xterm.js no lo agrega automáticamente.
+
+### Problema: Output no se muestra
+
+**Síntomas**: Comando se ejecuta pero no ves output
+
+**Checks**:
+1. stdout thread leyendo en backend
+2. WebSocket broadcast funcionando
+3. terminal.write() llamándose en frontend
+
+**Solución común**: Caracteres no-UTF8 en output. Usar `errors='replace'` en Popen.
 
 ---
 
-## SEGURIDAD Y PRIVACIDAD
+## 🔄 HISTORIAL DE DESARROLLO (Condensado)
 
-### Implementado en v0.1
+### Sesiones 1-10: MVP Foundation (v0.1)
+- Setup proyecto con uv + LangGraph
+- 6 herramientas core implementadas
+- Chat CLI funcional
+- Brain GUI con 3 tabs
+- Memoria JSON persistente
+- **Lección clave**: Solo ASCII en código (Windows encoding)
 
-- ✅ Input validation con Pydantic
-- ✅ Sistema L1-L5 de permisos
-- ✅ subprocess con shell=False (automation.py)
-- ✅ PII scrubbing en logs (emails, teléfonos, tarjetas)
-- ✅ Apps bloqueadas configurables
-- ✅ Credenciales en .env (nunca hardcoded)
-- ✅ Solo lee metadatos (títulos ventanas), nunca contenido
+### Sesiones 11-15: Sistema Proactivo (v0.2)
+- AgentIdentity con phases (Birth → Maturity)
+- Sistema de reminders completo
+- Loop asyncio no bloqueante
+- Notificaciones visuales con ASCII art
+- **Lección clave**: asyncio.to_thread() para input no bloqueante
 
-### Lo que Sendell NUNCA hace
+### Sesiones 16-17: Investigación v0.3
+- Research multi-project management (~15,000 palabras)
+- Playwright vs Selenium comparison
+- Angular + Ionic architecture
+- VS Code Extension design
+- **Clarificación crítica**: Daniel investiga, Claude implementa
 
-- ❌ Leer contenido de ventanas (solo títulos)
-- ❌ Monitorear apps bloqueadas
-- ❌ Guardar contraseñas
-- ❌ Enviar datos a terceros (excepto OpenAI API para LLM)
-- ❌ Telemetry sin opt-in
+### Sesiones 18-20: Dashboard Attempts
+- Intento 1: Tkinter (limitado, gráficos estáticos)
+- Intento 2: Qt6 (crashes por GIL, threading issues)
+- **Reset**: Archivar Phase 5/6, simplificar approach
+- Decisión: Angular web dashboard
 
----
-
-## SYSTEM PROMPT DEL AGENTE (prompts.py)
-
-**3 tipos de prompts**:
-
-1. **Base System Prompt**: Define personalidad y capacidades
-2. **Chat Mode Prompt**: Para modo interactivo
-3. **Proactive Loop Prompt**: Para ciclos OODA automáticos
-
-**Editable desde**: `sendell brain` -> Tab Prompts -> Editar y guardar
-
-**Contenido clave del prompt**:
-- Personalidad: Helpful, proactive, non-intrusive
-- Capacidades: 6 herramientas documentadas
-- Restricciones: Respetar privacidad, explicar acciones
-- Decision framework basado en nivel L1-L5
-- Apps bloqueadas: Nunca acceder
+### Sesiones 21: Terminales Embebidos ✅
+- TerminalManager con subprocess.Popen
+- WebSocket bidireccional implementado
+- xterm.js frontend funcionando
+- Click behavior: OFFLINE → READY → WORKING
+- **Estado**: 95% completo, pendiente build + testing
 
 ---
 
-## ROADMAP DE DESARROLLO
+## 📚 DOCUMENTACIÓN DE REFERENCIA
 
-### ✅ v0.1 (COMPLETADO - Octubre 2025)
+### Archivos Clave en Root
 
-- ✅ Setup completo del proyecto
-- ✅ 6 herramientas operativas
-- ✅ Chat interactivo funcional
-- ✅ Health check rápido
-- ✅ Sistema de memoria JSON
-- ✅ GUI "Ver Cerebro" con 3 tabs
-- ✅ Configuración de autonomía desde GUI
-- ✅ Sistema L1-L5 implementado
-- ✅ CLI con Typer + Rich
-- ✅ Documentación completa (README + claude.md)
+- **`CLAUDE.md`** - Este archivo (memoria permanente)
+- **`NEXT_SESSION_PLAN.md`** - Plan detallado para continuar v0.3 (450 líneas)
+- **`CLAUDE_CODE_INTEGRATION_PLAN.md`** - Futuro plan de integración Claude Code
+- **`V03_RESUMEN.md`** - Resumen ejecutivo del dashboard
+- **`README.md`** - Documentación de usuario
+- **`TUTORIAL.md`** - Tutorial de uso
 
-### 🔜 v0.2 (Próximo - 2-3 semanas)
+### Archivos Archivados
 
-- [ ] Memoria conversacional persistente
-- [ ] Facts cargados automáticamente en contexto
-- [ ] Auto-aprendizaje de facts desde conversaciones
-- [ ] Checkpointer de LangGraph
-- [ ] Más herramientas:
-  - take_screenshot
-  - manage_projects (track proyectos activos)
-  - control_music
-- [ ] Activar servidor MCP para extensibilidad
+- **`archive/phase6-research/`** - Investigación de Phase 5/6 abandonado (~3,500 líneas)
+- Útil para consulta futura, pero NO implementar sin testing previo
 
-### 🔮 v0.3 (Futuro - 1-2 meses)
+### Scripts de Testing
 
-- [ ] Integración email (lectura, envío)
-- [ ] Integración calendario (eventos, recordatorios)
-- [ ] Sistema de plugins/skills extensible
-- [ ] Análisis de productividad
-- [ ] Event listeners (en lugar de polling)
-
-### 🚀 v1.0 (Largo plazo - 3-6 meses)
-
-- [ ] Servidor MCP HTTP (multi-dispositivo)
-- [ ] Sincronización de contexto entre dispositivos
-- [ ] macOS support
-- [ ] Opción de modelos locales (Llama, Mistral)
+- **`test_pyside6_performance.py`** - Performance tests Qt6 (archivado)
+- **`test_vscode_simple.py`** - Test detección VS Code
+- **`build-dashboard.sh`** - Script para build + deploy Angular
 
 ---
 
-## LOG DE PROGRESO
+## 🚀 PRÓXIMOS PASOS
 
-### Sesión 1 (2025-10-24): Planificación
+### Inmediato (Esta o próxima sesión)
 
-- ✅ Lectura de sendellguia.txt
-- ✅ Creación de claude.md
-- ✅ Arquitectura de 3 capas definida
-- ✅ Todo list inicial
+1. **Build dashboard**:
+   ```bash
+   cd sendell-dashboard
+   npm run build
+   cd ..
+   ./build-dashboard.sh
+   ```
 
-### Sesión 2 (2025-10-24): Setup Estructura
+2. **Testing E2E**:
+   - Abrir 2-3 proyectos VS Code
+   - Click en OFFLINE → ver terminal aparecer
+   - Ejecutar comandos: `dir`, `npm install`, etc.
+   - Verificar output en tiempo real
+   - Toggle terminal (ocultar/mostrar)
 
-- ✅ Creación estructura de carpetas completa
-- ✅ pyproject.toml con todas las dependencias
-- ✅ .env.example y config.py con Pydantic
-- ✅ .gitignore configurado
+3. **Fase 4**: Actualizar `project_states.py` para usar TerminalManager:
+   ```python
+   def detect_project_state(project_pid: int) -> str:
+       terminal = terminal_manager.get_terminal(str(project_pid))
 
-### Sesión 3 (2025-10-24): Implementación Core
+       if not terminal or not terminal.is_running():
+           return "offline"
 
-- ✅ device/monitor.py - Wrapper psutil
-- ✅ device/automation.py - Control de apps
-- ✅ device/platform/windows.py - APIs Windows
-- ✅ security/permissions.py - Sistema L1-L5
-- ✅ utils/logger.py - PII scrubbing
-- ✅ utils/errors.py - Excepciones custom
+       if terminal.has_active_subprocess():
+           return "working"
 
-### Sesión 4 (2025-10-24): Herramientas MCP
+       return "ready"
+   ```
 
-- ✅ mcp/tools/monitoring.py - get_system_health, get_active_window
-- ✅ mcp/tools/process.py - list_top_processes, open_application
-- ✅ mcp/tools/conversation.py - respond_to_user
-- ✅ mcp/server.py - Servidor MCP completo
+4. **Commit & Push**:
+   - Commit con mensaje descriptivo
+   - Push a remote
+   - Merge `feature/claude-terminal-control` → `main`
 
-### Sesión 5 (2025-10-24): Agente LangGraph
+### Futuro v0.4+ (Opcional)
 
-- ✅ agent/prompts.py - System prompts
-- ✅ agent/core.py - SendellAgent con create_react_agent
-- ✅ __main__.py - CLI con 4 comandos
-- ✅ README.md inicial
+- Integración Claude Code (enviar instrucciones a sesiones Claude)
+- Browser automation con Playwright
+- Mobile dashboard con Ionic
+- Multi-machine monitoring
 
-### Sesión 6 (2025-10-25): Resolución de Errores
-
-**Error 1**: UnicodeDecodeError en README.md
-- Causa: Caracteres fancy Unicode
-- Solución: Recrear con ASCII puro
-
-**Error 2**: UnicodeDecodeError en agent/core.py
-- Causa: Flechas → en docstrings
-- Solución: Cambiar a ->
-
-**Error 3**: UnicodeDecodeError en __main__.py
-- Causa: Emojis (✅, ⚠️)
-- Solución: Cambiar a [OK], [!] High
-- **Aprendizaje**: Solo ASCII en código
-
-### Sesión 7 (2025-10-25): Testing Inicial
-
-- ✅ `sendell health` funcionó correctamente
-- ✅ Tabla con CPU, RAM, Disco mostrada
-- ⚠️ Error en `sendell chat`: create_react_agent parámetro incorrecto
-
-### Sesión 8 (2025-10-25): Corrección LangGraph
-
-**Error**: create_react_agent() got unexpected keyword argument 'state_modifier'
-- Daniel proporcionó langgraph.txt con documentación oficial
-- Corrección: Cambiar a parámetro `prompt`
-- ✅ Chat funcionó correctamente después del fix
-
-### Sesión 9 (2025-10-26): Análisis Profundo
-
-- Daniel preguntó sobre capacidades de Sendell
-- Explicación: MCP server existe pero no está activo
-- Explicación: Memoria no persistente aún en conversaciones
-- Discusión sobre evolución futura
-
-### Sesión 10 (2025-10-26): GUI "Ver Cerebro"
-
-**Idea de Daniel**: Interfaz gráfica para gestionar memoria
-- ✅ agent/memory.py - Sistema JSON de memoria
-- ✅ agent/brain_gui.py - GUI tkinter con 3 tabs
-- ✅ show_brain() como 6ta herramienta
-- ✅ Actualización mcp/server.py para incluir show_brain
-- ✅ Comando CLI: `sendell brain`
-
-**Tabs implementados**:
-1. Memorias: CRUD de facts + estadísticas
-2. Prompts: Ver/editar system prompt
-3. Herramientas: Lista de 6 tools
-
-### Sesión 11 (2025-10-27): Configuración de Autonomía
-
-**Problema**: Daniel en L2, Sendell no pudo abrir notepad
-- No es bug, es diseño (L2 requiere aprobación)
-- Daniel: "quiero que eso sea configurable en la mente"
-
-**Solución**:
-- ✅ Agregado selector de autonomía en Tab Memorias de GUI
-- ✅ Dropdown con opciones L1-L5
-- ✅ Función save_autonomy_level() para escribir en .env
-- ✅ Mensajes claros al usuario sobre reinicio
-
-### Sesión 12 (2025-10-28): Optimización Documentación
-
-**Tarea de Daniel**: "mejora y optimiza la documentacion del software el readme y el calude.md borrando lo que no sirve y entendiendo en su totalidad el proyecto bien supremamente claro ultrathink"
-
-**Completado**:
-- ✅ README.md completamente reescrito
-  - Enfoque práctico y claro
-  - Eliminada info desactualizada
-  - Secciones por comandos
-  - Troubleshooting y FAQ
-  - Bilingual-friendly
-- ✅ claude.md optimizado (este archivo)
-  - Reflejando estado REAL del proyecto
-  - Todas las features documentadas
-  - Log de progreso completo
-  - Decisiones arquitectónicas con aprendizajes
+**Criterio**: Solo implementar si hay valor demostrado y Daniel lo solicita
 
 ---
 
-## LECCIONES APRENDIDAS
+## 🎓 LECCIONES APRENDIDAS
 
-### 1. Encoding en Windows
-**Problema**: Python en Windows con UTF-8 fancy characters
-**Solución**: Solo ASCII en archivos Python
-**Aplicar siempre**: Evitar →, emojis, caracteres especiales en código
+### Desarrollo
 
-### 2. Verificar Documentación Oficial
-**Problema**: Asumí API de create_react_agent sin verificar
-**Solución**: Daniel proporcionó docs oficiales
-**Aplicar siempre**: No adivinar APIs, revisar docs primero
+1. **Simple > Complex**: psutil funciona mejor que WebSocket complicado
+2. **Test antes de commit**: Evita ciclos de debugging infinitos
+3. **No refactorizar sin razón**: Phase 5/6 enseñó esto duramente
+4. **Daniel investiga, Claude implementa**: Workflow claro previene malentendidos
+5. **Build frecuentemente**: Angular requiere `npm run build` después de cada cambio
 
-### 3. MVP Simple Funciona
-**Problema**: Tendencia a sobre-complicar arquitectura
-**Solución**: JSON simple, tools directos, sin MCP activo
-**Resultado**: v0.1 completado y funcional rápidamente
+### Técnico
 
-### 4. GUI Aumenta Usabilidad
-**Problema**: Configurar autonomía requería editar .env manualmente
-**Solución**: GUI con selector visual
-**Resultado**: Mejor UX, menos errores de usuario
+1. **subprocess.Popen > pty en Windows**: 98% reliability
+2. **Threading para I/O**: Queue pattern evita race conditions
+3. **WebSocket bidireccional**: Más eficiente que REST polling
+4. **xterm.js es poderoso**: Terminal completo en navegador
+5. **Signals en Angular**: Reactivo y simple
+6. **Singleton pattern**: Esencial para TerminalManager
 
-### 5. Testing Iterativo
-**Workflow**: Daniel testea -> reporta error -> Claude corrige -> documenta
-**Resultado**: Errores resueltos rápidamente, aprendizaje documentado
+### Arquitectura
 
----
-
-## PREGUNTAS RESPONDIDAS
-
-### Durante desarrollo (ya resueltas):
-
-1. **API Key**: ✅ Daniel tiene OpenAI API key configurada
-2. **Permisos**: ✅ Default L2, configurable desde GUI
-3. **Apps bloqueadas**: ✅ Configurables en .env (password managers, banking)
-4. **Testing**: ✅ Daniel testea, Claude implementa y ajusta
-5. **Lenguaje**: ✅ Documentación bilingüe, código en inglés
+1. **Angular web > Qt6 desktop**: Mejor para dashboards modernos
+2. **FastAPI async**: No GIL issues como Qt6
+3. **JSON simple > Database**: Suficiente para MVP
+4. **Memoria JSON > Redis/Postgres**: Overhead innecesario en v0.1-0.3
 
 ---
 
-## RECURSOS Y REFERENCIAS
+## 📞 WORKFLOW DE COMMITS
 
-### Documentación Usada
-- LangGraph: https://langchain-ai.github.io/langgraph/
-- LangGraph create_react_agent: langgraph.txt (proporcionado por Daniel)
-- MCP Protocol: https://modelcontextprotocol.io/
-- psutil: https://psutil.readthedocs.io/
-- Pydantic: https://docs.pydantic.dev/
-
-### Proyectos de Referencia
-- AutoGPT: Arquitectura de agente autónomo
-- Open Interpreter: UX conversacional
-
----
-
-## CONTACTO Y COLABORACIÓN
-
-**Workflow establecido**:
-1. ✅ Claude implementa según plan y feedback
-2. ✅ Daniel prueba funcionalidad (comandos health, chat, brain)
-3. ✅ Daniel reporta bugs o solicita features
-4. ✅ Claude ajusta y documenta en claude.md
-5. ✅ Repetir hasta objetivo completado
-
-**Comunicación**:
-- claude.md es la memoria permanente (fuente de verdad)
-- Daniel proporciona docs cuando es necesario (ej: langgraph.txt)
-- Documentación optimizada y clara para continuidad
-
----
-
-## DESARROLLO ACTUAL: RAMA feature/proactivity
-
-### Sesión 13 (2025-10-28): Inicio de Proactividad
-
-**Objetivo**: Evolucionar Sendell de agente reactivo a agente proactivo con identidad temporal.
-
-**Visión**: Sendell debe ser un compañero que vive contigo, no solo un asistente que espera comandos. Enfoque en el **usuario como persona**, no solo su trabajo.
-
-**Documentos de referencia**:
-- `proactividad.txt` - Arquitectura de proactividad (sistemas, fases, identidad)
-- `iapersonal.txt` - Stack tecnológico y arquitectura completa
-- `PROACTIVITY_DESIGN.md` - Diseño detallado de implementación
-
-**Branch creado**: `feature/proactivity`
-
-**5 Sistemas Core a implementar**:
-
-1. **Sistema de Identidad Temporal**
-   - Agente tiene "birth_date" y conoce hace cuánto vive
-   - Fases de evolución: Birth (días 1-7), Adolescence (8-30), Maturity (31-60), Mastery (60+)
-   - Ejemplo: "Es mi 5to día contigo, aún estoy aprendiendo tu ritmo"
-
-2. **Sistema de Reloj Interno**
-   - Sendell concibe el tiempo como recurso útil
-   - Contextos: morning_routine, work_hours, evening_routine, sleep_time
-   - Trackea uso del tiempo del usuario
-
-3. **Sistema de Memoria Personal Expandida**
-   - Más allá de facts: hábitos, rutinas, proyectos personales, familia
-   - Ejemplo: "Abuela María", hábito "Llamar a la abuela" semanal
-   - Patrones detectados: procrastinación, preferencias
-
-4. **Sistema de Recordatorios Personales**
-   - One-time: "Recuérdame llamar al doctor mañana 10am"
-   - Recurring: "Recuérdame llamar a mi abuela todos los domingos"
-   - Conditional: "Recuérdame revisar proyecto X cuando tenga tiempo libre"
-
-5. **Sistema de Atención Temporal Adaptativo**
-   - No check-ins fijos, sino cálculo dinámico de urgencia
-   - Urgency scoring 0-1 basado en: deadlines, hábitos, patrones, contexto
-   - Conversión urgencia a timing: 0.9 = 15min, 0.5 = 4h, 0.2 = mañana
-
-**Implementación por fases (5 semanas)**:
-
-**Fase 1 (Semana 1)**: Fundación
-- identity.py: AgentIdentity con birth_date, relationship_age, phase
-- temporal_clock.py: Reloj interno con time contexts
-- Actualizar memoria JSON con agent_identity
-- Validación: "Cuánto tiempo llevas conmigo?" -> "Es mi 5to día contigo"
-
-**Fase 2 (Semana 2)**: Memoria Personal
-- personal_memory.py: Habit, Routine, PersonalProject, Goal
-- GUI: Tab "Vida Personal" en brain_gui
-- CRUD de hábitos y rutinas
-- Validación: Agregar hábito "Llamar a la abuela" semanal
-
-**Fase 3 (Semana 3)**: Recordatorios Básicos
-- reminders.py: Reminder con tipos (one_time, recurring, conditional)
-- Trigger system para time-based
-- Integración con loop proactivo
-- Validación: "Recuérdame X mañana" -> se dispara correctamente
-
-**Fase 4 (Semana 4)**: Urgency Scoring
-- attention_system.py: calculate_urgency_score, urgency_to_next_interaction
-- Factores: deadlines, hábitos overdue, patrones, tiempo óptimo
-- Validación: Intervenciones oportunas, no spam
-
-**Fase 5 (Semana 5)**: Loop Proactivo Completo
-- proactive_loop.py: Loop con todos los sistemas integrados
-- daily_reflection: Reflexión al final del día
-- Sistema de feedback: ¿Esto te ayudó?
-- Validación: Dejar correr 7 días, medir utilidad vs molestia
-
-**Nuevos módulos**:
-```
-src/sendell/proactive/
-├── identity.py              # AgentIdentity, relationship phases
-├── temporal_clock.py        # Reloj interno, time awareness
-├── personal_memory.py       # Memoria personal expandida
-├── reminders.py             # Sistema de recordatorios
-├── attention_system.py      # Urgency scoring, timing optimizer
-└── proactive_loop.py        # Loop principal proactivo
-```
-
-**Principios de diseño**:
-- ✅ Respeto al usuario: 1 intervención valiosa > 10 molestas
-- ✅ Transparencia: Explica por qué actúa
-- ✅ Evolución gradual: Días 1-7 tímido, días 30+ anticipatorio
-- ✅ Medición: Track utilidad de intervenciones, aprende del feedback
-
-**Métricas de éxito v0.2**:
-- ✅ Intervenciones proactivas útiles >80%
-- ✅ Falsos positivos (molestias) <10%
-- ✅ 95%+ recordatorios se disparan a tiempo
-- ✅ Usuario siente que Sendell "lo conoce"
-
----
-
-## PRÓXIMOS PASOS INMEDIATOS
-
-### Para v0.2 (En desarrollo - rama feature/proactivity):
-
-**PRIORIDAD 1: Proactividad (5 semanas)**
-1. **Identidad temporal y reloj interno** (Semana 1)
-2. **Memoria personal expandida** (Semana 2)
-3. **Sistema de recordatorios** (Semana 3)
-4. **Urgency scoring** (Semana 4)
-5. **Loop proactivo completo** (Semana 5)
-
-**PRIORIDAD 2: Integración (después de proactividad)**
-- Memoria conversacional persistente con checkpointer
-- Auto-aprendizaje de facts desde conversaciones
-- Activar servidor MCP para extensibilidad
-
-**FUTURO v0.3+**:
-- Detección automática de patrones
-- Integración Google Calendar/Email
-- Análisis de productividad
-- take_screenshot, manage_projects, control_music
-
-### Sesión 14 (2025-10-28): Fase 1 Completada - Sistema Proactivo Funcionando
-
-**Estado**: ✅ **FASE 1 COMPLETADA AL 100% Y TESTEADA**
-
-**Commit**: `4917bbb` - "feat: Complete proactive system integration - Phase 1 100%"
-
-**Lo implementado**:
-
-#### 1. Módulos Core (Commit anterior: 125e911)
-- ✅ `identity.py` (270 líneas) - AgentIdentity con birth_date, phases, milestones
-- ✅ `temporal_clock.py` (200 líneas) - Contextos temporales, optimal timing
-- ✅ `reminders.py` (370 líneas) - Sistema completo de reminders (one-time, recurring)
-- ✅ `reminder_actions.py` (240 líneas) - Acciones ejecutables (popup, notepad, sound)
-- ✅ `proactive_loop.py` (180 líneas) - Loop background asyncio
-- ✅ `memory.py` actualizado - Soporte para agent_identity y reminders
-
-#### 2. Integración Core (Esta sesión)
-- ✅ **core.py** (+100 líneas):
-  - Inicializa todos los componentes proactivos en `__init__()`
-  - Tool `add_reminder` agregado (7mo tool del agente)
-  - Método `add_reminder_from_chat()` para crear reminders desde conversación
-  - Callback `_on_reminder_triggered()` para gestionar disparos
-  - Método `get_proactive_status()` para queries de estado
-
-- ✅ **__main__.py** (+60 líneas):
-  - Banner v0.2 "Autonomous & Proactive AI Assistant"
-  - Comando `status` - muestra identity, loop status, upcoming reminders
-  - Chat auto-inicia proactive loop en background
-  - Input no-bloqueante con `asyncio.to_thread()` - permite loop independiente
-  - Cleanup graceful al salir (stop loop)
-
-#### 3. Optimizaciones Críticas
-- ✅ **Loop independiente**: No bloquea chat, corre cada 60s
-- ✅ **Logging limpio**: Verbosidad movida a DEBUG, solo INFO para eventos importantes
-- ✅ **UI no invasiva**: Solo muestra "⏰ Processing N reminder(s)..." cuando hay acción
-- ✅ **Persistencia robusta**: Estado guardado en `data/sendell_memory.json`
-
-#### 4. Testing Exitoso ✅
-```
-✅ Reminder de 2 minutos con popup → FUNCIONA
-✅ Reminder con múltiples acciones (popup + notepad + sound) → FUNCIONA
-✅ Loop corre independiente sin bloquear input → FUNCIONA
-✅ UI limpia sin spam de logs → FUNCIONA
-✅ Persistencia correcta entre sesiones → FUNCIONA
-```
-
-**Ejemplo de uso**:
-```
-You: Remind me to test in 2 minutes with popup and notepad
-
-Sendell: [usa tool add_reminder]
-✅ Reminder set: 'test' at 10:42 PM (in 2 min) with actions: ['popup', 'notepad']
-
-[Después de 2 minutos, automáticamente:]
-⏰ Processing 1 reminder(s)...
-✅ Reminder: 'test' → popup, notepad
-[Popup de Windows aparece + Notepad se abre]
-```
-
-**Comandos disponibles**:
-```bash
-uv run python -m sendell chat    # Chat con loop proactivo auto-activado
-uv run python -m sendell status  # Ver identity, loop status, reminders
-```
-
-**Resultado status**:
-```
-Agent Identity
-  Age: 0 days
-  Phase: birth
-  Confidence: 0.00
-
-Proactive Loop
-  Running: Yes/No
-  Check interval: 60s
-  Cycles run: X
-  Reminders triggered: Y
-
-Reminders
-  Total: N
-  Due now: M
-  Upcoming (24h): K
-
-Upcoming Reminders (next 24h)
-  - test at 10:42 PM (popup, notepad)
-```
-
-**Arquitectura final Fase 1**:
-```
-src/sendell/proactive/
-├── __init__.py              ✅ Exports
-├── identity.py              ✅ AgentIdentity, RelationshipPhase
-├── temporal_clock.py        ✅ TimeContext, optimal timing
-├── reminders.py             ✅ Reminder, ReminderManager, ReminderType
-├── reminder_actions.py      ✅ popup, notepad, sound, chat_message
-└── proactive_loop.py        ✅ ProactiveLoop, asyncio background
-```
-
-**Métricas**:
-- 🎯 ~1500 líneas de código nuevo
-- 🎯 6 módulos core + integración en 2 archivos principales
-- 🎯 2 sesiones de desarrollo + debugging
-- 🎯 Testing manual 100% exitoso
-
-**Decisiones técnicas clave**:
-1. **asyncio.to_thread()** para input no-bloqueante → loop puede correr libremente
-2. **Logging en niveles** (DEBUG vs INFO) → UI limpia
-3. **Tool approach** para reminders → LLM puede parsear lenguaje natural
-4. **60s check interval** → balance entre reactividad y performance
-5. **JSON persistence** → simple, funcional, extensible
-
-**Próximos pasos recomendados**:
-
-**Opción A - Merge y Validación** (RECOMENDADO):
-1. Merge `feature/proactivity` → `main`
-2. Tag release `v0.2.0`
-3. Usar en producción por 3-7 días
-4. Recopilar feedback real
-5. Ajustar basándose en uso real
-
-**Opción B - Continuar desarrollo**:
-1. Fase 2: Hábitos y Rutinas (2-3 sesiones)
-2. Fase 3: Proyectos Personales (2 sesiones)
-3. Fase 4: Personalidad Evolutiva (2 sesiones)
-
-**Documentación actualizada**:
-- ✅ `IMPLEMENTATION_STATUS.md` - Estado completo, roadmap Fase 2-5
-- ✅ Commit detallado con changelog completo
-- ✅ `claude.md` actualizado (esta entrada)
-
-### Sesión 15 (2025-10-29): Inicio Fase 2A - Sistema de Notificaciones Visuales
-
-**Objetivo**: Mejorar UX de reminders con ventanas visuales llamativas en lugar de notepad simple.
-
-**Contexto**: Daniel testeó sistema de reminders y feedback fue:
-- ✅ Notepad funciona pero es muy simple
-- ❌ Necesita algo más llamativo y visual
-- 💡 Propuesta: Ventanas con ASCII art, colores, sonidos, niveles de urgencia
-
-**Roadmap Fase 2A** (6 tareas):
-1. UI Foundation (ventanas base)
-2. ASCII Art Library
-3. Sistema de niveles con sonidos
-4. Botones Snooze/Dismiss funcionales
-5. Integración con reminders
-6. Customización desde brain GUI
-
----
-
-#### Branch 1: `feature/ui-foundation` - ✅ COMPLETADO
-
-**Objetivo**: Estructura base del módulo UI con ventanas de notificación
-
-**Implementación**:
-- Creado módulo `src/sendell/ui/`
-- `notification_window.py` (272 líneas):
-  - Clase `NotificationLevel` (Enum: INFO, ATTENTION, URGENT, AVATAR)
-  - Clase `NotificationWindow` (ventana tkinter completa)
-  - 4 niveles con diferentes colores, tamaños, comportamiento
-  - Sistema de callbacks (on_dismiss, on_snooze)
-  - Auto-centrado en pantalla
-  - Topmost para niveles urgentes
-
-**Características por nivel**:
-| Nivel | Color | Tamaño | Topmost | Botones |
-|-------|-------|--------|---------|---------|
-| INFO | Azul | 400x250 | No | Dismiss |
-| ATTENTION | Naranja | 500x350 | Sí | Dismiss + Snooze |
-| URGENT | Rojo | 600x400 | Sí | Dismiss + Snooze |
-| AVATAR | Morado | 500x400 | Sí | Dismiss |
-
-**Testing**:
-- Script `test_notification.py` creado para testing manual
-- Daniel testeó todos los niveles: "funciona bastante bien"
-- ✅ Todas las ventanas se abren correctamente
-- ✅ Colores y tamaños apropiados
-- ✅ Botones responden correctamente
-- ✅ Topmost funciona en niveles correctos
-
-**Commit**: `9b5f2a4` - "feat: Add UI notification window system (Phase 2A - Task 1)"
-
-**Archivos creados**:
-- `src/sendell/ui/__init__.py`
-- `src/sendell/ui/notification_window.py` (272 líneas)
-- `test_notification.py` (152 líneas)
-
-**Próximo paso**: Branch 2 - ASCII Art Library
-
----
-
-#### Branch 2: `feature/ascii-art-library` - ✅ COMPLETADO
-
-**Objetivo**: Crear biblioteca de ASCII art para ventanas de notificación
-
-**Implementación**:
-- Creado `ascii_art.py` (415 líneas)
-- 25 ASCII arts organizados por categoría:
-  - Sendell (3): avatar, happy, thinking
-  - Time/Reminders (4): clock, alarm, timer, hourglass
-  - Alerts (4): warning, fire, bell, exclamation
-  - Positive (4): check, star, trophy, thumbs_up
-  - Personal (3): heart, phone, gift
-  - Tech (3): computer, terminal, lightbulb
-  - Critical (2): skull, stop
-- Funciones helper:
-  - `get_art(name)` - Obtener arte por nombre
-  - `list_available_arts()` - Listar todos
-  - `get_art_by_category(category)` - Filtrar por categoría
-- Todos ASCII puro (Windows compatible)
-
-**Testing**:
-- `test_notification.py` actualizado con 2 nuevas opciones
-- Opción 7: Ver todos los ASCII arts
-- Opción 8: Preview de arte en notificación
-- Daniel testeó: "se ven bien, están lindos"
-- 25/25 artes verificados correctamente
-
-**Commit**: `0cea990` - "feat: Add ASCII art library for notifications (Phase 2A - Task 2)"
-
-**Archivos creados**:
-- `src/sendell/ui/ascii_art.py` (415 líneas)
-
-**Archivos modificados**:
-- `src/sendell/ui/__init__.py` (exports ASCII art)
-- `test_notification.py` (+54 líneas)
-
-**Próximo paso**: Branch 3 - Integrar ASCII art en NotificationWindow + sistema de sonidos
-
----
-
-#### Branch 3: `feature/notification-sounds` - ✅ COMPLETADO
-
-**Objetivo**: Integrar ASCII art en ventanas + sistema de sonidos por nivel de urgencia
-
-**Implementación**:
-- Modificado `notification_window.py` (+131 líneas):
-  - Agregado parámetro `ascii_art` para mostrar arte en ventanas
-  - Agregado parámetro `play_sound` para controlar sonidos
-  - Sistema de sonidos con `winsound` (4 sonidos Windows):
-    - INFO: SystemAsterisk (suave)
-    - ATTENTION: SystemExclamation (alerta)
-    - URGENT: SystemHand (crítico)
-    - AVATAR: SystemQuestion (amigable)
-  - Ajuste automático de tamaño (+200px si hay arte)
-  - Display de ASCII art con fuente Courier en UI
-  - Función `get_art_for_context()` - mapeo inteligente mensaje → arte:
-    - Keywords: meeting/reunion → alarm
-    - Keywords: familia/abuela → heart
-    - Keywords: urgent/crítico → fire
-    - Keywords: complete/done → check/trophy
-    - 30+ keywords detectados en español e inglés
-  - Función `show_notification()` mejorada con auto-art
-- Actualizado `__init__.py` (+4 exports)
-- Actualizado `test_notification.py` (+133 líneas):
-  - Opción 9: Test ASCII art integrado en ventana
-  - Opción 10: Test sonidos por nivel
-  - Opción 11: Test auto-selección de arte ⭐
-  - Opción 12: Test escenarios reales de reminders ⭐
-
-**Características nuevas**:
-- ASCII art visible dentro de las ventanas de notificación
-- Sonidos diferentes por nivel de urgencia
-- Mapeo automático inteligente de contexto
-- 4 escenarios reales de reminders testeados
-
-**Testing**:
-- Daniel testeó opciones 9-12: "si genial te felicito"
-- ✅ ASCII arts se ven bien en ventanas
-- ✅ Sonidos funcionan correctamente (4 niveles)
-- ✅ Auto-selección escoge artes apropiados
-- ✅ Mucho más llamativo que versión anterior
-- ✅ Escenarios reales se ven profesionales
-
-**Commit**: [pendiente] - "feat: Integrate ASCII art + sound system in notifications (Phase 2A - Task 3)"
-
-**Archivos modificados**:
-- `src/sendell/ui/notification_window.py` (+131 líneas)
-- `src/sendell/ui/__init__.py` (+4 exports)
-- `test_notification.py` (+133 líneas)
-
-**Próximo paso**: Branch 4 ESPECIAL - Mejorar ASCII arts con animaciones (usando asciiguia.txt)
-
----
-
-### Sesión 16 (2025-11-02): v0.3 Planning y Clarificación Crítica
-
-**Contexto inicial**: Daniel completó v0.2 Fase 2A (notificaciones visuales) y pidió planificar expansión de Sendell.
-
-**Solicitud de Daniel**:
-- Expandir Sendell más allá de asistente personal
-- Gestionar múltiples proyectos de desarrollo
-- Ver proyectos en VS Code
-- Ver consolas/terminales de proyectos
-- Ejecutar comandos en contexto de proyecto
-- Navegación web (scraping)
-- 3 dashboards: local (existente), web app, mobile app
-- Extensión de VS Code
-
-**Trabajo realizado**:
-
-1. **4 Investigaciones exhaustivas** (~55,000 palabras):
-   - Playwright vs Selenium para browser automation
-   - VS Code Extension con WebSocket architecture
-   - Angular + Ionic para dashboards web/mobile
-   - Multi-Project Management patterns
-
-2. **Roadmap completo v0.3 → v1.0** creado:
-   - v0.3: Multi-Project Management (8-10 semanas, 9 branches)
-   - v0.4: Browser + VS Code Extension (6-8 semanas, 8 branches)
-   - v0.5: Web/Mobile Dashboards (4-6 semanas, 6 branches)
-   - v1.0: Production Polish (3-4 semanas, 5 branches)
-
-3. **Implementación inicial**: Branch 1 de v0.3 - Project Scanner
-   - Creado módulo `src/sendell/projects/` completo
-   - `types.py`: ProjectType, Project, ProjectConfig models (275 líneas)
-   - `models.py`: 7 tablas SQLAlchemy (400 líneas)
-   - `parsers.py`: 7 parsers de configs (365 líneas)
-   - `scanner.py`: ProjectScanner con detección recursiva (240 líneas)
-   - Agregado tool `discover_projects` a SendellAgent
-   - Script de testing `test_project_scanner.py`
-
-**⚠️ CLARIFICACIÓN CRÍTICA DE DANIEL**:
-
-Después de implementar el scanner, Daniel aclaró el **verdadero objetivo**:
-
-> "okey vale es capaz de escanear directorios... eso no esta mal... pero! yo estaba pensando era que nuestro sendell sea es capaz de ver que programas estoy ejecutando especificamente proyectos de visual studio y vea el proyecto en general y aparte vea tambien terminales que se ejecutan en esos proyectos y sea capaz de leerlos"
-
-**Lo que Daniel REALMENTE quiere**:
-- ✅ Ver procesos de VS Code que están CORRIENDO
-- ✅ Detectar qué proyectos están ABIERTOS en VS Code
-- ✅ Ver TERMINALES que se ejecutan en esos proyectos
-- ✅ LEER output de esos terminales en tiempo real
-- ✅ Ejemplo: "Sendell, el proyecto 'sendell' tiene 3 terminales: una vacía, otra corriendo el proyecto, otra con sesión de claude code"
-
-**Lo que implementé (útil pero secundario)**:
-- ❌ Scanner de directorios para encontrar proyectos
-- ❌ Parsers de archivos de configuración
-- ❌ Database para metadata de proyectos
-
-**Diferencia clave**:
-- **Implementado**: Descubrimiento ESTÁTICO de proyectos (buscar archivos en disco)
-- **Requerido**: Monitoreo DINÁMICO de procesos (ver qué está ejecutándose AHORA)
-
-**Workflow clarificado**:
-1. ✅ Daniel hace investigaciones (NO Claude)
-2. ✅ Daniel hace testing (NO Claude)
-3. ✅ Claude solo desarrolla basándose en docs que Daniel provee
-
-**Próximos pasos**:
-
-**INMEDIATO**:
-1. ✅ Actualizar CLAUDE.md con clarificación (esta sesión)
-2. ⏳ Daniel investiga cómo:
-   - Detectar procesos de VS Code corriendo (psutil?)
-   - Identificar qué proyecto está abierto en cada instancia
-   - Capturar output de terminales de VS Code
-   - APIs o métodos para acceder a info de procesos de VS Code
-
-**DESPUÉS DE INVESTIGACIÓN**:
-- Implementar sistema de monitoreo de procesos basado en research de Daniel
-- Branch 1 real de v0.3: "Process & Terminal Monitor" (NO "Project Scanner")
-
-**Estado del Project Scanner**:
-- Implementación completa y funcional
-- Útil como feature secundaria (descubrir proyectos en disco)
-- NO resuelve el objetivo principal (monitorear procesos activos)
-- Puede integrarse después como complemento
-
-**Archivos creados** (útiles pero no prioritarios):
-- `src/sendell/projects/__init__.py`
-- `src/sendell/projects/types.py` (275 líneas)
-- `src/sendell/projects/models.py` (400 líneas)
-- `src/sendell/projects/parsers.py` (365 líneas)
-- `src/sendell/projects/scanner.py` (240 líneas)
-- `test_project_scanner.py` (245 líneas)
-
-**Lección aprendida**:
-- ✅ Confirmar requerimientos ANTES de implementar
-- ✅ Daniel hace investigaciones técnicas, no Claude
-- ✅ "Descubrir proyectos" ≠ "Monitorear proyectos activos"
-
----
-
-## 📅 ROADMAP COMPLETO DE DESARROLLO (v0.3 - v1.0)
-
-### Visión General de Fases
+### Formato Establecido
 
 ```
-v0.2 (COMPLETADO)   →  v0.3 (5-7 semanas)  →  v0.4 (3-4 semanas)  →  v0.5 (4-6 semanas)  →  v1.0 (3-4 semanas)
-Proactive Agent        VS Code Integration    Browser Automation     Web/Mobile Dashboard    Production Release
-```
-
----
-
-## 🎯 v0.3 - VS CODE DEEP INTEGRATION & MULTI-AGENT ORCHESTRATION (5-7 semanas)
-
-**Objetivo**: Integración profunda con VS Code mediante extensión privada para monitorear proyectos activos, leer/escribir terminales, y orquestar colaboración con Claude Code sessions.
-
-> ✅ **INVESTIGACIÓN COMPLETADA (2025-11-03)**: Daniel completó investigación exhaustiva (18,000 palabras) en `investigacionvscodeextensionintegration.txt`. Todos los aspectos técnicos están validados y listos para implementación.
-
-**Hallazgos Clave de la Investigación**:
-- ✅ Extensiones privadas 100% legales (no requieren autorización Microsoft)
-- ✅ Shell Integration API estable desde v1.93+ (lectura de terminales)
-- ✅ `sendText()` API estable para escritura a terminales
-- ✅ WebSocket Client architecture (extensión → Sendell Python server)
-- ✅ Detección Claude Code 95%+ confiable (método combinado)
-- ✅ Token optimization strategies identificadas
-- ✅ NO HAY BLOCKERS TÉCNICOS
-
-**Arquitectura Implementada**:
-```
-Sendell Python (ws://localhost:7000) ← Servidor WebSocket
-        ↑
-        │ WebSocket Client
-        │
-Extensión VS Code (TypeScript)
-    ├── TerminalManager (Shell Integration API)
-    ├── ClaudeCodeDetector (95%+ accuracy)
-    ├── ProjectContextCache (<500 tokens/project)
-    └── SendellClaudeBridge (multi-agent coordination)
-        ↓
-    Terminales (read + write)
-```
-
-### Trabajo Previo Completado (Sesión 17)
-
-**Branch**: `feature/vscode-process-monitor` ✅ MERGED
-- ✅ `VSCodeMonitor` - Detecta procesos VS Code con psutil
-- ✅ `TerminalFinder` - Encuentra terminales child processes
-- ✅ `WindowMatcher` - Agrupa terminales por CWD (workspace)
-- ✅ `WorkspaceParser` - Parsea cmdline args de VS Code
-- ✅ Tool `list_vscode_instances()` - Agente sabe qué VS Code está corriendo
-- ✅ Test script validado por Daniel
-
-### Fase 3A: VS Code Extension Foundation (Semanas 1-2)
-
-**Branch 1: Extension Scaffold** (Semana 1 - Días 1-4)
-- Crear proyecto TypeScript de extensión
-- package.json con configuración completa
-- tsconfig.json y build scripts
-- WebSocket client básico conectando a `ws://localhost:7000`
-- Handshake inicial (enviar workspace info)
-- Auto-reconnect logic
-- Sistema de logging (OutputChannel)
-- **Entregable**: Extensión se conecta a Sendell y envía "hello"
-
-**Branch 2: Terminal Monitoring** (Semana 1-2 - Días 5-10)
-- `TerminalManager` usando Shell Integration API v1.93+
-- Eventos:
-  - `onDidStartTerminalShellExecution` → comando iniciado
-  - `onDidEndTerminalShellExecution` → exit code
-  - `execution.read()` → streaming de output
-- Enviar eventos via WebSocket con formato:
-  ```typescript
-  {
-    type: 'event',
-    category: 'terminal',
-    payload: { terminal, command, output, exitCode }
-  }
-  ```
-- Optimización: TailBuffer (últimas 100 líneas)
-- Error filtering (solo líneas con "error:")
-- **Entregable**: Sendell recibe output de terminales en tiempo real
-
-### Fase 3B: Claude Code Integration (Semana 3)
-
-**Branch 3: Claude Code Detection** (Semana 3 - Días 11-15)
-- `ClaudeCodeDetector` con 3 métodos combinados:
-  1. Terminal name contiene "claude" (30% confidence)
-  2. Command history detecta `claude` (40% confidence)
-  3. Output patterns: `Read(`, `Write(`, `Edit(`, `Bash(` (30% confidence)
-  - **Total**: 95%+ accuracy con approach combinado
-- `ClaudeCodeStateMachine`:
-  - Estados: ready, thinking, executing, waiting_permission
-  - Parser de output para detectar estado
-- `SendellClaudeBridge`:
-  - `sendCommand(message)` → envía texto a terminal Claude Code
-  - `waitForReady(timeout)` → espera estado ready
-  - `sendContext(files, selection)` → envía archivos con @mentions
-- **Entregable**: Sendell detecta Claude Code y puede enviarle comandos
-
-### Fase 3C: Context Extraction & Optimization (Semana 4)
-
-**Branch 4: Project Context** (Semana 4 - Días 16-20)
-- `ProjectContextCache` con detección inteligente:
-  - Node.js: package.json + descripción + deps
-  - Python: pyproject.toml + requirements.txt
-  - Rust: Cargo.toml
-  - Go: go.mod
-- Caching basado en file modification time
-- Invalidación solo si archivos clave cambian
-- Git integration (vscode.git API):
-  - Branch actual
-  - Últimos 3 commits
-  - Uncommitted changes count
-- LSP diagnostics (solo errores, no warnings)
-- **Target**: <500 tokens por proyecto
-- **Entregable**: Contexto minimal y eficiente de cada proyecto
-
-### Fase 3D: WebSocket Server in Sendell (Semana 5)
-
-**Branch 5: WebSocket Server** (Semana 5 - Días 21-25)
-- Crear módulo `src/sendell/vscode_integration/`:
-  - `websocket_server.py` (asyncio + websockets library)
-  - `message_handler.py` (procesa eventos de extensión)
-  - `extension_client.py` (representa conexión)
-- Servidor en puerto 7000, maneja múltiples clientes
-- Handlers para:
-  - `terminal` → almacena output reciente en memoria
-  - `claude` → marca terminal como Claude Code session
-  - `project` → actualiza contexto de proyecto
-  - `file` → detecta cambios de archivos
-- Nuevas herramientas para agente:
-  - `get_terminal_output(project, terminal_name)` → últimas líneas
-  - `send_to_terminal(project, terminal_name, command)` → ejecutar comando
-  - `send_to_claude_code(project, message)` → enviar a Claude Code
-- **Entregable**: Sendell puede leer/escribir terminales desde chat
-
-### Fase 3E: Multi-Agent Coordination (Semana 6)
-
-**Branch 6: Coordination System** (Semana 6 - Días 26-30)
-- `CoordinationManager` con file-based locking:
-  - Prevenir edición simultánea mismo archivo
-  - `coordination.json` compartido entre agentes
-- Protocolo de delegación de tareas:
-  ```
-  [Task from Sendell: task_id]
-
-  Task description...
-
-  Files: file1.py, file2.py
-
-  [Acknowledge with: Task Complete: task_id]
-  ```
-- Task tracking en memoria de Sendell
-- GUI actualizada (brain_gui.py) → Tab "Proyectos":
-  - Lista de proyectos VS Code activos
-  - Estado de cada terminal
-  - Indicador "Claude Code Active"
-  - Botón "Send Message to Claude"
-- **Entregable**: Sendell coordina trabajo con múltiples Claude Code sessions
-
-### Fase 3F: Optimization & Testing (Semana 7)
-
-**Branch 7: Production Ready** (Semana 7 - Días 31-35)
-- Performance optimization:
-  - Streaming progresivo de terminal output
-  - Caching agresivo de project context
-  - Throttling para dev servers (high-output commands)
-- Testing exhaustivo:
-  - 4 proyectos VS Code simultáneos
-  - 2 Claude Code sessions activas
-  - Medición de tokens/hora
-- Packaging:
-  - Build script para .vsix
-  - Instalación: `code --install-extension sendell-extension-0.3.0.vsix`
-  - Auto-update opcional vía Sendell HTTP endpoint
-- Documentación:
-  - README de extensión
-  - Guía de instalación paso a paso
-  - Troubleshooting guide
-  - Update CLAUDE.md
-- **Entregable**: Sistema production-ready con costos optimizados
-
-### Métricas de Éxito v0.3
-
-- ✅ Detección de 4+ proyectos VS Code simultáneos
-- ✅ Lectura de terminal output <500ms latency
-- ✅ Detección Claude Code >95% accuracy
-- ✅ Contexto de proyecto <500 tokens cada uno
-- ✅ Coordinación multi-agente sin race conditions
-- ✅ Usuario pregunta "¿qué proyectos estoy ejecutando?" → Sendell responde correctamente usando herramientas
-
-**Deliverable v0.3**: Sendell orquesta múltiples proyectos en desarrollo, lee/escribe terminales, colabora con Claude Code sessions, y gestiona contexto multi-proyecto de forma eficiente.
-
----
-
-## 🌐 v0.4 - BROWSER AUTOMATION (3-4 semanas)
-
-**Objetivo**: Capacidad de navegar web programáticamente y ejecutar acciones agénticas en navegador.
-
-> **NOTA**: VS Code Extension ya fue movido a v0.3 para implementación temprana.
-
-### Fase 4A: Browser Automation (Semanas 1-3)
-
-**Branch 1: Playwright Setup** (Semana 1)
-- Instalar Playwright + LangChain integration
-- Implementar `BrowserAgent` con `PlayWrightBrowserToolkit`
-- Tool básico: `view_webpage(url)` → extraer título, texto, links
-- Integración con LangGraph agent
-
-**Branch 2: Advanced Browser Actions** (Semana 2)
-- Tool: `browse_web(task)` - natural language browser control
-  - Ejemplos: "Search Google for X", "Go to Y and extract Z"
-- Click, fill forms, navigate
-- Screenshot capability para debugging
-- Permissions L3+ required
-
-**Branch 3: Proactive Web Monitoring** (Semana 3)
-- Monitor website changes (polling)
-- Notify user when content changes
-- RSS/API integration opcional
-- Testing con sitios reales
-
-### Fase 4B: Testing & Documentation (Semana 4)
-
-**Branch 4: Production Ready** (Semana 4)
-- Integration testing con sitios reales
-- Performance optimization
-- Error handling robusto
-- Documentation y ejemplos
-- Update CLAUDE.md
-
-**Deliverable v0.4**: Sendell puede navegar web, extraer información, y ejecutar acciones en navegador de forma autónoma.
-
----
-
-## 📱 v0.5 - WEB & MOBILE DASHBOARDS (4-6 semanas)
-
-**Objetivo**: Controlar Sendell desde navegador web y app móvil.
-
-### Fase 5A: Backend API (Semanas 1-2)
-
-**Branch 1: FastAPI Server** (Semana 1)
-- Implement FastAPI REST API
-- Endpoints: /projects, /status, /commands, /logs
-- JWT authentication
-- CORS configuration
-
-**Branch 2: WebSocket Server** (Semana 2)
-- Real-time updates vía WebSocket
-- Broadcast project status changes
-- Broadcast errors/notifications
-- Connection management (múltiples clientes)
-
-### Fase 5B: Angular/Ionic Frontend (Semanas 3-5)
-
-**Branch 3: Project Setup** (Semana 3)
-- Initialize Ionic + Angular project
-- Routing setup
-- HTTP service + WebSocket service
-- Authentication module (JWT)
-
-**Branch 4: Dashboard Pages** (Semana 4)
-- Home: Overview con cards (projects, health, notifications)
-- Projects: Lista con status, logs, actions
-- Chat: Interface de chat con Sendell
-- Settings: Config de usuario
-
-**Branch 5: Mobile Optimization** (Semana 5)
-- Responsive design
-- Mobile-specific gestures
-- Build for iOS/Android con Capacitor
-- Testing en emuladores
-
-### Fase 5C: Deployment (Semana 6)
-
-**Branch 6: Web Deployment** (Semana 6 - parte 1)
-- Deploy web app a Netlify/Vercel
-- Domain setup (opcional)
-- CI/CD con GitHub Actions
-
-**Branch 7: Mobile Build** (Semana 6 - parte 2)
-- iOS build con Xcode
-- Android build con Android Studio
-- App Store submission (opcional, privado)
-- Testing en dispositivos reales
-
-**Deliverable v0.5**: Dashboards web y móvil funcionales conectados a Sendell.
-
----
-
-## 🚀 v1.0 - PRODUCTION RELEASE (3-4 semanas)
-
-**Objetivo**: Pulir todo, documentar, y tener sistema production-ready.
-
-### Fase 6: Final Polish
-
-**Branch 1: Performance Optimization** (Semana 1)
-- Profile y optimize código Python
-- Reduce memory footprint
-- Optimize database queries
-- Reduce latency en WebSocket
-
-**Branch 2: Security Audit** (Semana 2)
-- Revisar todos los endpoints con `bandit`
-- Dependency vulnerability scan con `safety`
-- Input validation exhaustiva
-- Audit logging completo
-
-**Branch 3: Documentation** (Semana 3)
-- User guide completo
-- Developer docs
-- API documentation (Swagger)
-- Video tutorials
-- Troubleshooting guide
-
-**Branch 4: Final Testing** (Semana 4)
-- E2E testing completo
-- Load testing (stress test)
-- User acceptance testing (Daniel)
-- Bug fixes finales
-
-**Deliverable v1.0**: Sistema completo, documentado, seguro, y listo para uso diario.
-
----
-
-## 📊 MÉTRICAS DE ÉXITO
-
-### v0.3 Success Criteria
-- ✅ Detecta 10+ proyectos en máquina
-- ✅ Monitorea 5+ proyectos concurrentemente sin lag
-- ✅ Detecta errores en <5 segundos
-- ✅ GUI Projects tab muestra status en tiempo real
-- ✅ 0 comandos peligrosos ejecutados (security)
-
-### v0.4 Success Criteria
-- ✅ Puede navegar a URL y extraer información
-- ✅ VS Code extension conecta con Sendell
-- ✅ Detecta proyecto activo en VS Code
-- ✅ Lee terminal output en tiempo real
-- ✅ Sendell entiende contexto de desarrollo
-
-### v0.5 Success Criteria
-- ✅ Web dashboard accesible desde cualquier navegador
-- ✅ App móvil instalable en iPhone/Android
-- ✅ Real-time updates <1 segundo
-- ✅ Autenticación funciona correctamente
-- ✅ Puede controlar proyectos desde móvil
-
-### v1.0 Success Criteria
-- ✅ 0 bugs críticos
-- ✅ Documentación completa
-- ✅ Performance <100MB RAM base
-- ✅ Security audit passed
-- ✅ Daniel usa daily sin problemas
-
----
-
-## 🎓 RECURSOS Y DOCUMENTACIÓN
-
-### Guías de Investigación Creadas (2025-11-02)
-
-Todas ubicadas en raíz del proyecto:
-
-1. **`PLAYWRIGHT_BROWSER_GUIDE.md`** (15,000 palabras)
-   - Playwright vs Selenium comparison
-   - LangChain PlayWrightBrowserToolkit integration
-   - Code examples (standalone y AI agent)
-   - Security considerations
-   - Recommended implementation for Sendell
-
-2. **`VSCODE_EXTENSION_GUIDE.md`** (12,000 palabras)
-   - WebSocket-based architecture
-   - Complete VS Code Extension API reference
-   - TypeScript extension implementation
-   - Python WebSocket server
-   - Security (authentication, validation)
-   - 4-phase development roadmap
-
-3. **`ANGULAR_IONIC_GUIDE.md`** (13,000 palabras)
-   - Ionic + Angular for web + mobile
-   - FastAPI backend integration
-   - WebSocket real-time communication
-   - JWT authentication flow
-   - Deployment strategies (Netlify, App Stores)
-   - Complete project structure
-
-4. **`MULTI_PROJECT_MANAGEMENT_GUIDE.md`** (15,000 palabras)
-   - Project discovery patterns
-   - Async subprocess monitoring
-   - Database schema (7 tables + SQLAlchemy ORM)
-   - Error detection regex patterns
-   - Security & sandboxing
-   - LangGraph tool integration
-   - Complete ProductionManager implementation
-
-### Quick Reference Docs
-
-- **`VSCODE_EXTENSION_SUMMARY.md`** - TL;DR de VS Code extension
-- **`PROJECT_MANAGEMENT_SUMMARY.md`** - TL;DR de multi-project management
-
----
-
-## 🔄 WORKFLOW DE DESARROLLO
-
-### Para cada Branch
-
-1. **Claude crea branch** con nombre descriptivo
-2. **Claude implementa** feature completa
-3. **Claude muestra** código a Daniel
-4. **Daniel testea** funcionalidad
-5. **Si funciona** → Claude hace commit con mensaje detallado
-6. **Daniel hace push**
-7. **Documentar** avance en CLAUDE.md
-8. **Repetir** para siguiente branch
-
-### Commits
-
-Formato establecido:
-```
-feat: [Descripción corta de la feature] (Phase X - Task Y)
+feat|fix|docs: [Descripción corta] (Phase X - Task Y)
 
 SUMMARY:
-[Resumen de 1-2 líneas]
+[Resumen 1-2 líneas]
 
 CHANGES:
-1. [Cambio detallado]
-2. [Cambio detallado]
+1. [Cambio específico]
+2. [Cambio específico]
 
 TESTING:
 [Cómo testear]
@@ -2153,72 +668,62 @@ FILES MODIFIED:
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
----
+### Ejemplo Real
 
-## 🛡️ PRINCIPIOS DE SEGURIDAD
+```
+feat: Implement embedded terminals with xterm.js (Phase 3)
 
-### Aplican a TODAS las fases
+SUMMARY:
+Complete terminal embedding system with WebSocket I/O and xterm.js frontend
 
-1. **Input Validation**
-   - Pydantic models para todos los inputs
-   - Path validation (prevent traversal)
-   - Command validation (block dangerous commands)
+CHANGES:
+1. Created TerminalManager singleton with subprocess.Popen
+2. Added WebSocket endpoint /ws/terminal/{pid}
+3. Implemented xterm.js TerminalComponent in Angular
+4. Added click behavior: OFFLINE → create terminal, READY/WORKING → toggle
 
-2. **Sandboxing**
-   - Never use `shell=True` in subprocess
-   - Resource limits (CPU, memory, timeout)
-   - Separate processes for each project
+TESTING:
+1. Start server: uv run uvicorn sendell.web.server:app --port 8765
+2. Open dashboard: http://localhost:8765
+3. Click OFFLINE project → terminal appears
+4. Type commands → see output in real-time
 
-3. **Authentication**
-   - JWT tokens para dashboards
-   - Token-based auth para VS Code extension
-   - API keys rotables
+FILES MODIFIED:
+- src/sendell/terminal_manager/ (NEW, 4 files)
+- src/sendell/web/server.py (+50 lines)
+- sendell-dashboard/src/app/components/terminal.component.ts (NEW)
 
-4. **Privacy**
-   - PII scrubbing en logs (mantener sistema actual)
-   - Filter sensitive files (.env, credentials)
-   - Respect autonomy levels L1-L5
-
-5. **Audit Logging**
-   - Log all commands executed
-   - Track all API calls
-   - User transparency (mostrar lo que hace)
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
 
 ---
 
-## 📝 NOTAS IMPORTANTES
+## 🔒 PRINCIPIOS DE SEGURIDAD
 
-### Decisiones Arquitectónicas Clave
+### Implementados
 
-1. **Playwright over Selenium**: AI-native, mejor performance, LangChain integration
-2. **WebSocket over LSP** (VS Code): Simpler, bidirectional, language-agnostic
-3. **Ionic over React Native**: Single codebase, faster development, web + mobile
-4. **FastAPI over Flask**: Async native, better performance, auto-docs
-5. **SQLAlchemy over raw SQL**: ORM benefits, type safety, easier maintenance
+1. **Input validation** - Pydantic models para todos los inputs
+2. **Subprocess safety** - Nunca `shell=True`
+3. **PII scrubbing** - Emails, teléfonos, tarjetas en logs
+4. **Blocked apps** - Password managers, banking (configurable)
+5. **Autonomy levels** - L1-L5 para control de permisos
+6. **No secret storage** - Credenciales solo en .env
 
-### Riesgos y Mitigaciones
+### Lo que Sendell NUNCA hace
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|--------------|---------|------------|
-| Complexity overload | Alta | Alto | Desarrollo incremental, testing constante |
-| Performance issues (multi-project) | Media | Medio | Async I/O, resource limits, profiling |
-| Security vulnerabilities | Media | Alto | Security audit, input validation, sandboxing |
-| Cross-platform issues | Baja | Medio | Test en Windows primary, Linux/Mac opcional |
-| Scope creep | Media | Medio | Roadmap estricto, Daniel aprueba cambios |
-
-### Dependencias Críticas
-
-Todas las features dependen de:
-- ✅ OpenAI API funcionando
-- ✅ Python 3.10+
-- ✅ LangGraph agent core estable
-- ✅ Sistema de memoria JSON
-- ✅ Permissions L1-L5
+- ❌ Leer contenido de ventanas (solo títulos)
+- ❌ Monitorear apps bloqueadas
+- ❌ Guardar contraseñas
+- ❌ Enviar datos a terceros (excepto OpenAI API)
+- ❌ Telemetry sin opt-in explícito
 
 ---
 
 **FIN DE MEMORIA PERMANENTE**
 
-Este archivo refleja el estado REAL del proyecto Sendell.
-Última actualización: 2025-11-02 (Sesión 16)
-Estado: v0.2 Fase 2A COMPLETADA ✅ - v0.3 requiere investigación de Daniel sobre monitoreo de procesos VS Code ⏳
+Este archivo refleja el estado REAL y ACTUAL del proyecto Sendell.
+
+Para información detallada de próximos pasos, ver: `NEXT_SESSION_PLAN.md`
+
+🤖 Co-Authored-By: Claude <noreply@anthropic.com>
