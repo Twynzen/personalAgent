@@ -285,7 +285,7 @@ class ManagedTerminalProcess:
             return None
 
     def terminate(self):
-        """Terminate process gracefully"""
+        """Terminate process gracefully and cleanup bridge.json"""
         if not self.process:
             return
 
@@ -303,6 +303,14 @@ class ManagedTerminalProcess:
             self.process.kill()
         except Exception as e:
             logger.error(f"Error terminating process: {e}")
+
+        # Update bridge.json to idle state when terminal closes
+        try:
+            from sendell.project_manager.bridge import set_terminal_idle
+            set_terminal_idle(self.workspace_path)
+            logger.debug(f"Updated bridge.json to idle for {self.workspace_path}")
+        except Exception as e:
+            logger.error(f"Error updating bridge.json on terminate: {e}")
 
         self.state = ProcessState.STOPPED
         logger.info(f"Terminal {self.terminal_id} terminated")

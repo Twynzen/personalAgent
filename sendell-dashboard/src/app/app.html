@@ -155,9 +155,9 @@
                      [class.status-working]="project.state === 'working'"
                      [class.status-ready]="project.state === 'ready'"
                      [class.status-offline]="project.state === 'offline'">
-                  [{{ project.state.toUpperCase() }}]
-                  @if (project.claude_active) {
-                    <span class="claude-indicator">🤖 Claude</span>
+                  [{{ project.state?.toUpperCase() ?? 'UNKNOWN' }}]
+                  @if (project.bridge_status) {
+                    <span class="bridge-indicator">{{ project.bridge_status }}</span>
                   }
                 </div>
               </div>

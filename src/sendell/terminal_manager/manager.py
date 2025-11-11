@@ -269,6 +269,48 @@ class TerminalManager:
         if dead_terminals:
             logger.info(f"Cleaned up {len(dead_terminals)} dead terminals")
 
+    def check_idle_terminals(self, idle_timeout_seconds: int = 300):
+        """
+        Check all terminals for idle state based on last activity.
+
+        If a terminal has no output for idle_timeout_seconds (default 5 min),
+        updates bridge.json to 'idle' state.
+
+        This implements Opción A+D: Timeout + no output detection.
+
+        Args:
+            idle_timeout_seconds: Seconds of inactivity before marking idle
+        """
+        from datetime import datetime, timedelta
+        from sendell.project_manager.bridge import get_terminal_status, set_terminal_idle
+
+        current_time = datetime.now()
+        idle_count = 0
+
+        for terminal_id, terminal in self.terminals.items():
+            if not terminal.is_running():
+                continue
+
+            # Check if terminal has been inactive
+            time_since_activity = (current_time - terminal.last_activity).total_seconds()
+
+            if time_since_activity > idle_timeout_seconds:
+                # Check bridge status
+                bridge_status = get_terminal_status(terminal.workspace_path)
+
+                if bridge_status == 'working':
+                    # Terminal was marked as working but hasn't had output in a while
+                    # Update to idle
+                    logger.info(
+                        f"Terminal {terminal_id} idle for {time_since_activity:.0f}s, "
+                        f"updating bridge.json to idle"
+                    )
+                    set_terminal_idle(terminal.workspace_path)
+                    idle_count += 1
+
+        if idle_count > 0:
+            logger.debug(f"Marked {idle_count} terminals as idle due to inactivity")
+
 
 # Singleton accessor
 def get_terminal_manager() -> TerminalManager:

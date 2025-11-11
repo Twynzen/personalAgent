@@ -14,7 +14,7 @@ from typing import Dict
 
 from sendell.web.routes import router
 from sendell.web.websocket import WebSocketManager
-from sendell.web.background import start_vscode_scanner
+from sendell.web.background import start_vscode_scanner, start_idle_checker
 from sendell.terminal_manager import get_terminal_manager, TerminalOutput
 from sendell.utils.logger import get_logger
 
@@ -143,6 +143,9 @@ async def startup():
 
     # Iniciar VS Code scanner
     asyncio.create_task(start_vscode_scanner(ws_manager))
+
+    # Iniciar idle terminal checker
+    asyncio.create_task(start_idle_checker())
 
     logger.info("API server ready on http://localhost:8765")
 

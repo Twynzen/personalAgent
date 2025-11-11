@@ -171,11 +171,21 @@ async def open_terminal(request: dict):
         if not terminal or not terminal.is_running():
             raise HTTPException(status_code=500, detail="Terminal creation failed")
 
+        # Create bridge.json for project communication
+        from sendell.project_manager.bridge import create_bridge_file
+        bridge_result = create_bridge_file(workspace_path, project_name)
+
+        if not bridge_result['success']:
+            # Log error but don't fail the request (terminal is created)
+            import logging
+            logging.warning(f"Failed to create bridge.json: {bridge_result.get('error')}")
+
         return {
             'success': True,
             'terminal_id': terminal_id,
             'message': f'Terminal created for {project_name}',
-            'status': 'ready'  # Explicitly indicate terminal is ready
+            'status': 'ready',  # Explicitly indicate terminal is ready
+            'bridge_created': bridge_result.get('created', False)
         }
 
     except Exception as e:

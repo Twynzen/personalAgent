@@ -1,4 +1,5 @@
 export type ProjectStatus = 'working' | 'ready' | 'offline';
+export type BridgeStatus = 'idle' | 'working' | 'error';
 
 export interface Project {
   pid: number;
@@ -7,8 +8,8 @@ export interface Project {
   workspace_type: string;
   state: ProjectStatus;
   has_terminal: boolean;
-  claude_active: boolean;
-  claude_working: boolean;
+  bridge_status: BridgeStatus;
+  current_task: string | null;
 }
 
 export interface Metrics {
