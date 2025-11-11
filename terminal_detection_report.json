@@ -1,0 +1,285 @@
+{
+  "vscode_processes": [
+    {
+      "pid": 496,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --max-old-space-size=3072 c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\node_modules\\typescript\\lib\\tsserver.js --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName C:\\Users\\Daniel\\AppData\\Local\\Temp\\vscode-typescript\\26653846b6efb0cbad79\\tscancellation-2838e83061830560067a.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations c:\\Users\\Daniel\\.vscode\\extensions\\github.copilot-chat-0.32.4 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 2140,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --dns-result-order=ipv4first --experimental-network-inspection --inspect-port=0 --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=13416 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 2268,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=renderer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --app-user-model-id=Microsoft.VisualStudioCode --app-path=C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app --enable-sandbox --enable-blink-features=HighlightAPI --disable-blink-features=FontMatchingCTMigration,StandardizedBrowserZoom, --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=42 --time-ticks-at-unix-epoch=-1761878119440390 --launch-time-ticks=739078822887 --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=7104 --vscode-window-config=vscode:e554d152-c7d9-497e-b0a8-3b86b1984b0e /prefetch:1",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 10804,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=gpu-process --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --gpu-preferences=UAAAAAAAAADgAAAEAAAAAAAAAAAAAAAAAABgAAEAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=1776 /prefetch:2",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 10972,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:/Users/Daniel/AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/node_modules/typescript/lib/typingsInstaller.js --globalTypingsCacheLocation C:/Users/Daniel/AppData/Local/Microsoft/TypeScript/5.9 --enableTelemetry --typesMapLocation c:/Users/Daniel/AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/node_modules/typescript/lib/typesMap.json --validateDefaultNpmLocation",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 12348,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=crashpad-handler --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code /prefetch:4 --no-rate-limit --monitor-self-annotation=ptype=crashpad-handler --database=C:\\Users\\Daniel\\AppData\\Roaming\\Code\\Crashpad --url=appcenter://code?aid=a4e3233c-699c-46ec-b4f4-9c2a77254662&uid=15f05a1e-b82b-4d03-b6c5-d6edc0d7db1d&iid=15f05a1e-b82b-4d03-b6c5-d6edc0d7db1d&sid=15f05a1e-b82b-4d03-b6c5-d6edc0d7db1d --annotation=_companyName=Microsoft --annotation=_productName=VSCode --annotation=_version=1.105.1 --annotation=plat=Win64 --annotation=prod=Electron --annotation=ver=37.6.0 --initial-client-data=0x480,0x484,0x488,0x47c,0x48c,0x7ff6e6f36ce4,0x7ff6e6f36cf0,0x7ff6e6f36d00",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 12588,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=renderer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --app-user-model-id=Microsoft.VisualStudioCode --app-path=C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app --enable-sandbox --enable-blink-features=HighlightAPI --disable-blink-features=FontMatchingCTMigration,StandardizedBrowserZoom, --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=5 --time-ticks-at-unix-epoch=-1761878119440390 --launch-time-ticks=508028572386 --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=3572 --vscode-window-config=vscode:47ab84dc-b8a7-4658-8699-089061caf370 /prefetch:1",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 14960,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=6140 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 16576,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 20176,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\markdown-language-features\\dist\\serverWorkerMain --node-ipc --clientProcessId=40108",
+      "cwd": "c:\\Users\\Daniel\\Desktop\\Daniel\\sendell"
+    },
+    {
+      "pid": 22488,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=8988 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 24276,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --max-old-space-size=3072 c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\node_modules\\typescript\\lib\\tsserver.js --useInferredProjectPerProjectRoot --enableTelemetry --cancellationPipeName C:\\Users\\Daniel\\AppData\\Local\\Temp\\vscode-typescript\\26653846b6efb0cbad79\\tscancellation-79290c03d91539b19cd4.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations c:\\Users\\Daniel\\.vscode\\extensions\\github.copilot-chat-0.32.4 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 25800,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=renderer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --app-user-model-id=Microsoft.VisualStudioCode --app-path=C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app --enable-sandbox --enable-blink-features=HighlightAPI --disable-blink-features=FontMatchingCTMigration,StandardizedBrowserZoom, --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=8 --time-ticks-at-unix-epoch=-1761878119440390 --launch-time-ticks=508028811310 --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=3712 --vscode-window-config=vscode:3ce60c50-9038-4445-a751-2a031585d6f8 /prefetch:1",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 27660,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --dns-result-order=ipv4first --experimental-network-inspection --inspect-port=0 --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=5448 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 28388,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=6852 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 29356,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\markdown-language-features\\dist\\serverWorkerMain --node-ipc --clientProcessId=31444",
+      "cwd": "c:\\Users\\Daniel\\Documents\\quantum-dimensions-tesseract-(qdt)"
+    },
+    {
+      "pid": 29900,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=4984 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 30340,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=1888 /prefetch:3",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 30372,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=renderer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --app-user-model-id=Microsoft.VisualStudioCode --app-path=C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app --enable-sandbox --enable-blink-features=HighlightAPI --disable-blink-features=FontMatchingCTMigration,StandardizedBrowserZoom, --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=54 --time-ticks-at-unix-epoch=-1761878119440390 --launch-time-ticks=932480780776 --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=12624 --vscode-window-config=vscode:825623cc-d6c3-4009-99d4-1ba75af30479 /prefetch:1",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 31128,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=renderer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --app-user-model-id=Microsoft.VisualStudioCode --app-path=C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app --enable-sandbox --enable-blink-features=HighlightAPI --disable-blink-features=FontMatchingCTMigration,StandardizedBrowserZoom, --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=45 --time-ticks-at-unix-epoch=-1761878119440390 --launch-time-ticks=770503550462 --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=8836 --vscode-window-config=vscode:7a92837d-b19c-4e7e-9a79-16dff9c82de3 /prefetch:1",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 31444,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --dns-result-order=ipv4first --experimental-network-inspection --inspect-port=0 --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=4948 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 32672,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\.vscode\\extensions\\ms-python.vscode-pylance-2025.9.1\\dist\\server.bundle.js --cancellationReceive=file:6276f80062b1c9f89711d4804a4a4994eead31139b --node-ipc --clientProcessId=40108",
+      "cwd": "c:\\Users\\Daniel\\.vscode\\extensions\\ms-python.vscode-pylance-2025.9.1\\dist"
+    },
+    {
+      "pid": 39504,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=6072 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 40108,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --dns-result-order=ipv4first --experimental-network-inspection --inspect-port=0 --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=6452 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 40376,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\.vscode\\extensions\\tamasfe.even-better-toml-0.21.2\\dist\\server.js --node-ipc --clientProcessId=40108",
+      "cwd": "c:\\Users\\Daniel\\Desktop\\Daniel\\sendell"
+    },
+    {
+      "pid": 43968,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=5576 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 44076,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=renderer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --app-user-model-id=Microsoft.VisualStudioCode --app-path=C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app --enable-sandbox --enable-blink-features=HighlightAPI --disable-blink-features=FontMatchingCTMigration,StandardizedBrowserZoom, --video-capture-use-gpu-memory-buffer --lang=en-US --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=9 --time-ticks-at-unix-epoch=-1761878119440390 --launch-time-ticks=508028907792 --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=4104 --vscode-window-config=vscode:604c9732-76c2-47ab-a2cf-b59db9e87ccd /prefetch:1",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 44596,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\markdown-language-features\\dist\\serverWorkerMain --node-ipc --clientProcessId=27660",
+      "cwd": "c:\\Users\\Daniel\\Desktop\\Daniel\\experimentos"
+    },
+    {
+      "pid": 47712,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=12740 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 47820,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\markdown-language-features\\dist\\serverWorkerMain --node-ipc --clientProcessId=50136",
+      "cwd": "c:\\Users\\Daniel\\Desktop\\Daniel\\estudio"
+    },
+    {
+      "pid": 48704,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\.vscode\\extensions\\ms-python.vscode-pylance-2025.9.1\\dist\\server.bundle.js --cancellationReceive=file:c9f40195dc58e7f36fb8552accb9855d7d80d2d9b6 --node-ipc --clientProcessId=27660",
+      "cwd": "c:\\Users\\Daniel\\.vscode\\extensions\\ms-python.vscode-pylance-2025.9.1\\dist"
+    },
+    {
+      "pid": 49112,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=7436 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 50136,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --dns-result-order=ipv4first --experimental-network-inspection --inspect-port=0 --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=9260 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 50156,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\json-language-features\\server\\dist\\node\\jsonServerMain --node-ipc --clientProcessId=27660",
+      "cwd": "c:\\Users\\Daniel\\Desktop\\Daniel\\experimentos"
+    },
+    {
+      "pid": 50656,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\json-language-features\\server\\dist\\node\\jsonServerMain --node-ipc --clientProcessId=40108",
+      "cwd": "c:\\Users\\Daniel\\Desktop\\Daniel\\sendell"
+    },
+    {
+      "pid": 51416,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --dns-result-order=ipv4first --experimental-network-inspection --inspect-port=0 --video-capture-use-gpu-memory-buffer --user-data-dir=C:\\Users\\Daniel\\AppData\\Roaming\\Code --standard-schemes=vscode-webview,vscode-file --enable-sandbox --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --field-trial-handle=1780,i,16018590808060725286,15798322159388396447,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EnableTransparentHwndEnlargement,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,FontationsLinuxSystemFonts,ScreenAIOCREnabled,SpareRendererForSitePerProcess,WinDelaySpellcheckServiceInit --variations-seed-version --mojo-platform-channel-handle=3416 /prefetch:8",
+      "cwd": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code"
+    },
+    {
+      "pid": 52344,
+      "name": "Code.exe",
+      "cmdline": "C:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe c:\\Users\\Daniel\\AppData\\Local\\Programs\\Microsoft VS Code\\resources\\app\\extensions\\markdown-language-features\\dist\\serverWorkerMain --node-ipc --clientProcessId=51416",
+      "cwd": "c:\\Users\\Daniel\\Desktop\\Daniel\\whattAgent"
+    }
+  ],
+  "claude_processes": [
+    {
+      "pid": 2392,
+      "ppid": 45116,
+      "name": "node.exe",
+      "cmdline": "C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs/node_modules/@anthropic-ai/claude-code/cli.js",
+      "cwd": "C:\\Users\\Daniel\\Desktop\\Daniel\\whattAgent",
+      "cpu_percent": 0.0,
+      "memory_mb": 101.02,
+      "is_active": false,
+      "status": "idle"
+    },
+    {
+      "pid": 4060,
+      "ppid": 32208,
+      "name": "node.exe",
+      "cmdline": "C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs/node_modules/@anthropic-ai/claude-code/cli.js",
+      "cwd": "C:\\Users\\Daniel\\Desktop\\Daniel\\devpost\\visionRead",
+      "cpu_percent": 0.0,
+      "memory_mb": 133.7,
+      "is_active": false,
+      "status": "idle"
+    },
+    {
+      "pid": 9876,
+      "ppid": 2872,
+      "name": "node.exe",
+      "cmdline": "C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs/node_modules/@anthropic-ai/claude-code/cli.js",
+      "cwd": "C:\\Users\\Daniel\\Desktop\\Daniel\\estudio",
+      "cpu_percent": 0.0,
+      "memory_mb": 118.36,
+      "is_active": false,
+      "status": "idle"
+    },
+    {
+      "pid": 17784,
+      "ppid": 48772,
+      "name": "node.exe",
+      "cmdline": "C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs/node_modules/@anthropic-ai/claude-code/cli.js",
+      "cwd": "C:\\Users\\Daniel\\Desktop\\Daniel\\sendell",
+      "cpu_percent": 133.0,
+      "memory_mb": 235.41,
+      "is_active": true,
+      "status": "running"
+    },
+    {
+      "pid": 50444,
+      "ppid": 23272,
+      "name": "node.exe",
+      "cmdline": "C:\\Program Files\\nodejs\\node.exe C:\\Program Files\\nodejs/node_modules/@anthropic-ai/claude-code/cli.js",
+      "cwd": "C:\\Users\\Daniel\\Desktop\\Daniel\\sendell",
+      "cpu_percent": 0.0,
+      "memory_mb": 0.02,
+      "is_active": false,
+      "status": "idle"
+    }
+  ],
+  "active_sessions": [],
+  "timestamp": "2025-11-10T17:00:10.700905"
+}

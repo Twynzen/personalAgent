@@ -45,6 +45,18 @@ export class ApiService {
     return this.http.get<{ projects: Project[] }>(`${this.baseUrl}/projects`);
   }
 
+  openTerminal(workspace_path: string, project_pid: number, project_name: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/projects/open-terminal`, {
+      workspace_path,
+      project_pid,
+      project_name
+    });
+  }
+
+  initBridge(workspace_path: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/projects/init-bridge`, { workspace_path });
+  }
+
   // ==================== METRICS ====================
 
   getMetrics(): Observable<Metrics> {

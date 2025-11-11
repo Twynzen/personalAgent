@@ -159,8 +159,73 @@ def chat():
         sys.exit(1)
 
 
+def start_dashboard_server():
+    """Start dashboard server in background if not already running."""
+    import socket
+    import subprocess
+    import os
+    import time
+
+    def is_server_running():
+        """Check if server is running on port 8765"""
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1)
+                result = s.connect_ex(('localhost', 8765))
+                return result == 0
+        except:
+            return False
+
+    if is_server_running():
+        logger.info("Dashboard server already running on port 8765")
+        console.print("[dim]📊 Dashboard server running on http://localhost:8765[/dim]")
+        return
+
+    logger.info("Starting dashboard server on port 8765...")
+    console.print("[dim]🚀 Starting dashboard server...[/dim]")
+
+    project_root = os.path.dirname(os.path.dirname(__file__))
+
+    try:
+        if os.name == 'nt':  # Windows
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+
+            subprocess.Popen(
+                ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"],
+                cwd=project_root,
+                startupinfo=startupinfo,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+        else:  # Linux/Mac
+            subprocess.Popen(
+                ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"],
+                cwd=project_root,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+
+        # Wait for server to start
+        time.sleep(2)
+
+        if is_server_running():
+            logger.info("Dashboard server started successfully")
+            console.print("[green]✅ Dashboard server started on http://localhost:8765[/green]")
+        else:
+            logger.warning("Dashboard server may not have started correctly")
+            console.print("[yellow]⚠️  Dashboard server may not have started correctly[/yellow]")
+
+    except Exception as e:
+        logger.error(f"Failed to start dashboard server: {e}")
+        console.print(f"[yellow]⚠️  Failed to start dashboard server: {e}[/yellow]")
+
+
 async def run_chat_loop():
     """Run interactive chat loop"""
+    # Auto-start dashboard server
+    start_dashboard_server()
+
     agent = get_agent()
     conversation_history = []
 

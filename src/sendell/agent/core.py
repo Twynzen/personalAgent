@@ -320,6 +320,110 @@ class SendellAgent:
                     "message": f"Failed to detect VS Code: {str(e)}"
                 }
 
+        @tool
+        def open_dashboard() -> dict:
+            """Open the Sendell Cerebro web dashboard in the default browser.
+
+            This opens a visual web interface where Daniel can:
+            - See all active VS Code projects
+            - View project states (OFFLINE/READY/WORKING)
+            - Open embedded terminals for each project
+            - Monitor system metrics (CPU, RAM, terminals count)
+            - View Claude Code terminals
+            - Access real-time activity graphs
+
+            The dashboard provides a comprehensive view of all development projects
+            and allows direct interaction with terminals through the web interface.
+
+            Use this when Daniel asks to:
+            - "open dashboard" / "abre el dashboard"
+            - "show cerebro" / "muestra el cerebro"
+            - "let me see my projects" / "muéstrame mis proyectos"
+            - "open the visual interface" / "abre la interfaz visual"
+            - "show me the web interface" / "muestra la interfaz web"
+
+            Note: The dashboard server must be running (port 8765).
+            If not running, it will attempt to auto-start.
+
+            Returns:
+                dict: Success status and dashboard URL
+            """
+            import webbrowser
+            import socket
+            import subprocess
+            import os
+            import time
+
+            def is_server_running():
+                """Check if server is running on port 8765"""
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.settimeout(1)
+                        result = s.connect_ex(('localhost', 8765))
+                        return result == 0
+                except:
+                    return False
+
+            dashboard_url = "http://localhost:8765"
+
+            try:
+                # Check if server is running
+                if not is_server_running():
+                    logger.info("Dashboard server not running, attempting to start...")
+
+                    # Start server in background
+                    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
+                    # Use CREATE_NO_WINDOW flag to hide cmd window
+                    if os.name == 'nt':  # Windows
+                        startupinfo = subprocess.STARTUPINFO()
+                        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                        startupinfo.wShowWindow = subprocess.SW_HIDE
+
+                        subprocess.Popen(
+                            ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"],
+                            cwd=project_root,
+                            startupinfo=startupinfo,
+                            creationflags=subprocess.CREATE_NO_WINDOW
+                        )
+                    else:  # Linux/Mac
+                        subprocess.Popen(
+                            ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"],
+                            cwd=project_root,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+
+                    # Wait for server to start
+                    time.sleep(2)
+
+                    # Verify it started
+                    if not is_server_running():
+                        return {
+                            "success": False,
+                            "error": "Server failed to start",
+                            "message": "Dashboard server failed to start. Please start manually with: uv run uvicorn sendell.web.server:app --port 8765"
+                        }
+
+                    logger.info("Dashboard server started successfully")
+
+                # Open browser
+                webbrowser.open(dashboard_url)
+
+                return {
+                    "success": True,
+                    "url": dashboard_url,
+                    "message": f"Dashboard opened in browser at {dashboard_url}"
+                }
+
+            except Exception as e:
+                logger.error(f"Failed to open dashboard: {e}")
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "message": f"Failed to open dashboard: {str(e)}"
+                }
+
         return [
             get_system_health,
             get_active_window,
@@ -329,6 +433,7 @@ class SendellAgent:
             show_brain,
             add_reminder,
             list_vscode_instances,
+            open_dashboard,
         ]
 
 

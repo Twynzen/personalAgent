@@ -3,19 +3,25 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from './core/services/api.service';
 import { WebSocketService } from './core/services/websocket.service';
+import { ClaudeTerminalsService } from './core/services/claude-terminals.service';
+import { TerminalService } from './core/services/terminal.service';
 import { Fact } from './core/models/fact.model';
 import { Project, Metrics, Tool, ProjectStatus } from './core/models/project.model';
+import { ClaudeTerminal, ClaudeSession } from './core/models/claude-terminal.model';
 import { ActivityGraphComponent } from './components/activity-graph.component';
+import { TerminalComponent } from './components/terminal.component';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, FormsModule, ActivityGraphComponent],
+  imports: [CommonModule, FormsModule, ActivityGraphComponent, TerminalComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })
 export class App implements OnInit, OnDestroy {
   private api = inject(ApiService);
   private ws = inject(WebSocketService);
+  claudeService = inject(ClaudeTerminalsService);
+  terminalService = inject(TerminalService);
 
   // Active tab
   activeTab = signal<string>('proyectos');
@@ -35,6 +41,7 @@ export class App implements OnInit, OnDestroy {
   projects = signal<Project[]>([]);
   metrics = signal<Metrics>({ cpu: 0, ram: 0, terminals: 0 });
   currentTime = signal<string>(new Date().toLocaleTimeString());
+  loadingProjectPid = signal<number | null>(null); // Track which project is loading
 
   private clockInterval: any;
 
@@ -45,8 +52,7 @@ export class App implements OnInit, OnDestroy {
     // Subscribe to WebSocket updates
     this.ws.messages$.subscribe((message) => {
       if (message.type === 'update') {
-        const projectsWithStatus = this.mapProjectsWithStatus(message.data.projects);
-        this.projects.set(projectsWithStatus);
+        this.projects.set(message.data.projects);
         this.metrics.set(message.data.metrics);
       }
     });
@@ -58,26 +64,6 @@ export class App implements OnInit, OnDestroy {
 
     // Load initial data based on active tab
     this.loadTabData();
-  }
-
-  private mapProjectsWithStatus(projects: Project[]): Project[] {
-    // For now, assign mock statuses for visual testing
-    // TODO: Replace with real detection logic
-    return projects.map((project, index) => {
-      let status: ProjectStatus = 'offline';
-
-      // Mock logic for testing:
-      // - First project: running
-      // - Second project: idle
-      // - Rest: offline
-      if (index === 0) {
-        status = 'running';
-      } else if (index === 1) {
-        status = 'idle';
-      }
-
-      return { ...project, status };
-    });
   }
 
   ngOnDestroy() {
@@ -104,7 +90,48 @@ export class App implements OnInit, OnDestroy {
     } else if (tab === 'proyectos') {
       this.api.getProjects().subscribe(data => this.projects.set(data.projects));
       this.api.getMetrics().subscribe(data => this.metrics.set(data));
+    } else if (tab === 'claude-terminals') {
+      this.claudeService.getTerminals().subscribe();
+      this.claudeService.getSessions().subscribe();
     }
+  }
+
+  // Projects methods
+  onProjectClick(project: Project) {
+    if (project.state === 'offline') {
+      // ROJO: No hay terminal → Crear nueva terminal
+      this.loadingProjectPid.set(project.pid);
+
+      this.api.openTerminal(project.workspace_path, project.pid, project.name).subscribe({
+        next: (result) => {
+          console.log('Terminal created:', result);
+
+          // Mostrar terminal embebida
+          this.terminalService.openTerminal(project.pid);
+
+          // Reload projects
+          setTimeout(() => {
+            this.api.getProjects().subscribe(data => {
+              this.projects.set(data.projects);
+              this.loadingProjectPid.set(null);
+            });
+          }, 1000);
+        },
+        error: (err) => {
+          console.error('Error creating terminal:', err);
+          alert('Error al crear terminal: ' + err.message);
+          this.loadingProjectPid.set(null);
+        }
+      });
+    } else if (project.state === 'ready' || project.state === 'working') {
+      // AZUL/VERDE: Terminal existe → Mostrar/ocultar terminal existente
+      this.terminalService.toggleTerminal(project.pid);
+    }
+  }
+
+  // Claude Terminals methods
+  refreshClaudeTerminals() {
+    this.claudeService.refresh();
   }
 
   // Memorias methods

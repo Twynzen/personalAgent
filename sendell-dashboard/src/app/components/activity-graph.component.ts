@@ -1,6 +1,6 @@
 import { Component, Input, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 
-export type ProjectStatus = 'running' | 'idle' | 'offline';
+export type ProjectStatus = 'working' | 'ready' | 'offline';
 
 @Component({
   selector: 'activity-graph',
@@ -71,7 +71,7 @@ export class ActivityGraphComponent implements AfterViewInit, OnDestroy {
 
     let newPoint = 50;
 
-    if (this.status === 'running') {
+    if (this.status === 'working') {
       this.heartbeatCounter++;
 
       // ECG-style heartbeat pattern
@@ -93,7 +93,7 @@ export class ActivityGraphComponent implements AfterViewInit, OnDestroy {
         // Baseline with minimal variation between beats
         newPoint = 50 + (Math.random() - 0.5) * 3;
       }
-    } else if (this.status === 'idle') {
+    } else if (this.status === 'ready') {
       // Blue flat line with minimal variation
       newPoint = 50 + (Math.random() - 0.5) * 5;
     } else {
@@ -147,10 +147,10 @@ export class ActivityGraphComponent implements AfterViewInit, OnDestroy {
     let color = '#ff0055'; // Red (offline)
     let glowColor = 'rgba(255, 0, 85, 0.5)';
 
-    if (this.status === 'running') {
+    if (this.status === 'working') {
       color = '#00ff00'; // Green
       glowColor = 'rgba(0, 255, 0, 0.8)';
-    } else if (this.status === 'idle') {
+    } else if (this.status === 'ready') {
       color = '#00ffff'; // Cyan
       glowColor = 'rgba(0, 255, 255, 0.5)';
     }

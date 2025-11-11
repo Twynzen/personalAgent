@@ -27,6 +27,11 @@
       (click)="setActiveTab('proyectos')">
       PROYECTOS
     </button>
+    <button
+      [class.active]="activeTab() === 'claude-terminals'"
+      (click)="setActiveTab('claude-terminals')">
+      CLAUDE CODE
+    </button>
   </nav>
 
   <!-- Tab Content -->
@@ -125,34 +130,70 @@
         <div class="projects-list">
           @for (project of projects(); track project.pid) {
             <div class="project-card"
-                 [class.running]="project.status === 'running'"
-                 [class.idle]="project.status === 'idle'"
-                 [class.offline]="project.status === 'offline'">
+                 [class.working]="project.state === 'working'"
+                 [class.ready]="project.state === 'ready'"
+                 [class.offline]="project.state === 'offline'"
+                 [class.clickable]="project.state === 'offline' || project.state === 'ready'"
+                 [class.loading]="loadingProjectPid() === project.pid"
+                 (click)="onProjectClick(project)">
+
+              <!-- Loading Overlay -->
+              @if (loadingProjectPid() === project.pid) {
+                <div class="loading-overlay">
+                  <div class="loading-spinner-project"></div>
+                  <div class="loading-text-project">Opening terminal...</div>
+                </div>
+              }
+
               <div class="project-header">
                 <div class="project-name"
-                     [class.running-name]="project.status === 'running'"
-                     [class.idle-name]="project.status === 'idle'">
-                  [{{ $index + 1 }}] {{ project.workspace_name }}
+                     [class.working-name]="project.state === 'working'"
+                     [class.ready-name]="project.state === 'ready'">
+                  [{{ $index + 1 }}] {{ project.name }}
                 </div>
                 <div class="project-status"
-                     [class.status-running]="project.status === 'running'"
-                     [class.status-idle]="project.status === 'idle'"
-                     [class.status-offline]="project.status === 'offline'">
-                  [{{ project.status.toUpperCase() }}]
+                     [class.status-working]="project.state === 'working'"
+                     [class.status-ready]="project.state === 'ready'"
+                     [class.status-offline]="project.state === 'offline'">
+                  [{{ project.state.toUpperCase() }}]
+                  @if (project.claude_active) {
+                    <span class="claude-indicator">🤖 Claude</span>
+                  }
                 </div>
               </div>
 
               <!-- Activity Graph -->
               <div class="activity-graph-container">
-                <activity-graph [status]="project.status"></activity-graph>
+                <activity-graph [status]="project.state"></activity-graph>
               </div>
 
               <div class="project-info">
                 <div>Path: {{ project.workspace_path }}</div>
                 <div>PID: {{ project.pid }}</div>
-                <div>Type: {{ project.workspace_type }}</div>
+                @if (project.has_terminal) {
+                  <div>✓ Terminal abierto</div>
+                }
+                @if (project.state === 'offline' || project.state === 'ready') {
+                  <div class="click-hint">
+                    @if (project.state === 'offline') {
+                      Click para abrir terminal
+                    } @else {
+                      Click para abrir nueva terminal
+                    }
+                  </div>
+                }
               </div>
             </div>
+
+            <!-- Embedded Terminal (shown below project card) -->
+            @if (terminalService.isTerminalOpen(project.pid)) {
+              <app-terminal
+                [projectPid]="project.pid"
+                [workspacePath]="project.workspace_path"
+                [projectName]="project.name"
+              />
+            }
+
           } @empty {
             <div class="empty-state">
               No hay proyectos VS Code activos<br>
@@ -160,6 +201,119 @@
             </div>
           }
         </div>
+      </div>
+    }
+
+    <!-- TAB 5: CLAUDE CODE TERMINALS -->
+    @if (activeTab() === 'claude-terminals') {
+      <div class="tab-panel">
+        <div class="proyectos-header">
+          <h2>CLAUDE CODE TERMINALS</h2>
+          <button (click)="refreshClaudeTerminals()" class="cyber-button">
+            REFRESH
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        @if (claudeService.isLoading()) {
+          <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">
+              Detecting Claude Code processes...<br>
+              This may take 16-20 seconds
+            </p>
+          </div>
+        }
+
+        <!-- Error State -->
+        @if (claudeService.error()) {
+          <div class="error-panel">
+            <p>{{ claudeService.error() }}</p>
+            <button (click)="claudeService.clearError()" class="cyber-button">
+              DISMISS
+            </button>
+          </div>
+        }
+
+        <!-- Terminals List -->
+        @if (!claudeService.isLoading() && !claudeService.error()) {
+          <div class="terminals-section">
+            <h3>DETECTED TERMINALS ({{ claudeService.terminals().length }})</h3>
+            @if (claudeService.lastUpdate()) {
+              <p class="last-update">
+                Last update: {{ claudeService.lastUpdate() }}
+              </p>
+            }
+
+            <div class="terminals-list">
+              @for (terminal of claudeService.terminals(); track terminal.pid) {
+                <div class="terminal-card"
+                     [class.active]="terminal.is_active"
+                     [class.idle]="!terminal.is_active">
+                  <div class="terminal-header">
+                    <span class="terminal-status"
+                          [class.status-running]="terminal.is_active"
+                          [class.status-idle]="!terminal.is_active">
+                      [{{ terminal.status.toUpperCase() }}]
+                    </span>
+                    <span class="terminal-pid">PID: {{ terminal.pid }}</span>
+                  </div>
+
+                  <div class="terminal-info">
+                    <div><strong>Name:</strong> {{ terminal.name }}</div>
+                    <div><strong>Working Dir:</strong> {{ terminal.cwd }}</div>
+                    <div><strong>CPU:</strong> {{ terminal.cpu_percent }}%</div>
+                    <div><strong>Memory:</strong> {{ terminal.memory_mb }} MB</div>
+                  </div>
+
+                  <div class="terminal-cmdline">
+                    <strong>Command:</strong>
+                    <code>{{ terminal.cmdline.substring(0, 100) }}...</code>
+                  </div>
+                </div>
+              } @empty {
+                <div class="empty-state">
+                  No Claude Code terminals detected<br>
+                  Open a Claude Code terminal and click REFRESH
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Sessions List -->
+          <div class="sessions-section">
+            <h3>ACTIVE SESSIONS ({{ claudeService.sessions().length }})</h3>
+            <div class="sessions-list">
+              @for (session of claudeService.sessions(); track session.session_id) {
+                <div class="session-card">
+                  <div class="session-header">
+                    <span class="session-project">{{ session.project }}</span>
+                    <span class="session-state"
+                          [class.state-idle]="session.state === 'idle'"
+                          [class.state-running]="session.state === 'generating' || session.state === 'executing_tool'"
+                          [class.state-error]="session.state === 'error'">
+                      [{{ session.state.toUpperCase() }}]
+                    </span>
+                  </div>
+
+                  <div class="session-info">
+                    <div><strong>Events:</strong> {{ session.event_count }}</div>
+                    @if (session.token_usage) {
+                      <div><strong>Tokens:</strong> {{ session.token_usage.total }}</div>
+                    }
+                    @if (session.seconds_since_last_event !== undefined) {
+                      <div><strong>Last activity:</strong> {{ session.seconds_since_last_event }}s ago</div>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <div class="empty-state">
+                  No active sessions found
+                </div>
+              }
+            </div>
+          </div>
+        }
       </div>
     }
   </main>

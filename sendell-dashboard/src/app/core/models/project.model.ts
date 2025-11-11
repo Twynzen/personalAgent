@@ -1,13 +1,14 @@
-export type ProjectStatus = 'running' | 'idle' | 'offline';
+export type ProjectStatus = 'working' | 'ready' | 'offline';
 
 export interface Project {
   pid: number;
   name: string;
-  workspace_name: string;
   workspace_path: string;
   workspace_type: string;
-  status: ProjectStatus;
-  is_running?: boolean; // Keep for backward compatibility
+  state: ProjectStatus;
+  has_terminal: boolean;
+  claude_active: boolean;
+  claude_working: boolean;
 }
 
 export interface Metrics {

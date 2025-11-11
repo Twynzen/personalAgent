@@ -44,6 +44,40 @@ $text-secondary: #888888;
   50% { opacity: 0.5; }
 }
 
+@keyframes border-pulse-red {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(255, 0, 85, 0.6),
+      0 0 40px rgba(255, 0, 85, 0.4),
+      0 0 60px rgba(255, 0, 85, 0.2),
+      inset 0 0 20px rgba(255, 0, 85, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(255, 0, 85, 0.8),
+      0 0 60px rgba(255, 0, 85, 0.6),
+      0 0 90px rgba(255, 0, 85, 0.3),
+      inset 0 0 30px rgba(255, 0, 85, 0.2);
+  }
+}
+
+@keyframes border-pulse-cyan {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(0, 255, 255, 0.6),
+      0 0 40px rgba(0, 255, 255, 0.4),
+      0 0 60px rgba(0, 255, 255, 0.2),
+      inset 0 0 20px rgba(0, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(0, 255, 255, 0.8),
+      0 0 60px rgba(0, 255, 255, 0.6),
+      0 0 90px rgba(0, 255, 255, 0.3),
+      inset 0 0 30px rgba(0, 255, 255, 0.2);
+  }
+}
+
 // Navigation Tabs
 .sendell-tabs {
   display: flex;
@@ -262,13 +296,14 @@ $text-secondary: #888888;
   border: 2px solid #2a2a2a;
   padding: 1.5rem;
   transition: all 0.3s;
+  position: relative; // Para el loading overlay
 
-  &.running {
+  &.working {
     border-color: $neon-green;
     box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
   }
 
-  &.idle {
+  &.ready {
     border-color: $neon-cyan;
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
   }
@@ -276,6 +311,41 @@ $text-secondary: #888888;
   &.offline {
     border-color: $neon-red;
     box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
+  }
+
+  &.clickable {
+    cursor: pointer;
+
+    // Hover para proyectos OFFLINE (rojos)
+    &.offline:hover {
+      transform: translateY(-3px);
+      // Enhanced border glow effect - RED
+      border-color: #ff0055;
+      box-shadow:
+        0 0 20px rgba(255, 0, 85, 0.6),
+        0 0 40px rgba(255, 0, 85, 0.4),
+        0 0 60px rgba(255, 0, 85, 0.2),
+        inset 0 0 20px rgba(255, 0, 85, 0.1);
+      animation: border-pulse-red 1.5s ease-in-out infinite;
+    }
+
+    // Hover para proyectos READY (azules)
+    &.ready:hover {
+      transform: translateY(-3px);
+      // Enhanced border glow effect - CYAN
+      border-color: #00ffff;
+      box-shadow:
+        0 0 20px rgba(0, 255, 255, 0.6),
+        0 0 40px rgba(0, 255, 255, 0.4),
+        0 0 60px rgba(0, 255, 255, 0.2),
+        inset 0 0 20px rgba(0, 255, 255, 0.1);
+      animation: border-pulse-cyan 1.5s ease-in-out infinite;
+    }
+  }
+
+  &.loading {
+    pointer-events: none; // Disable clicks while loading
+    opacity: 0.7;
   }
 
   .project-header {
@@ -289,11 +359,11 @@ $text-secondary: #888888;
       font-size: 1.1rem;
       font-weight: bold;
 
-      &.running-name {
+      &.working-name {
         color: $neon-green;
       }
 
-      &.idle-name {
+      &.ready-name {
         color: $neon-cyan;
       }
     }
@@ -301,17 +371,29 @@ $text-secondary: #888888;
     .project-status {
       color: $neon-red;
       font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
 
-      &.status-running {
+      &.status-working {
         color: $neon-green;
       }
 
-      &.status-idle {
+      &.status-ready {
         color: $neon-cyan;
       }
 
       &.status-offline {
         color: $neon-red;
+      }
+
+      .claude-indicator {
+        background: rgba(0, 255, 0, 0.1);
+        color: $neon-green;
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        border: 1px solid $neon-green;
       }
     }
   }
@@ -331,6 +413,13 @@ $text-secondary: #888888;
     font-size: 0.85rem;
     display: grid;
     gap: 0.25rem;
+
+    .click-hint {
+      color: $neon-red;
+      font-style: italic;
+      margin-top: 0.5rem;
+      animation: pulse 2s infinite;
+    }
   }
 }
 
@@ -340,4 +429,275 @@ $text-secondary: #888888;
   color: $text-secondary;
   padding: 3rem;
   font-size: 1.1rem;
+}
+
+// ==================== LOADING OVERLAY FOR PROJECTS ====================
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 4px;
+}
+
+.loading-spinner-project {
+  width: 60px;
+  height: 60px;
+  border: 5px solid rgba(255, 0, 85, 0.2);
+  border-top: 5px solid $neon-red;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text-project {
+  color: $neon-red;
+  font-size: 1rem;
+  text-transform: uppercase;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+// ==================== CLAUDE TERMINALS ====================
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1rem;
+
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(0, 255, 0, 0.1);
+    border-top: 4px solid $neon-green;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-text {
+    color: $neon-cyan;
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-panel {
+  background: rgba(255, 0, 85, 0.1);
+  border: 1px solid $neon-red;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  p {
+    margin: 0;
+    color: $neon-red;
+  }
+}
+
+.terminals-section,
+.sessions-section {
+  margin-bottom: 2rem;
+
+  h3 {
+    color: $neon-cyan;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+    padding-bottom: 0.5rem;
+  }
+
+  .last-update {
+    color: $text-secondary;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.terminals-list,
+.sessions-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.terminal-card {
+  background: $bg-panel;
+  border: 1px solid $text-secondary;
+  border-radius: 4px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+
+  &.active {
+    border-color: $neon-green;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  }
+
+  &.idle {
+    border-color: $neon-cyan;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.4);
+  }
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terminal-status {
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+
+  &.status-running {
+    background: rgba(0, 255, 0, 0.2);
+    color: $neon-green;
+    border: 1px solid $neon-green;
+  }
+
+  &.status-idle {
+    background: rgba(0, 255, 255, 0.2);
+    color: $neon-cyan;
+    border: 1px solid $neon-cyan;
+  }
+}
+
+.terminal-pid {
+  color: $text-secondary;
+  font-size: 0.85rem;
+  font-family: 'Courier New', monospace;
+}
+
+.terminal-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  div {
+    color: $text-primary;
+    font-size: 0.85rem;
+
+    strong {
+      color: $neon-cyan;
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+.terminal-cmdline {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.75rem;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  strong {
+    color: $neon-cyan;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  code {
+    color: $text-secondary;
+    font-size: 0.75rem;
+    word-break: break-all;
+    font-family: 'Courier New', monospace;
+  }
+}
+
+.session-card {
+  background: $bg-panel;
+  border: 1px solid $text-secondary;
+  border-radius: 4px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: $neon-cyan;
+    box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+  }
+}
+
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.session-project {
+  color: $neon-green;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.session-state {
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+
+  &.state-idle {
+    background: rgba(0, 255, 255, 0.2);
+    color: $neon-cyan;
+    border: 1px solid $neon-cyan;
+  }
+
+  &.state-running {
+    background: rgba(0, 255, 0, 0.2);
+    color: $neon-green;
+    border: 1px solid $neon-green;
+  }
+
+  &.state-error {
+    background: rgba(255, 0, 85, 0.2);
+    color: $neon-red;
+    border: 1px solid $neon-red;
+  }
+}
+
+.session-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+
+  div {
+    color: $text-primary;
+    font-size: 0.85rem;
+
+    strong {
+      color: $neon-cyan;
+      margin-right: 0.5rem;
+    }
+  }
 }
