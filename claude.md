@@ -81,17 +81,16 @@ Backend (FastAPI + Python)
 - WebSocket client (real-time updates)
 - Canvas API (animated graphs)
 
-**GUI (Desktop)**:
-- tkinter (Brain GUI - config/memory management)
+**Note**: Old tkinter/Qt GUI has been completely replaced by the Angular web dashboard.
 
 ### Capacidades Actuales
 
 **Agent Core** (v0.1):
-- 7 herramientas LangChain
+- 7 herramientas LangChain (get_system_health, get_active_window, list_top_processes, open_application, respond_to_user, add_reminder, list_vscode_instances, open_dashboard)
 - Chat interactivo
 - Memoria JSON persistente
 - Sistema de autonomía L1-L5
-- Brain GUI para configuración
+- Web dashboard para gestión de proyectos y terminales
 
 **Sistema Proactivo** (v0.2):
 - Identidad temporal del agente

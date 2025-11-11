@@ -155,42 +155,8 @@ class SendellAgent:
             """
             return respond_to_user_func(message=message, requires_approval=requires_approval)
 
-        @tool
-        def show_brain() -> dict:
-            """Open the Sendell Brain GUI to view and manage memory, prompts, and tools.
-
-            This opens a visual interface where Daniel can:
-            - View and edit learned facts about him
-            - View memory statistics
-            - Edit the system prompt
-            - See all available tools/actions
-
-            Use this when Daniel asks to:
-            - "show me your brain"
-            - "let me see your memory"
-            - "open brain interface"
-            - "configure your memory"
-            """
-            try:
-                import threading
-                from sendell.agent.brain_gui_qt import show_brain as show_brain_gui
-
-                # Run GUI in separate thread to not block agent
-                gui_thread = threading.Thread(target=lambda: show_brain_gui(self.tools))
-                gui_thread.daemon = True
-                gui_thread.start()
-
-                return {
-                    "success": True,
-                    "message": "Brain GUI opened. Check the new window to manage my memory and settings."
-                }
-            except Exception as e:
-                logger.error(f"Failed to open brain GUI: {e}")
-                return {
-                    "success": False,
-                    "error": str(e),
-                    "message": "Failed to open Brain GUI. Check logs for details."
-                }
+        # NOTE: show_brain tool removed - replaced by open_dashboard (web interface)
+        # The Angular dashboard at http://localhost:8765 now handles all GUI functionality
 
         @tool
         async def add_reminder(content: str, minutes_from_now: int, actions: str = "visual_notification") -> dict:
@@ -430,10 +396,9 @@ class SendellAgent:
             list_top_processes,
             open_application,
             respond_to_user,
-            show_brain,
             add_reminder,
             list_vscode_instances,
-            open_dashboard,
+            open_dashboard,  # Web dashboard replaces old show_brain GUI
         ]
 
 

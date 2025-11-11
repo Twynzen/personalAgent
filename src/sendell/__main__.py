@@ -343,26 +343,77 @@ def display_health(health):
 @app.command()
 def brain():
     """
-    Open Sendell Brain GUI to manage memory, prompts, and tools.
+    Open Sendell Dashboard (web interface) to manage projects and terminals.
+
+    Opens the Angular web dashboard at http://localhost:8765
+    Replaces the old tkinter/Qt GUI with a modern web interface.
     """
     try:
-        console.print("\n[bold green]Opening Sendell Brain...[/bold green]\n")
+        console.print("\n[bold green]Opening Sendell Dashboard...[/bold green]")
+        console.print("[dim]Web interface at http://localhost:8765[/dim]\n")
 
-        from sendell.agent.brain_gui_qt import show_brain
-        from sendell.agent.core import get_agent
+        import webbrowser
+        import socket
+        import subprocess
+        import os
+        import time
 
-        # Get agent to pass tools
-        try:
-            agent = get_agent()
-            tools = agent.tools
-        except:
-            tools = []
+        def is_server_running():
+            """Check if server is running on port 8765"""
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(1)
+                    result = s.connect_ex(('localhost', 8765))
+                    return result == 0
+            except:
+                return False
 
-        # Show GUI (Qt6 version)
-        show_brain(tools=tools)
+        dashboard_url = "http://localhost:8765"
+
+        # Check if server is running
+        if not is_server_running():
+            console.print("[yellow]Starting dashboard server...[/yellow]")
+
+            # Start server in background
+            project_root = os.path.dirname(os.path.dirname(__file__))
+
+            # Use CREATE_NO_WINDOW flag to hide cmd window
+            if os.name == 'nt':  # Windows
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+
+                subprocess.Popen(
+                    ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"],
+                    cwd=project_root,
+                    startupinfo=startupinfo,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+            else:  # Linux/Mac
+                subprocess.Popen(
+                    ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"],
+                    cwd=project_root,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+
+            # Wait for server to start
+            time.sleep(3)
+
+            # Verify it started
+            if not is_server_running():
+                console.print("[bold red]Error:[/bold red] Server failed to start")
+                console.print("Please start manually: [cyan]uv run uvicorn sendell.web.server:app --port 8765[/cyan]")
+                sys.exit(1)
+
+            console.print("[green]✓ Server started successfully[/green]\n")
+
+        # Open browser
+        webbrowser.open(dashboard_url)
+        console.print(f"[bold green]✓ Dashboard opened at {dashboard_url}[/bold green]")
 
     except Exception as e:
-        logger.error(f"Failed to open brain: {e}")
+        logger.error(f"Failed to open dashboard: {e}")
         console.print(f"[bold red]Error:[/bold red] {e}")
         sys.exit(1)
 

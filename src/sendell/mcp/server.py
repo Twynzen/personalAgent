@@ -152,19 +152,8 @@ class SendellMCPServer:
                         "required": ["message"],
                     },
                 ),
-                Tool(
-                    name="show_brain",
-                    description=(
-                        "Open the Sendell Brain GUI interface. "
-                        "This allows Daniel to view and manage memory, prompts, and available tools. "
-                        "Use when Daniel asks to see memory, brain, or configure settings."
-                    ),
-                    inputSchema={
-                        "type": "object",
-                        "properties": {},
-                        "required": [],
-                    },
-                ),
+                # NOTE: show_brain tool removed - replaced by web dashboard
+                # MCP server only exposes 5 core system tools now
             ]
 
         @self.server.call_tool()
@@ -190,20 +179,7 @@ class SendellMCPServer:
                     message = arguments.get("message")
                     requires_approval = arguments.get("requires_approval", False)
                     result = respond_to_user(message=message, requires_approval=requires_approval)
-                elif name == "show_brain":
-                    # Import here to avoid circular dependency
-                    import threading
-                    from sendell.agent.brain_gui import show_brain as show_brain_gui
-
-                    # Run GUI in thread
-                    gui_thread = threading.Thread(target=show_brain_gui)
-                    gui_thread.daemon = True
-                    gui_thread.start()
-
-                    result = {
-                        "success": True,
-                        "message": "Brain GUI opened"
-                    }
+                # NOTE: show_brain tool removed - use web dashboard instead
                 else:
                     raise ValueError(f"Unknown tool: {name}")
 
