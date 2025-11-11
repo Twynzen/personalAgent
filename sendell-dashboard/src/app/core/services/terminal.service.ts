@@ -4,34 +4,30 @@ import { Injectable, signal } from '@angular/core';
   providedIn: 'root'
 })
 export class TerminalService {
-  // Map of project PIDs to terminal visibility
-  private openTerminals = signal<Map<number, boolean>>(new Map());
+  // Track the currently open terminal (only one modal at a time)
+  private _currentTerminalPid = signal<number | null>(null);
 
   openTerminal(projectPid: number) {
-    this.openTerminals.update(map => {
-      const newMap = new Map(map);
-      newMap.set(projectPid, true);
-      return newMap;
-    });
+    this._currentTerminalPid.set(projectPid);
   }
 
-  closeTerminal(projectPid: number) {
-    this.openTerminals.update(map => {
-      const newMap = new Map(map);
-      newMap.delete(projectPid);
-      return newMap;
-    });
-  }
-
-  isTerminalOpen(projectPid: number): boolean {
-    return this.openTerminals().has(projectPid);
+  closeTerminal() {
+    this._currentTerminalPid.set(null);
   }
 
   toggleTerminal(projectPid: number) {
-    if (this.isTerminalOpen(projectPid)) {
-      this.closeTerminal(projectPid);
+    if (this._currentTerminalPid() === projectPid) {
+      this.closeTerminal();
     } else {
       this.openTerminal(projectPid);
     }
+  }
+
+  currentTerminalPid() {
+    return this._currentTerminalPid();
+  }
+
+  isTerminalOpen(projectPid: number): boolean {
+    return this._currentTerminalPid() === projectPid;
   }
 }

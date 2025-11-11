@@ -185,15 +185,6 @@
               </div>
             </div>
 
-            <!-- Embedded Terminal (shown below project card) -->
-            @if (terminalService.isTerminalOpen(project.pid)) {
-              <app-terminal
-                [projectPid]="project.pid"
-                [workspacePath]="project.workspace_path"
-                [projectName]="project.name"
-              />
-            }
-
           } @empty {
             <div class="empty-state">
               No hay proyectos VS Code activos<br>
@@ -318,3 +309,13 @@
     }
   </main>
 </div>
+
+<!-- TERMINAL MODAL (renders outside main layout, fixed position) -->
+@if (terminalService.currentTerminalPid()) {
+  <app-terminal
+    [projectPid]="terminalService.currentTerminalPid()!"
+    [workspacePath]="getCurrentProject()?.workspace_path || ''"
+    [projectName]="getCurrentProject()?.name || 'Terminal'"
+    (close)="terminalService.closeTerminal()"
+  />
+}

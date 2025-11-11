@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, signal } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
@@ -8,22 +8,70 @@ import { FitAddon } from '@xterm/addon-fit';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="terminal-container">
-      <div class="terminal-header">
-        <span class="terminal-title">{{ projectName }} - Terminal</span>
-        <button class="terminal-close" (click)="closeTerminal()">&times;</button>
+    <!-- Modal Backdrop -->
+    <div class="modal-backdrop" (click)="onBackdropClick()">
+      <!-- Modal Content (click no se propaga al backdrop) -->
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="terminal-container">
+          <div class="terminal-header">
+            <span class="terminal-title">{{ projectName }} - Terminal</span>
+            <button class="terminal-close" (click)="closeTerminal()">&times;</button>
+          </div>
+          <div class="terminal-body" #terminalElement></div>
+        </div>
       </div>
-      <div class="terminal-body" #terminalElement></div>
     </div>
   `,
   styles: [`
+    /* MODAL STYLES */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-content {
+      width: 90vw;
+      height: 80vh;
+      max-width: 1400px;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* TERMINAL STYLES */
     .terminal-container {
+      width: 100%;
+      height: 100%;
       background: #0a0a0a;
       border: 2px solid #00ff00;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-      margin-top: 1rem;
-      border-radius: 4px;
+      box-shadow: 0 0 40px rgba(0, 255, 0, 0.5);
+      border-radius: 8px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .terminal-header {
@@ -33,6 +81,7 @@ import { FitAddon } from '@xterm/addon-fit';
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #00ff00;
+      flex-shrink: 0;
     }
 
     .terminal-title {
@@ -64,8 +113,9 @@ import { FitAddon } from '@xterm/addon-fit';
     }
 
     .terminal-body {
-      height: 400px;
+      flex: 1;
       padding: 0.5rem;
+      overflow: hidden;
     }
   `]
 })
@@ -73,8 +123,9 @@ export class TerminalComponent implements OnInit, OnDestroy {
   @Input() projectPid!: number;
   @Input() workspacePath!: string;
   @Input({ required: true }) projectName!: string;
+  @Output() close = new EventEmitter<void>();
 
-  @ViewChild('terminalElement', { static: true }) terminalElement!: ElementRef;
+  @ViewChild('terminalElement', { static: false }) terminalElement!: ElementRef;
 
   private terminal!: Terminal;
   private fitAddon!: FitAddon;
@@ -190,7 +241,11 @@ export class TerminalComponent implements OnInit, OnDestroy {
   }
 
   closeTerminal() {
-    // Emit close event to parent
-    this.ngOnDestroy();
+    this.close.emit();
+  }
+
+  onBackdropClick() {
+    // Close modal when clicking outside
+    this.closeTerminal();
   }
 }

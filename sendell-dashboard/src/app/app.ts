@@ -129,6 +129,12 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
+  getCurrentProject() {
+    const pid = this.terminalService.currentTerminalPid();
+    if (!pid) return null;
+    return this.projects().find(p => p.pid === pid) || null;
+  }
+
   // Claude Terminals methods
   refreshClaudeTerminals() {
     this.claudeService.refresh();

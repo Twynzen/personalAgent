@@ -155,10 +155,27 @@ async def open_terminal(request: dict):
             project_name=project_name
         )
 
+        # CRITICAL: Wait for terminal to be ready before returning
+        import asyncio
+        import time
+
+        terminal = terminal_manager.get_terminal(terminal_id)
+        timeout = 5  # seconds
+        start_time = time.time()
+
+        while terminal and not terminal.is_running():
+            if time.time() - start_time > timeout:
+                raise HTTPException(status_code=500, detail="Terminal failed to start within timeout")
+            await asyncio.sleep(0.1)
+
+        if not terminal or not terminal.is_running():
+            raise HTTPException(status_code=500, detail="Terminal creation failed")
+
         return {
             'success': True,
             'terminal_id': terminal_id,
-            'message': f'Terminal created for {project_name}'
+            'message': f'Terminal created for {project_name}',
+            'status': 'ready'  # Explicitly indicate terminal is ready
         }
 
     except Exception as e:
