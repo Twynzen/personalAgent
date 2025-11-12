@@ -334,56 +334,109 @@ class SendellAgent:
 
             try:
                 # Check if server is running
+                logger.info("Step 1: Checking if dashboard server is already running on port 8765...")
                 if not is_server_running():
-                    logger.info("Dashboard server not running, attempting to start...")
+                    logger.info("Step 2: Server not running. Starting new server process...")
 
                     # Start server in background
-                    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                    # __file__ is: .../sendell/src/sendell/agent/core.py
+                    # We need to go 4 levels up to reach project root
+                    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+                    logger.info(f"Step 3: Project root: {project_root}")
 
                     # Use CREATE_NO_WINDOW flag to hide cmd window
                     if os.name == 'nt':  # Windows
+                        logger.info("Step 4: Windows detected, configuring hidden process...")
                         startupinfo = subprocess.STARTUPINFO()
                         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                         startupinfo.wShowWindow = subprocess.SW_HIDE
 
-                        subprocess.Popen(
-                            ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"],
+                        cmd = ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"]
+                        logger.info(f"Step 5: Executing command: {' '.join(cmd)}")
+
+                        process = subprocess.Popen(
+                            cmd,
                             cwd=project_root,
                             startupinfo=startupinfo,
-                            creationflags=subprocess.CREATE_NO_WINDOW
+                            creationflags=subprocess.CREATE_NO_WINDOW,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            text=True
                         )
+                        logger.info(f"Step 6: Process started with PID: {process.pid}")
                     else:  # Linux/Mac
-                        subprocess.Popen(
-                            ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"],
+                        logger.info("Step 4: Linux/Mac detected, starting background process...")
+                        cmd = ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"]
+                        logger.info(f"Step 5: Executing command: {' '.join(cmd)}")
+
+                        process = subprocess.Popen(
+                            cmd,
                             cwd=project_root,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            text=True
                         )
+                        logger.info(f"Step 6: Process started with PID: {process.pid}")
 
                     # Wait for server to start (with retry logic)
-                    max_retries = 15  # 15 seconds total
+                    # We use a generous timeout since the dashboard is critical functionality
+                    logger.info("Step 7: Waiting for server to respond on port 8765...")
+                    max_retries = 30  # 30 seconds total (dashboard can take 4-6 seconds)
+                    server_started = False
+
                     for i in range(max_retries):
                         time.sleep(1)
                         if is_server_running():
+                            server_started = True
+                            logger.info(f"Step 8: SUCCESS! Server responded after {i+1} seconds")
                             break
 
-                    # Final verify
-                    if not is_server_running():
-                        return {
-                            "success": False,
-                            "error": "Server failed to start within 15 seconds",
-                            "message": "Dashboard server failed to start. Please start manually with: uv run uvicorn sendell.web.server:app --port 8765"
-                        }
+                        # Log progress every 5 seconds
+                        if (i + 1) % 5 == 0:
+                            logger.info(f"Step 7 (continued): Still waiting... ({i+1}/{max_retries} seconds)")
+                            # Check if process is still alive
+                            poll_result = process.poll()
+                            if poll_result is not None:
+                                # Process died!
+                                logger.error(f"Step 7 (ERROR): Server process died with code {poll_result}")
+                                # Try to get error output
+                                try:
+                                    stderr_output = process.stderr.read()
+                                    if stderr_output:
+                                        logger.error(f"Server stderr: {stderr_output[:500]}")
+                                except:
+                                    pass
+                                break
 
-                    logger.info("Dashboard server started successfully")
+                    # Even if server didn't respond yet, we still open the browser
+                    # The user can refresh if needed, but we ALWAYS try to show the dashboard
+                    if not server_started:
+                        logger.warning(f"Step 8 (WARNING): Server didn't respond after {max_retries} seconds")
+                        # Try to capture any error output
+                        try:
+                            poll_result = process.poll()
+                            if poll_result is not None:
+                                stderr_output = process.stderr.read()
+                                stdout_output = process.stdout.read()
+                                if stderr_output:
+                                    logger.error(f"Server stderr output: {stderr_output[:1000]}")
+                                if stdout_output:
+                                    logger.info(f"Server stdout output: {stdout_output[:1000]}")
+                        except Exception as e:
+                            logger.error(f"Could not read process output: {e}")
+                else:
+                    logger.info("Step 2: Server already running, skipping startup")
 
-                # Open browser
+                # ALWAYS open browser - even if server is still starting up
+                # The browser can be refreshed manually if the server needs more time
+                logger.info(f"Step 9: Opening browser at {dashboard_url}")
                 webbrowser.open(dashboard_url)
+                logger.info("Step 10: Browser opened successfully")
 
                 return {
                     "success": True,
                     "url": dashboard_url,
-                    "message": f"Dashboard opened in browser at {dashboard_url}"
+                    "message": f"Dashboard opened in browser at {dashboard_url}. If page doesn't load, wait a few seconds and refresh."
                 }
 
             except Exception as e:

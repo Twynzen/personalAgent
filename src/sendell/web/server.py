@@ -129,16 +129,30 @@ async def broadcast_terminal_output(output: TerminalOutput):
                 pass
 
 
+# Global event loop reference for thread-safe async calls
+_event_loop = None
+
 # Startup: iniciar scanner en background
 @app.on_event("startup")
 async def startup():
+    global _event_loop
+    _event_loop = asyncio.get_event_loop()
     logger.info("Starting Sendell Brain API server...")
 
     # Initialize TerminalManager and register output callback
     terminal_manager = get_terminal_manager()
-    terminal_manager.register_output_callback(
-        lambda output: asyncio.create_task(broadcast_terminal_output(output))
-    )
+
+    def schedule_broadcast(output):
+        """Schedule async broadcast from sync thread context"""
+        try:
+            asyncio.run_coroutine_threadsafe(
+                broadcast_terminal_output(output),
+                _event_loop
+            )
+        except Exception as e:
+            logger.error(f"Failed to schedule broadcast: {e}")
+
+    terminal_manager.register_output_callback(schedule_broadcast)
     logger.info("TerminalManager initialized")
 
     # Iniciar VS Code scanner

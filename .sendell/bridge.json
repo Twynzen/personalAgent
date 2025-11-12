@@ -1,0 +1,13 @@
+{
+  "_readme": "🤖 This file enables Sendell ↔ Claude Code collaboration. Claude: you can read 'task_request' and update 'status' to communicate progress.",
+  "project_path": "C:\\Users\\Daniel\\Desktop\\Daniel\\sendell",
+  "project_name": "sendell",
+  "terminal_status": "idle",
+  "current_task": null,
+  "last_command": null,
+  "last_updated": "2025-11-12T18:13:54.675685",
+  "task_request": null,
+  "sendell_notes": "You can communicate with Sendell by updating this file",
+  "claude_active": false,
+  "claude_last_seen": null
+}

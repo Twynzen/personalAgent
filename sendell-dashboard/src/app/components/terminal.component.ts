@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
@@ -119,7 +119,7 @@ import { FitAddon } from '@xterm/addon-fit';
     }
   `]
 })
-export class TerminalComponent implements OnInit, OnDestroy {
+export class TerminalComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() projectPid!: number;
   @Input() workspacePath!: string;
   @Input({ required: true }) projectName!: string;
@@ -130,8 +130,24 @@ export class TerminalComponent implements OnInit, OnDestroy {
   private terminal!: Terminal;
   private fitAddon!: FitAddon;
   private ws!: WebSocket;
+  private inputBuffer: string[] = []; // Buffer commands while WebSocket connects
+  private isConnected: boolean = false;
+  private currentLine: string = ''; // Accumulate current line until Enter
 
   ngOnInit() {
+    // Lifecycle hook - component initialized but view not ready yet
+    console.log('TerminalComponent: ngOnInit called for project', this.projectName);
+  }
+
+  ngAfterViewInit() {
+    // View is ready, now we can access ViewChild
+    console.log('TerminalComponent: ngAfterViewInit called, terminalElement:', this.terminalElement);
+
+    if (!this.terminalElement) {
+      console.error('TerminalComponent: terminalElement is undefined!');
+      return;
+    }
+
     this.initializeTerminal();
     this.connectWebSocket();
   }
@@ -146,6 +162,8 @@ export class TerminalComponent implements OnInit, OnDestroy {
   }
 
   private initializeTerminal() {
+    console.log('[Terminal] Initializing xterm.js for project:', this.projectName);
+
     this.terminal = new Terminal({
       cursorBlink: true,
       fontSize: 14,
@@ -176,16 +194,46 @@ export class TerminalComponent implements OnInit, OnDestroy {
       allowProposedApi: true
     });
 
+    console.log('[Terminal] Terminal instance created');
+
     this.fitAddon = new FitAddon();
     this.terminal.loadAddon(this.fitAddon);
+    console.log('[Terminal] FitAddon loaded');
 
     this.terminal.open(this.terminalElement.nativeElement);
-    this.fitAddon.fit();
+    console.log('[Terminal] Terminal opened in DOM');
 
-    // Handle user input
+    this.fitAddon.fit();
+    console.log('[Terminal] Terminal fitted to container');
+
+    // Handle user input - process character by character
     this.terminal.onData((data) => {
-      this.sendCommand(data);
+      console.log('[Terminal] 📝 User typed data:', JSON.stringify(data), 'char code:', data.charCodeAt(0));
+
+      // Check for special characters
+      const code = data.charCodeAt(0);
+
+      if (code === 13) {
+        // Enter key - send accumulated command
+        console.log('[Terminal] ⏎ Enter pressed - Sending command:', JSON.stringify(this.currentLine));
+        this.terminal.write('\r\n'); // Echo newline
+        this.sendCommand(this.currentLine + '\r\n'); // Send with newline for cmd.exe
+        this.currentLine = ''; // Reset line
+      } else if (code === 127 || code === 8) {
+        // Backspace or Delete
+        if (this.currentLine.length > 0) {
+          this.currentLine = this.currentLine.slice(0, -1);
+          this.terminal.write('\b \b'); // Move back, write space, move back again
+          console.log('[Terminal] ⌫ Backspace - Current line:', JSON.stringify(this.currentLine));
+        }
+      } else if (code >= 32) {
+        // Printable character - add to current line and echo
+        this.currentLine += data;
+        this.terminal.write(data); // Echo character
+        console.log('[Terminal] Current line:', JSON.stringify(this.currentLine));
+      }
     });
+    console.log('[Terminal] onData handler registered');
 
     // Welcome message
     this.terminal.writeln('\x1b[1;32m=== Sendell Embedded Terminal ===\x1b[0m');
@@ -193,50 +241,79 @@ export class TerminalComponent implements OnInit, OnDestroy {
     this.terminal.writeln(`\x1b[1;36mPath:\x1b[0m ${this.workspacePath}`);
     this.terminal.writeln('\x1b[1;32m=================================\x1b[0m');
     this.terminal.writeln('');
+    console.log('[Terminal] Welcome message written');
 
     // Resize on window resize
     window.addEventListener('resize', () => {
       this.fitAddon.fit();
     });
+    console.log('[Terminal] ✅ Initialization complete');
   }
 
   private connectWebSocket() {
     const wsUrl = `ws://localhost:8765/ws/terminal/${this.projectPid}`;
+    console.log('[WebSocket] Connecting to:', wsUrl);
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log(`Terminal WebSocket connected for project ${this.projectPid}`);
-      this.terminal.writeln('\x1b[1;32m[Connected to terminal]\x1b[0m');
+      console.log(`[WebSocket] ✅ Connected for project ${this.projectPid}`);
+      this.isConnected = true;
+      this.terminal.writeln('\x1b[1;32m[Connected to terminal - Ready for input]\x1b[0m');
+
+      // Send any buffered input
+      if (this.inputBuffer.length > 0) {
+        console.log('[WebSocket] Sending', this.inputBuffer.length, 'buffered commands');
+        this.inputBuffer.forEach(cmd => {
+          this.ws.send(JSON.stringify({ type: 'input', data: cmd }));
+        });
+        this.inputBuffer = [];
+      }
     };
 
     this.ws.onmessage = (event) => {
+      console.log('[WebSocket] ⬇️ Message received:', event.data);
       const message = JSON.parse(event.data);
 
       if (message.type === 'output') {
-        // Write output to terminal
-        this.terminal.write(message.data + '\r\n');
+        console.log('[WebSocket] Output stream:', message.stream, 'data:', message.data);
+        // Write output to terminal WITHOUT extra newline (server already includes it)
+        this.terminal.write(message.data);
       } else if (message.type === 'error') {
+        console.error('[WebSocket] ❌ Error from server:', message.message);
         this.terminal.writeln(`\x1b[1;31m[Error: ${message.message}]\x1b[0m`);
+      } else {
+        console.warn('[WebSocket] ⚠️ Unknown message type:', message.type);
       }
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('[WebSocket] ❌ Connection error:', error);
       this.terminal.writeln('\x1b[1;31m[WebSocket error]\x1b[0m');
     };
 
-    this.ws.onclose = () => {
-      console.log('WebSocket closed');
+    this.ws.onclose = (event) => {
+      console.log('[WebSocket] ❌ Connection closed. Code:', event.code, 'Reason:', event.reason);
+      this.isConnected = false;
       this.terminal.writeln('\x1b[1;33m[Disconnected from terminal]\x1b[0m');
     };
   }
 
   private sendCommand(data: string) {
+    console.log('[Terminal] ⬆️ Sending command:', JSON.stringify(data), 'char codes:', Array.from(data).map(c => c.charCodeAt(0)));
+
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
+      const payload = {
         type: 'input',
         data: data
-      }));
+      };
+      console.log('[Terminal] ⬆️ WebSocket payload:', JSON.stringify(payload));
+      this.ws.send(JSON.stringify(payload));
+    } else if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+      // Buffer input while connecting
+      console.log('[Terminal] ⏳ WebSocket connecting - Buffering input');
+      this.inputBuffer.push(data);
+    } else {
+      console.error('[Terminal] ❌ Cannot send - WebSocket not open. State:', this.ws?.readyState);
     }
   }
 

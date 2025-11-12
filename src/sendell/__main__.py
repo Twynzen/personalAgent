@@ -206,8 +206,8 @@ def start_dashboard_server():
                 stderr=subprocess.DEVNULL
             )
 
-        # Wait for server to start
-        time.sleep(2)
+        # Wait for server to start (dashboard takes ~4-5 seconds to initialize)
+        time.sleep(6)
 
         if is_server_running():
             logger.info("Dashboard server started successfully")
@@ -223,8 +223,8 @@ def start_dashboard_server():
 
 async def run_chat_loop():
     """Run interactive chat loop"""
-    # Auto-start dashboard server
-    start_dashboard_server()
+    # Dashboard server is started on-demand via open_dashboard() tool
+    # No need to auto-start it here
 
     agent = get_agent()
     conversation_history = []

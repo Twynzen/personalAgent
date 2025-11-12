@@ -98,34 +98,43 @@ export class App implements OnInit, OnDestroy {
 
   // Projects methods
   onProjectClick(project: Project) {
+    console.log('[App] 🖱️ Project clicked:', project.name, 'State:', project.state, 'PID:', project.pid);
+
     if (project.state === 'offline') {
       // ROJO: No hay terminal → Crear nueva terminal
+      console.log('[App] 🔴 State is OFFLINE - Creating new terminal...');
       this.loadingProjectPid.set(project.pid);
 
       this.api.openTerminal(project.workspace_path, project.pid, project.name).subscribe({
         next: (result) => {
-          console.log('Terminal created:', result);
+          console.log('[App] ✅ Terminal created successfully:', result);
 
           // Mostrar terminal embebida
+          console.log('[App] Opening terminal modal for PID:', project.pid);
           this.terminalService.openTerminal(project.pid);
 
           // Reload projects
+          console.log('[App] Reloading projects in 1 second...');
           setTimeout(() => {
             this.api.getProjects().subscribe(data => {
+              console.log('[App] Projects reloaded:', data.projects.length, 'projects');
               this.projects.set(data.projects);
               this.loadingProjectPid.set(null);
             });
           }, 1000);
         },
         error: (err) => {
-          console.error('Error creating terminal:', err);
+          console.error('[App] ❌ Error creating terminal:', err);
           alert('Error al crear terminal: ' + err.message);
           this.loadingProjectPid.set(null);
         }
       });
     } else if (project.state === 'ready' || project.state === 'working') {
       // AZUL/VERDE: Terminal existe → Mostrar/ocultar terminal existente
+      console.log('[App] 🔵/🟢 State is', project.state.toUpperCase(), '- Toggling terminal visibility');
       this.terminalService.toggleTerminal(project.pid);
+    } else {
+      console.warn('[App] ⚠️ Unknown project state:', project.state);
     }
   }
 
