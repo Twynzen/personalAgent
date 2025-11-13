@@ -319,6 +319,7 @@ class SendellAgent:
             import subprocess
             import os
             import time
+            from sendell.web.server_tracker import save_server_pid
 
             def is_server_running():
                 """Check if server is running on port 8765"""
@@ -364,6 +365,9 @@ class SendellAgent:
                             text=True
                         )
                         logger.info(f"Step 6: Process started with PID: {process.pid}")
+
+                        # Save PID for cleanup when Sendell closes
+                        save_server_pid(process.pid)
                     else:  # Linux/Mac
                         logger.info("Step 4: Linux/Mac detected, starting background process...")
                         cmd = ["uv", "run", "uvicorn", "sendell.web.server:app", "--port", "8765"]
@@ -377,6 +381,9 @@ class SendellAgent:
                             text=True
                         )
                         logger.info(f"Step 6: Process started with PID: {process.pid}")
+
+                        # Save PID for cleanup when Sendell closes
+                        save_server_pid(process.pid)
 
                     # Wait for server to start (with retry logic)
                     # We use a generous timeout since the dashboard is critical functionality

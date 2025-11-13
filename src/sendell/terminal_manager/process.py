@@ -58,7 +58,6 @@ class ManagedTerminalProcess:
         self.command_queue: queue.Queue[str] = queue.Queue()
         self.output_buffer: List[str] = []  # Last N lines
         self.max_buffer_lines = 1000
-        self.ignore_initial_output = True  # Ignore junk output until first command
 
         # Threading
         self.stdout_thread: Optional[threading.Thread] = None
@@ -184,11 +183,6 @@ class ManagedTerminalProcess:
         """Handle output line from stdout/stderr"""
         self.last_activity = datetime.now()
 
-        # Skip initial junk output until first command is sent
-        if self.ignore_initial_output:
-            # Once we start sending commands, we want to see output
-            return
-
         # Add to buffer
         self.output_buffer.append(line)
         if len(self.output_buffer) > self.max_buffer_lines:
@@ -218,11 +212,6 @@ class ManagedTerminalProcess:
         """
         if self.state != ProcessState.RUNNING:
             raise RuntimeError(f"Cannot send command to terminal in state {self.state}")
-
-        # First command sent - start showing output
-        if self.ignore_initial_output:
-            logger.info(f"First command sent to {self.terminal_id} - enabling output")
-            self.ignore_initial_output = False
 
         self.command_queue.put(command)
         logger.debug(f"Queued command for {self.terminal_id}: {command[:50]}")

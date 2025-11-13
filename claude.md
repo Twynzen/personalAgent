@@ -1,7 +1,7 @@
 # CLAUDE.MD - Memoria Permanente del Proyecto Sendell
 
-**Última actualización**: 2025-11-11 (Post-Sesión 21)
-**Estado del proyecto**: v0.3 Dashboard con Terminales Embebidos (95% completo)
+**Última actualización**: 2025-11-12 (Post-Sesión 22 - Terminal Funcional!)
+**Estado del proyecto**: v0.3 Dashboard con Terminales Embebidos (98% completo)
 **Desarrolladores**: Daniel (Testing/PM/Research) + Claude (Desarrollo)
 
 ---
@@ -9,8 +9,8 @@
 ## 🚨 ESTADO ACTUAL (Quick Context)
 
 **Branch actual**: `feature/claude-terminal-control`
-**Última sesión**: Terminales embebidos con xterm.js - Fases 1-3 completadas
-**Estado**: ⚠️ PENDIENTE: Build + Testing + Fase 4
+**Última sesión**: Sesión 22 - Terminal completamente funcional!
+**Estado**: ✅ FUNCIONANDO: Input/Output bidireccional, sin bugs críticos
 
 ### Sistema Actual (v0.3)
 
@@ -34,10 +34,19 @@ Backend (FastAPI + Python)
     └── ProjectStateDetector
 ```
 
-**Pendiente v0.3**:
-1. ⏳ Build dashboard: `npm run build` + deploy
-2. ⏳ Testing E2E completo
-3. ⏳ Fase 4: Actualizar `project_states.py` para usar TerminalManager
+**Completado v0.3** (Sesión 22):
+1. ✅ Terminal funciona completamente (input + output bidireccional)
+2. ✅ Click en ROJO crea terminal, AZUL/VERDE toggle visibilidad
+3. ✅ Sin caracteres basura, input se acumula hasta Enter
+4. ✅ WebSocket async funcionando desde threads
+5. ✅ Logs detallados para debugging
+
+**Pendiente v0.3** (próxima sesión):
+1. ⏳ Fix: Estado cambia ROJO→AZUL automáticamente (investigar bridge.json)
+2. ⏳ Feature: Botón minimizar en lugar de X en modal
+3. ⏳ Fix: Cleanup de servidor cuando Sendell cierra chat
+4. ⏳ Testing: Comandos largos (npm install, git clone)
+5. ⏳ Testing: Múltiples proyectos simultáneos
 
 **Documentación de referencia**:
 - `NEXT_SESSION_PLAN.md` - Instrucciones completas para continuar (450 líneas)
@@ -538,6 +547,52 @@ cd ..
 - xterm.js frontend funcionando
 - Click behavior: OFFLINE → READY → WORKING
 - **Estado**: 95% completo, pendiente build + testing
+
+### Sesión 22: Terminal Completamente Funcional ✅ (2025-11-12)
+**Problema inicial**: Terminal se renderizaba pero no funcionaba correctamente
+
+**6 Bugs Críticos Resueltos**:
+
+1. **Dashboard no abría desde Sendell**
+   - Error: `project_root` incorrecto (apuntaba a `src/` en lugar de raíz)
+   - Fix: 4 niveles `dirname()` en `agent/core.py:344`
+   - Commit: f385ae3
+
+2. **ViewChild undefined en TerminalComponent**
+   - Error: `ngOnInit()` ejecutaba antes del DOM
+   - Fix: Cambio a `ngAfterViewInit()`
+   - File: `terminal.component.ts:141`
+
+3. **WebSocket async callback desde thread**
+   - Error: "no running event loop" al broadcast output
+   - Fix: `asyncio.run_coroutine_threadsafe()` con event loop global
+   - File: `web/server.py:145-153`
+
+4. **Input se perdía mientras WebSocket conectaba**
+   - Problema: Usuario escribía antes de que WebSocket estuviera OPEN
+   - Fix: Input buffering hasta que `readyState === OPEN`
+   - File: `terminal.component.ts:133-135, 287-290`
+
+5. **Cada letra se enviaba como comando separado**
+   - Problema: `onData()` enviaba cada carácter inmediatamente
+   - Fix: Acumulación local + echo, envío solo al presionar Enter
+   - File: `terminal.component.ts:210-236`
+
+6. **Caracteres basura del banner cmd.exe**
+   - Problema: Output inicial de cmd.exe se mostraba
+   - Fix: Flag `ignore_initial_output` hasta primer comando
+   - File: `terminal_manager/process.py:61, 188-190`
+
+**Resultado**: Terminal 100% funcional para uso básico
+
+**Testing realizado**:
+- ✅ `dir` command funciona
+- ✅ Input/output bidireccional
+- ✅ Echo local visible
+- ✅ Backspace funciona
+- ✅ Sin caracteres basura
+
+**Lección clave**: Threading + asyncio requiere `run_coroutine_threadsafe()` cuando el callback es async pero se llama desde un thread sin event loop.
 
 ---
 

@@ -1,0 +1,1124 @@
+# Implementación Correcta de Terminal Web con xterm.js y node-pty en Windows
+
+## Resumen Ejecutivo
+
+Tu implementación actual sufre de **arquitectura incorrecta de echo y manejo de I/O**. Los problemas de texto duplicado, caracteres basura y teclas especiales no funcionales tienen una causa raíz común: **estás implementando echo local cuando deberías usar echo remoto con PTY**.
+
+**Lo que está faltando:** Tu implementación no está usando node-pty correctamente en el backend, lo que significa que el proceso shell no tiene un pseudoterminal real. Sin PTY, debes manejar manualmente todo el comportamiento del terminal (echo, backspace, secuencias ANSI, señales), lo cual es extremadamente complejo y propenso a errores.
+
+**Lo que estás haciendo mal:** Probablemente estás escribiendo el input del usuario directamente en el terminal (echo local) Y el backend también está devolviendo los caracteres, causando duplicación. Además, sin PTY, los caracteres especiales y secuencias ANSI no se procesan correctamente, generando basura en pantalla.
+
+**Principales cambios necesarios:**
+1. **Implementar node-pty en el backend** para crear un verdadero pseudoterminal
+2. **Eliminar cualquier echo local** en el frontend - solo enviar datos al servidor
+3. **Modo de transmisión carácter por carácter** sin buffereo
+4. **Configurar correctamente windowsPty** en xterm.js para Windows
+5. **Usar PowerShell o cmd.exe** con ConPTY (Windows 10+) o winpty (versiones antiguas)
+
+---
+
+## Configuración Correcta de xterm.js
+
+### Inicialización Básica
+
+```javascript
+import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import '@xterm/xterm/css/xterm.css';
+
+// Configuración crítica para Windows
+const term = new Terminal({
+  cursorBlink: true,
+  fontSize: 14,
+  fontFamily: 'Courier New, monospace',
+  scrollback: 1000,
+  
+  // CRÍTICO para Windows
+  windowsPty: {
+    backend: 'conpty',      // Usar ConPTY en Windows 10 1809+
+    buildNumber: 21376      // Windows 11 build
+  },
+  // Para Windows más antiguo usar:
+  // windowsMode: true,
+  
+  // NO activar convertEol cuando usas PTY
+  convertEol: false,  // El PTY maneja conversiones de línea
+  
+  theme: {
+    background: '#1e1e1e',
+    foreground: '#d4d4d4'
+  }
+});
+
+// Cargar addons
+const fitAddon = new FitAddon();
+const webLinksAddon = new WebLinksAddon();
+
+term.loadAddon(fitAddon);
+term.loadAddon(webLinksAddon);
+
+// Abrir en DOM
+term.open(document.getElementById('terminal'));
+
+// Ajustar al contenedor
+fitAddon.fit();
+
+// Manejar resize de ventana
+window.addEventListener('resize', () => {
+  fitAddon.fit();
+});
+```
+
+### Opciones Importantes para Windows
+
+```javascript
+const term = new Terminal({
+  // === COMPORTAMIENTO DEL TERMINAL ===
+  cursorBlink: true,              // Cursor parpadeante
+  cursorStyle: 'block',           // 'block' | 'underline' | 'bar'
+  
+  // === WINDOWS-SPECIFIC ===
+  windowsPty: {
+    backend: 'conpty',            // Forzar ConPTY
+    buildNumber: 21376            // Build de Windows
+  },
+  
+  // === CONVERSIÓN DE CARACTERES ===
+  convertEol: false,              // IMPORTANTE: false con PTY
+  
+  // === SCROLL Y BUFFER ===
+  scrollback: 1000,               // Líneas de historial
+  fastScrollModifier: 'shift',    // Scroll rápido con Shift
+  
+  // === FUENTE ===
+  fontSize: 14,
+  fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+  fontWeight: 'normal',
+  fontWeightBold: 'bold',
+  lineHeight: 1.0,
+  
+  // === ACCESIBILIDAD ===
+  screenReaderMode: false,        // Activar si necesitas screen readers
+  
+  // === MOUSE ===
+  rightClickSelectsWord: true,    // Comportamiento macOS
+  
+  // === TEMA ===
+  theme: {
+    background: '#1e1e1e',
+    foreground: '#d4d4d4',
+    cursor: '#ffffff',
+    selection: 'rgba(255, 255, 255, 0.3)',
+    black: '#000000',
+    red: '#cd3131',
+    green: '#0dbc79',
+    yellow: '#e5e510',
+    blue: '#2472c8',
+    magenta: '#bc3fbc',
+    cyan: '#11a8cd',
+    white: '#e5e5e5',
+    brightBlack: '#666666',
+    brightRed: '#f14c4c',
+    brightGreen: '#23d18b',
+    brightYellow: '#f5f543',
+    brightBlue: '#3b8eea',
+    brightMagenta: '#d670d6',
+    brightCyan: '#29b8db',
+    brightWhite: '#e5e5e5'
+  }
+});
+```
+
+### Addons Recomendados
+
+```javascript
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import { SearchAddon } from '@xterm/addon-search';
+import { WebglAddon } from '@xterm/addon-webgl';
+
+// 1. FitAddon (ESENCIAL)
+// Ajusta el terminal al contenedor
+const fitAddon = new FitAddon();
+term.loadAddon(fitAddon);
+fitAddon.fit();
+
+// 2. WebLinksAddon (RECOMENDADO)
+// Detecta y hace clickeables los URLs
+const webLinksAddon = new WebLinksAddon();
+term.loadAddon(webLinksAddon);
+
+// 3. SearchAddon (ÚTIL)
+// Permite búsqueda en el buffer del terminal
+const searchAddon = new SearchAddon();
+term.loadAddon(searchAddon);
+// Usar: searchAddon.findNext('término');
+
+// 4. WebglAddon (PERFORMANCE)
+// Rendering acelerado por GPU - mejora mucho el rendimiento
+const webglAddon = new WebglAddon();
+term.loadAddon(webglAddon);
+
+// Manejar pérdida de contexto WebGL
+webglAddon.onContextLoss(() => {
+  webglAddon.dispose();
+});
+```
+
+---
+
+## Lógica Correcta Frontend
+
+### Patrón Fundamental: Echo Remoto
+
+**INCORRECTO** (causa texto duplicado):
+```javascript
+// ❌ NO HAGAS ESTO
+term.onData(data => {
+  term.write(data);    // Echo local - MAL
+  socket.send(data);   // También envía al servidor
+});
+// Resultado: cada carácter aparece dos veces
+```
+
+**CORRECTO** (echo remoto):
+```javascript
+// ✅ HAZ ESTO
+term.onData(data => {
+  socket.send(data);   // SOLO envía al servidor, NO escribas localmente
+});
+
+// El servidor con PTY hará el echo y lo devolverá
+socket.onmessage = (event) => {
+  term.write(event.data);  // Solo escribe lo que viene del servidor
+};
+```
+
+### Implementación Completa del Frontend
+
+```javascript
+// ========================================
+// FRONTEND COMPLETO CON WEBSOCKET
+// ========================================
+
+import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import '@xterm/xterm/css/xterm.css';
+
+class WebTerminal {
+  constructor(containerId, wsUrl) {
+    this.wsUrl = wsUrl;
+    this.initTerminal(containerId);
+    this.connectWebSocket();
+  }
+
+  initTerminal(containerId) {
+    // Crear terminal
+    this.term = new Terminal({
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: 'Courier New, monospace',
+      scrollback: 1000,
+      convertEol: false,  // PTY maneja esto
+      windowsPty: {
+        backend: 'conpty',
+        buildNumber: 21376
+      },
+      theme: {
+        background: '#1e1e1e',
+        foreground: '#d4d4d4'
+      }
+    });
+
+    // Cargar addons
+    this.fitAddon = new FitAddon();
+    this.term.loadAddon(this.fitAddon);
+    this.term.loadAddon(new WebLinksAddon());
+
+    // Abrir en DOM
+    this.term.open(document.getElementById(containerId));
+    this.fitAddon.fit();
+
+    // Manejar resize
+    window.addEventListener('resize', () => {
+      this.fitAddon.fit();
+      this.sendResize();
+    });
+
+    // CRÍTICO: Manejar input del usuario
+    // NO hacer echo local - solo enviar al servidor
+    this.term.onData(data => {
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        this.socket.send(data);
+      }
+    });
+  }
+
+  connectWebSocket() {
+    this.socket = new WebSocket(this.wsUrl);
+
+    this.socket.onopen = () => {
+      console.log('Conectado al servidor');
+      // Enviar tamaño inicial del terminal
+      this.sendResize();
+    };
+
+    // CRÍTICO: Recibir output del servidor
+    // Solo escribir lo que viene del servidor (que incluye el echo)
+    this.socket.onmessage = (event) => {
+      this.term.write(event.data);
+    };
+
+    this.socket.onerror = (error) => {
+      console.error('Error WebSocket:', error);
+      this.term.write('\r\n\x1b[31mError de conexión\x1b[0m\r\n');
+    };
+
+    this.socket.onclose = () => {
+      console.log('Desconectado del servidor');
+      this.term.write('\r\n\x1b[31mDesconectado\x1b[0m\r\n');
+    };
+  }
+
+  sendResize() {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      const msg = JSON.stringify({
+        type: 'resize',
+        cols: this.term.cols,
+        rows: this.term.rows
+      });
+      this.socket.send(msg);
+    }
+  }
+
+  focus() {
+    this.term.focus();
+  }
+
+  dispose() {
+    if (this.socket) {
+      this.socket.close();
+    }
+    this.term.dispose();
+  }
+}
+
+// Uso
+const terminal = new WebTerminal('terminal-container', 'ws://localhost:8080');
+```
+
+### Manejo de Teclas Especiales
+
+```javascript
+// Las teclas especiales YA funcionan automáticamente con PTY
+// xterm.js envía las secuencias correctas:
+
+term.onData(data => {
+  // data puede ser:
+  // - 'a', 'b', 'c'... para letras normales
+  // - '\r' para Enter
+  // - '\x7f' para Backspace
+  // - '\x1b[A' para Flecha Arriba
+  // - '\x1b[B' para Flecha Abajo
+  // - '\x1b[C' para Flecha Derecha
+  // - '\x1b[D' para Flecha Izquierda
+  // - '\x03' para Ctrl+C
+  // - '\x04' para Ctrl+D
+  
+  // SOLO envía al servidor, NO proceses localmente
+  socket.send(data);
+});
+
+// Si necesitas interceptar teclas específicas:
+term.attachCustomKeyEventHandler((event) => {
+  if (event.type === 'keydown') {
+    // Ctrl+Shift+C para copiar
+    if (event.ctrlKey && event.shiftKey && event.key === 'C') {
+      if (term.hasSelection()) {
+        navigator.clipboard.writeText(term.getSelection());
+        return false; // Prevenir procesamiento por defecto
+      }
+    }
+    
+    // Ctrl+Shift+V para pegar
+    if (event.ctrlKey && event.shiftKey && event.key === 'V') {
+      navigator.clipboard.readText().then(text => {
+        socket.send(text);
+      });
+      return false;
+    }
+  }
+  return true; // Procesar normalmente
+});
+```
+
+### Control de Flujo (Importante para Rendimiento)
+
+```javascript
+// Implementar backpressure para outputs grandes
+const HIGH_WATER = 100000;
+const LOW_WATER = 10000;
+let watermark = 0;
+
+socket.onmessage = (event) => {
+  const data = event.data;
+  watermark += data.length;
+  
+  // Escribir con callback para flow control
+  term.write(data, () => {
+    watermark = Math.max(watermark - data.length, 0);
+    if (watermark < LOW_WATER && socket.bufferedAmount === 0) {
+      // Podrías enviar señal al servidor para resumir si implementaste pause
+    }
+  });
+  
+  if (watermark > HIGH_WATER) {
+    // Podrías enviar señal al servidor para pausar
+  }
+};
+```
+
+---
+
+## Lógica Correcta Backend
+
+### Setup con node-pty (ESENCIAL)
+
+```javascript
+// ========================================
+// BACKEND COMPLETO CON NODE-PTY
+// ========================================
+
+const WebSocket = require('ws');
+const pty = require('node-pty');
+const os = require('os');
+
+const PORT = 8080;
+const wss = new WebSocket.Server({ port: PORT });
+
+console.log(`Servidor WebSocket ejecutándose en puerto ${PORT}`);
+
+wss.on('connection', (ws, req) => {
+  console.log('Cliente conectado desde', req.socket.remoteAddress);
+  
+  // CRÍTICO: Detectar shell según plataforma
+  const shell = os.platform() === 'win32' 
+    ? 'powershell.exe'  // o 'cmd.exe'
+    : 'bash';
+  
+  // CRÍTICO: Spawn PTY (no subprocess normal)
+  const ptyProcess = pty.spawn(shell, [], {
+    name: 'xterm-color',        // Tipo de terminal
+    cols: 80,                    // Columnas iniciales
+    rows: 24,                    // Filas iniciales
+    cwd: process.env.HOME || process.env.USERPROFILE,  // Directorio inicial
+    env: process.env,            // Variables de entorno
+    
+    // Opciones específicas de Windows (opcional)
+    useConpty: true,             // Forzar ConPTY si disponible
+    conptyInheritCursor: false   // Herencia de cursor
+  });
+  
+  console.log(`Shell spawned (PID: ${ptyProcess.pid})`);
+  
+  // ================================================
+  // PTY OUTPUT → WEBSOCKET → FRONTEND
+  // ================================================
+  // CRÍTICO: El PTY maneja el echo automáticamente
+  ptyProcess.onData((data) => {
+    try {
+      ws.send(data);
+    } catch (error) {
+      console.error('Error enviando a WebSocket:', error);
+    }
+  });
+  
+  // ================================================
+  // FRONTEND → WEBSOCKET → PTY INPUT
+  // ================================================
+  ws.on('message', (msg) => {
+    try {
+      const data = msg.toString();
+      
+      // Verificar si es comando de resize
+      if (data.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.type === 'resize') {
+            ptyProcess.resize(parsed.cols, parsed.rows);
+            console.log(`Terminal redimensionado a ${parsed.cols}x${parsed.rows}`);
+            return;
+          }
+        } catch (e) {
+          // No es JSON, procesar como input normal
+        }
+      }
+      
+      // Input normal - escribir al PTY
+      ptyProcess.write(data);
+      
+    } catch (error) {
+      console.error('Error escribiendo al PTY:', error);
+    }
+  });
+  
+  // ================================================
+  // CLEANUP
+  // ================================================
+  ws.on('close', () => {
+    console.log('Cliente desconectado');
+    ptyProcess.kill();
+  });
+  
+  ptyProcess.on('exit', (code, signal) => {
+    console.log(`Shell terminado con código ${code}, señal ${signal}`);
+    try {
+      ws.close();
+    } catch (error) {
+      // Ya cerrado
+    }
+  });
+});
+
+// Manejo de cierre graceful
+process.on('SIGINT', () => {
+  console.log('\nCerrando servidor...');
+  wss.close(() => {
+    process.exit(0);
+  });
+});
+```
+
+### Configuración de Subprocess para Windows
+
+```javascript
+// ========================================
+// OPCIONES ESPECÍFICAS DE WINDOWS
+// ========================================
+
+const os = require('os');
+const pty = require('node-pty');
+
+// Detectar plataforma y configurar shell
+let shell, shellArgs;
+
+if (os.platform() === 'win32') {
+  // OPCIÓN 1: PowerShell (recomendado para Windows moderno)
+  shell = 'powershell.exe';
+  shellArgs = [];
+  
+  // OPCIÓN 2: CMD (legacy)
+  // shell = 'cmd.exe';
+  // shellArgs = [];
+  
+  // OPCIÓN 3: WSL (si está instalado)
+  // shell = 'wsl.exe';
+  // shellArgs = [];
+  
+  // OPCIÓN 4: Git Bash
+  // shell = 'C:\\Program Files\\Git\\bin\\bash.exe';
+  // shellArgs = ['--login'];
+  
+} else if (os.platform() === 'darwin') {
+  // macOS
+  shell = process.env.SHELL || '/bin/zsh';
+  shellArgs = ['--login'];
+  
+} else {
+  // Linux
+  shell = process.env.SHELL || '/bin/bash';
+  shellArgs = [];
+}
+
+// Spawn con configuración específica de Windows
+const ptyProcess = pty.spawn(shell, shellArgs, {
+  name: 'xterm-256color',      // IMPORTANTE: xterm-256color, no xterm-color
+  cols: 80,
+  rows: 24,
+  
+  // Working directory según plataforma
+  cwd: os.platform() === 'win32'
+    ? process.env.USERPROFILE     // Windows: C:\Users\Username
+    : process.env.HOME,           // Unix: /home/username
+  
+  // Environment variables
+  env: {
+    ...process.env,
+    TERM: 'xterm-256color',       // Asegurar TERM correcto
+    COLORTERM: 'truecolor'        // Habilitar true color
+  },
+  
+  // Windows-specific options
+  useConpty: true,                // Usar ConPTY si disponible (Win10 1809+)
+  conptyInheritCursor: false      // No heredar posición de cursor
+});
+```
+
+### Manejo de Streams
+
+```javascript
+// ========================================
+// MANEJO AVANZADO DE STREAMS
+// ========================================
+
+// Con flow control (pausar/resumir)
+const HIGH_WATER = 500000;  // 500KB
+const LOW_WATER = 100000;   // 100KB
+let watermark = 0;
+
+ptyProcess.onData((chunk) => {
+  watermark += chunk.length;
+  
+  // Enviar a WebSocket
+  ws.send(chunk);
+  
+  // Pausar si hay mucho buffer
+  if (watermark > HIGH_WATER) {
+    ptyProcess.pause();
+    console.log('PTY pausado - buffer alto');
+  }
+  
+  // Resumir cuando el buffer baja
+  if (watermark < LOW_WATER) {
+    ptyProcess.resume();
+    console.log('PTY resumido - buffer bajo');
+  }
+  
+  // Decrementar watermark cuando WebSocket envía
+  watermark = Math.max(0, watermark - chunk.length);
+});
+
+// Verificar estado del WebSocket antes de enviar
+ptyProcess.onData((data) => {
+  if (ws.readyState === WebSocket.OPEN) {
+    try {
+      ws.send(data);
+    } catch (error) {
+      console.error('Error enviando datos:', error);
+      ptyProcess.pause();
+    }
+  } else {
+    console.warn('WebSocket no está abierto, pausando PTY');
+    ptyProcess.pause();
+  }
+});
+```
+
+### Manejo de Errores y Logging
+
+```javascript
+// ========================================
+// ERROR HANDLING Y LOGGING
+// ========================================
+
+const ptyProcess = pty.spawn(shell, [], config);
+
+// Error en el proceso PTY
+ptyProcess.on('error', (error) => {
+  console.error('Error en PTY:', error);
+  ws.send('\r\n\x1b[31mError en el proceso shell\x1b[0m\r\n');
+});
+
+// Exit del proceso
+ptyProcess.on('exit', (code, signal) => {
+  console.log(`Shell exit - código: ${code}, señal: ${signal}`);
+  
+  if (code !== 0) {
+    ws.send(`\r\n\x1b[31mProceso terminado con código ${code}\x1b[0m\r\n`);
+  }
+  
+  // Cerrar WebSocket
+  setTimeout(() => {
+    ws.close();
+  }, 100);
+});
+
+// Error en WebSocket
+ws.on('error', (error) => {
+  console.error('Error en WebSocket:', error);
+  ptyProcess.kill();
+});
+
+// Log de datos (para debugging)
+if (process.env.DEBUG) {
+  ptyProcess.onData((data) => {
+    console.log('PTY→WS:', JSON.stringify(data));
+    ws.send(data);
+  });
+  
+  ws.on('message', (msg) => {
+    console.log('WS→PTY:', JSON.stringify(msg.toString()));
+    ptyProcess.write(msg.toString());
+  });
+}
+```
+
+---
+
+## Diferencias Clave vs Implementación Actual
+
+### 1. Arquitectura de Echo
+
+**TU IMPLEMENTACIÓN ACTUAL (INCORRECTA):**
+```javascript
+// Frontend - Echo local
+term.onData(data => {
+  term.write(data);    // ❌ Escribes localmente
+  socket.send(data);   // ❌ Y envías al servidor
+});
+
+// Backend - Sin PTY, ejecutas comando directamente
+const { exec } = require('child_process');
+exec(command, (error, stdout) => {
+  ws.send(stdout);     // ❌ Devuelves output
+});
+// Resultado: TEXTO DUPLICADO
+```
+
+**IMPLEMENTACIÓN CORRECTA:**
+```javascript
+// Frontend - Sin echo local
+term.onData(data => {
+  socket.send(data);   // ✅ Solo envías, NO escribes
+});
+
+socket.onmessage = (event) => {
+  term.write(event.data);  // ✅ Solo escribes lo del servidor
+};
+
+// Backend - Con PTY
+const pty = require('node-pty');
+const ptyProcess = pty.spawn('powershell.exe', [], {...});
+
+ptyProcess.onData((data) => {
+  ws.send(data);       // ✅ PTY maneja echo automáticamente
+});
+
+ws.on('message', (msg) => {
+  ptyProcess.write(msg); // ✅ Escribes directamente al PTY
+});
+```
+
+**POR QUÉ ESTO SOLUCIONA EL TEXTO DUPLICADO:**
+- Sin PTY: tú manejas echo → duplicación inevitable
+- Con PTY: el kernel/PTY maneja echo → funciona como terminal real
+
+### 2. Manejo de Caracteres Especiales
+
+**TU IMPLEMENTACIÓN ACTUAL (INCORRECTA):**
+```javascript
+// Intentas manejar teclas especiales manualmente
+term.onData(data => {
+  if (data === '\x7f') {  // Backspace
+    // ❌ Intentas implementar backspace manualmente
+    if (buffer.length > 0) {
+      buffer = buffer.slice(0, -1);
+      term.write('\b \b');
+    }
+  } else if (data === '\x1b[A') {  // Flecha arriba
+    // ❌ Intentas implementar historial manualmente
+    // Esto es EXTREMADAMENTE complejo
+  }
+  // ...más código manual
+});
+```
+
+**IMPLEMENTACIÓN CORRECTA:**
+```javascript
+// NO hagas nada especial - el PTY lo maneja
+term.onData(data => {
+  socket.send(data);  // ✅ Envía TODO al PTY sin procesar
+});
+
+// El PTY automáticamente:
+// - Maneja backspace correctamente
+// - Implementa historial de comandos
+// - Procesa flechas de navegación
+// - Maneja Ctrl+C, Ctrl+D, etc.
+// - Interpreta secuencias ANSI
+```
+
+**POR QUÉ ESTO SOLUCIONA LAS TECLAS ESPECIALES:**
+- Tu código manual nunca será completo (faltan cientos de casos)
+- PTY es una capa del sistema operativo diseñada para esto
+- Soporta todos los programas interactivos (vim, nano, etc.)
+
+### 3. Secuencias ANSI y Caracteres Basura
+
+**TU IMPLEMENTACIÓN ACTUAL (INCORRECTA):**
+```javascript
+// Backend sin PTY
+exec(command, (error, stdout) => {
+  // stdout es texto plano, sin secuencias ANSI
+  ws.send(stdout);
+});
+
+// Frontend
+socket.onmessage = (event) => {
+  // Si llegan secuencias ANSI mal formadas
+  term.write(event.data);  // ❌ Aparecen como basura
+};
+```
+
+**IMPLEMENTACIÓN CORRECTA:**
+```javascript
+// Backend con PTY
+ptyProcess.onData((data) => {
+  // data incluye secuencias ANSI correctamente formadas
+  ws.send(data);  // ✅ Secuencias ANSI válidas
+});
+
+// Frontend
+socket.onmessage = (event) => {
+  term.write(event.data);  // ✅ xterm.js interpreta ANSI correctamente
+};
+
+// ADEMÁS: Configuración correcta de TERM
+const ptyProcess = pty.spawn(shell, [], {
+  name: 'xterm-256color',  // ✅ Terminal type correcto
+  env: {
+    ...process.env,
+    TERM: 'xterm-256color'  // ✅ Variable TERM correcta
+  }
+});
+```
+
+**POR QUÉ ESTO SOLUCIONA LOS CARACTERES BASURA:**
+- Sin PTY: no hay contexto de terminal → secuencias malformadas
+- Con PTY + TERM correcto: secuencias ANSI válidas que xterm.js entiende
+- PTY traduce entre Console API (Windows) y secuencias VT
+
+### 4. Configuración de Windows
+
+**TU IMPLEMENTACIÓN ACTUAL (INCORRECTA):**
+```javascript
+// No tienes configuración específica de Windows
+const term = new Terminal({
+  // Sin opciones de Windows
+});
+
+// Backend sin detección de plataforma
+const shell = 'bash';  // ❌ No funciona en Windows
+```
+
+**IMPLEMENTACIÓN CORRECTA:**
+```javascript
+// Frontend con configuración de Windows
+const term = new Terminal({
+  windowsPty: {
+    backend: 'conpty',    // ✅ Usar ConPTY
+    buildNumber: 21376
+  },
+  convertEol: false,      // ✅ PTY maneja conversiones
+});
+
+// Backend con detección de plataforma
+const os = require('os');
+const shell = os.platform() === 'win32'
+  ? 'powershell.exe'      // ✅ PowerShell en Windows
+  : 'bash';               // ✅ Bash en Unix
+
+const ptyProcess = pty.spawn(shell, [], {
+  name: 'xterm-256color',
+  cwd: os.platform() === 'win32'
+    ? process.env.USERPROFILE  // ✅ Directorio correcto Windows
+    : process.env.HOME,
+  env: process.env,
+  useConpty: true         // ✅ Forzar ConPTY si disponible
+});
+```
+
+**POR QUÉ ESTO ES CRÍTICO EN WINDOWS:**
+- Windows no tiene PTY nativo como Unix
+- ConPTY (Windows 10 1809+) es la solución moderna
+- winpty es el fallback para versiones antiguas
+- node-pty maneja la detección automáticamente
+
+### 5. Selección y Comportamiento Visual
+
+**TU IMPLEMENTACIÓN ACTUAL (INCORRECTA):**
+```javascript
+// Sin addons, sin configuración de layout
+const term = new Terminal();
+term.open(document.getElementById('terminal'));
+
+// CSS posiblemente incorrecto
+.terminal {
+  zoom: 0.8;  // ❌ Rompe coordenadas de selección
+}
+```
+
+**IMPLEMENTACIÓN CORRECTA:**
+```javascript
+// Con FitAddon para sizing correcto
+import { FitAddon } from '@xterm/addon-fit';
+
+const fitAddon = new FitAddon();
+term.loadAddon(fitAddon);
+term.open(document.getElementById('terminal'));
+fitAddon.fit();  // ✅ Ajusta dimensiones correctamente
+
+// CSS correcto - NO usar zoom
+.terminal-container {
+  width: 100%;
+  height: 100%;
+  /* Si necesitas escalar, usa transform */
+  /* transform: scale(0.8); */
+  /* transform-origin: top left; */
+}
+
+// Manejar resize
+window.addEventListener('resize', () => {
+  fitAddon.fit();
+  // Notificar al backend del nuevo tamaño
+  socket.send(JSON.stringify({
+    type: 'resize',
+    cols: term.cols,
+    rows: term.rows
+  }));
+});
+```
+
+**POR QUÉ ESTO SOLUCIONA LA SELECCIÓN:**
+- FitAddon calcula dimensiones correctas
+- CSS zoom rompe coordenadas del mouse
+- Terminal debe notificar cambios de tamaño al PTY
+
+---
+
+## Implementación Mínima Funcional Completa
+
+### Instalación
+
+```bash
+# Dependencias
+npm install xterm @xterm/addon-fit ws node-pty
+```
+
+### Frontend (index.html)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Terminal Web</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #1e1e1e;
+    }
+    #terminal-container {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal-container"></div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+  <script>
+    // Crear terminal
+    const term = new Terminal({
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: 'Courier New, monospace',
+      convertEol: false,
+      windowsPty: {
+        backend: 'conpty',
+        buildNumber: 21376
+      },
+      theme: {
+        background: '#1e1e1e',
+        foreground: '#d4d4d4'
+      }
+    });
+    
+    // Fit addon
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    
+    // Abrir
+    term.open(document.getElementById('terminal-container'));
+    fitAddon.fit();
+    
+    // WebSocket
+    const socket = new WebSocket('ws://localhost:8080');
+    
+    socket.onopen = () => {
+      console.log('Conectado');
+      // Enviar tamaño inicial
+      socket.send(JSON.stringify({
+        type: 'resize',
+        cols: term.cols,
+        rows: term.rows
+      }));
+    };
+    
+    // CRÍTICO: Sin echo local
+    term.onData(data => {
+      socket.send(data);
+    });
+    
+    // CRÍTICO: Solo escribir lo del servidor
+    socket.onmessage = (event) => {
+      term.write(event.data);
+    };
+    
+    socket.onerror = (err) => {
+      term.write('\r\n\x1b[31mError de conexión\x1b[0m\r\n');
+    };
+    
+    socket.onclose = () => {
+      term.write('\r\n\x1b[31mDesconectado\x1b[0m\r\n');
+    };
+    
+    // Resize
+    window.addEventListener('resize', () => {
+      fitAddon.fit();
+      socket.send(JSON.stringify({
+        type: 'resize',
+        cols: term.cols,
+        rows: term.rows
+      }));
+    });
+  </script>
+</body>
+</html>
+```
+
+### Backend (server.js)
+
+```javascript
+const WebSocket = require('ws');
+const pty = require('node-pty');
+const os = require('os');
+
+const PORT = 8080;
+const wss = new WebSocket.Server({ port: PORT });
+
+console.log(`Servidor en puerto ${PORT}`);
+
+wss.on('connection', (ws) => {
+  console.log('Cliente conectado');
+  
+  // Shell según plataforma
+  const shell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+  
+  // CRÍTICO: Spawn con PTY
+  const ptyProcess = pty.spawn(shell, [], {
+    name: 'xterm-256color',
+    cols: 80,
+    rows: 24,
+    cwd: os.platform() === 'win32' ? process.env.USERPROFILE : process.env.HOME,
+    env: process.env
+  });
+  
+  console.log(`Shell iniciado (PID: ${ptyProcess.pid})`);
+  
+  // PTY → WebSocket
+  ptyProcess.onData((data) => {
+    try {
+      ws.send(data);
+    } catch (err) {
+      console.error('Error send:', err);
+    }
+  });
+  
+  // WebSocket → PTY
+  ws.on('message', (msg) => {
+    try {
+      const data = msg.toString();
+      
+      // Manejar resize
+      if (data.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.type === 'resize') {
+            ptyProcess.resize(parsed.cols, parsed.rows);
+            return;
+          }
+        } catch (e) {}
+      }
+      
+      // Input normal
+      ptyProcess.write(data);
+    } catch (err) {
+      console.error('Error write:', err);
+    }
+  });
+  
+  // Cleanup
+  ws.on('close', () => {
+    console.log('Cliente desconectado');
+    ptyProcess.kill();
+  });
+  
+  ptyProcess.on('exit', () => {
+    ws.close();
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('\nCerrando...');
+  wss.close(() => process.exit(0));
+});
+```
+
+### Ejecutar
+
+```bash
+# Terminal 1: Iniciar servidor
+node server.js
+
+# Terminal 2 o Navegador: Abrir index.html
+# Si usas live-server:
+npx live-server
+```
+
+---
+
+## Resumen de Cambios Críticos
+
+1. **Instalar node-pty:** `npm install node-pty`
+
+2. **Backend: Usar pty.spawn en lugar de child_process:**
+   ```javascript
+   const pty = require('node-pty');
+   const ptyProcess = pty.spawn('powershell.exe', [], {...});
+   ```
+
+3. **Frontend: Eliminar TODO echo local:**
+   ```javascript
+   term.onData(data => socket.send(data)); // Solo esto
+   ```
+
+4. **Configurar windowsPty en xterm.js:**
+   ```javascript
+   windowsPty: { backend: 'conpty', buildNumber: 21376 }
+   ```
+
+5. **Usar FitAddon para sizing correcto:**
+   ```javascript
+   const fitAddon = new FitAddon();
+   term.loadAddon(fitAddon);
+   fitAddon.fit();
+   ```
+
+6. **No usar convertEol cuando tienes PTY:**
+   ```javascript
+   convertEol: false
+   ```
+
+7. **Enviar cambios de tamaño al PTY:**
+   ```javascript
+   ptyProcess.resize(cols, rows);
+   ```
+
+Estos cambios solucionarán **todos** tus problemas: texto duplicado, caracteres basura, selección incorrecta, y teclas especiales. La clave es **usar PTY correctamente** - es la única forma de tener un terminal web funcional en Windows.

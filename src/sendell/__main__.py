@@ -233,64 +233,79 @@ async def run_chat_loop():
     await agent.proactive_loop.start()
     console.print("[dim]⏰ Proactive reminders active (checking every 60s)[/dim]\n")
 
-    while True:
-        try:
-            # Get user input (non-blocking using asyncio.to_thread)
-            user_input = await asyncio.to_thread(
-                console.input, "\n[bold cyan]You:[/bold cyan] "
-            )
-            user_input = user_input.strip()
-
-            if not user_input:
-                continue
-
-            # Handle commands
-            if user_input.lower() in ["/quit", "/exit", "/q"]:
-                console.print("[yellow]Stopping services...[/yellow]")
-                await agent.proactive_loop.stop()
-                console.print("[yellow]Goodbye![/yellow]")
-                break
-
-            if user_input.lower() == "/health":
-                # Quick health check
-                monitor = SystemMonitor()
-                health = monitor.get_system_health()
-                display_health(health)
-                continue
-
-            if user_input.lower() == "/help":
-                console.print(
-                    "\n[bold]Available Commands:[/bold]\n"
-                    "  /quit, /exit - Exit chat\n"
-                    "  /health - Quick system health check\n"
-                    "  /help - Show this help\n\n"
-                    "[bold]You can also ask:[/bold]\n"
-                    "  'How's my system?'\n"
-                    "  'What's using all my RAM?'\n"
-                    "  'Open notepad'\n"
-                    "  'Show me top processes'\n"
+    try:
+        while True:
+            try:
+                # Get user input (non-blocking using asyncio.to_thread)
+                user_input = await asyncio.to_thread(
+                    console.input, "\n[bold cyan]You:[/bold cyan] "
                 )
-                continue
+                user_input = user_input.strip()
 
-            # Send to agent
-            console.print("[dim]Thinking...[/dim]")
-            result = await agent.chat(user_input, conversation_history)
+                if not user_input:
+                    continue
 
-            if result["success"]:
-                # Update conversation history
-                conversation_history = result.get("conversation_history", [])
+                # Handle commands
+                if user_input.lower() in ["/quit", "/exit", "/q"]:
+                    console.print("[yellow]Stopping services...[/yellow]")
+                    await agent.proactive_loop.stop()
 
-                # Display response
-                response = result.get("response", "No response")
-                console.print(f"\n[bold green]Sendell:[/bold green] {response}")
-            else:
-                console.print(f"[red]Error: {result.get('error')}[/red]")
+                    # Kill dashboard server if running
+                    from sendell.web.server_tracker import kill_server
+                    kill_server()
 
-        except KeyboardInterrupt:
-            raise
-        except Exception as e:
-            logger.error(f"Chat error: {e}")
-            console.print(f"[red]Error: {e}[/red]")
+                    console.print("[yellow]Goodbye![/yellow]")
+                    break
+
+                if user_input.lower() == "/health":
+                    # Quick health check
+                    monitor = SystemMonitor()
+                    health = monitor.get_system_health()
+                    display_health(health)
+                    continue
+
+                if user_input.lower() == "/help":
+                    console.print(
+                        "\n[bold]Available Commands:[/bold]\n"
+                        "  /quit, /exit - Exit chat\n"
+                        "  /health - Quick system health check\n"
+                        "  /help - Show this help\n\n"
+                        "[bold]You can also ask:[/bold]\n"
+                        "  'How's my system?'\n"
+                        "  'What's using all my RAM?'\n"
+                        "  'Open notepad'\n"
+                        "  'Show me top processes'\n"
+                    )
+                    continue
+
+                # Send to agent
+                console.print("[dim]Thinking...[/dim]")
+                result = await agent.chat(user_input, conversation_history)
+
+                if result["success"]:
+                    # Update conversation history
+                    conversation_history = result.get("conversation_history", [])
+
+                    # Display response
+                    response = result.get("response", "No response")
+                    console.print(f"\n[bold green]Sendell:[/bold green] {response}")
+                else:
+                    console.print(f"[red]Error: {result.get('error')}[/red]")
+
+            except KeyboardInterrupt:
+                # User pressed Ctrl+C - break out of loop
+                break
+            except Exception as e:
+                logger.error(f"Chat error: {e}")
+                console.print(f"[red]Error: {e}[/red]")
+
+    finally:
+        # Always cleanup dashboard server on exit (Ctrl+C or /quit)
+        console.print("\n[yellow]Cleaning up dashboard server...[/yellow]")
+        from sendell.web.server_tracker import kill_server
+        kill_server()
+        console.print("[green]✅ Cleanup complete[/green]")
+        console.print("[yellow]Goodbye![/yellow]")
 
 
 @app.command()

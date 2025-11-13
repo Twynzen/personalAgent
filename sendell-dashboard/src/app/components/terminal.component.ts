@@ -216,32 +216,27 @@ export class TerminalComponent implements OnInit, AfterViewInit, OnDestroy {
       if (code === 13) {
         // Enter key - send accumulated command
         console.log('[Terminal] ⏎ Enter pressed - Sending command:', JSON.stringify(this.currentLine));
-        this.terminal.write('\r\n'); // Echo newline
-        this.sendCommand(this.currentLine + '\r\n'); // Send with newline for cmd.exe
+        this.terminal.write('\r\n'); // Echo newline locally
+        this.sendCommand(this.currentLine + '\r\n'); // Send complete line with newline
         this.currentLine = ''; // Reset line
       } else if (code === 127 || code === 8) {
-        // Backspace or Delete
+        // Backspace or Delete - handle locally
         if (this.currentLine.length > 0) {
           this.currentLine = this.currentLine.slice(0, -1);
-          this.terminal.write('\b \b'); // Move back, write space, move back again
+          this.terminal.write('\b \b'); // Visual backspace (move back, space, move back)
           console.log('[Terminal] ⌫ Backspace - Current line:', JSON.stringify(this.currentLine));
         }
       } else if (code >= 32) {
-        // Printable character - add to current line and echo
+        // Printable character - accumulate and echo locally
         this.currentLine += data;
-        this.terminal.write(data); // Echo character
-        console.log('[Terminal] Current line:', JSON.stringify(this.currentLine));
+        this.terminal.write(data); // Echo character immediately (local feedback)
+        console.log('[Terminal] Typed:', JSON.stringify(data), 'Current line:', JSON.stringify(this.currentLine));
       }
     });
     console.log('[Terminal] onData handler registered');
 
-    // Welcome message
-    this.terminal.writeln('\x1b[1;32m=== Sendell Embedded Terminal ===\x1b[0m');
-    this.terminal.writeln(`\x1b[1;36mProject:\x1b[0m ${this.projectName}`);
-    this.terminal.writeln(`\x1b[1;36mPath:\x1b[0m ${this.workspacePath}`);
-    this.terminal.writeln('\x1b[1;32m=================================\x1b[0m');
-    this.terminal.writeln('');
-    console.log('[Terminal] Welcome message written');
+    // NO welcome message - terminal starts completely clean
+    // The backend will send the actual cmd.exe prompt
 
     // Resize on window resize
     window.addEventListener('resize', () => {
@@ -258,7 +253,10 @@ export class TerminalComponent implements OnInit, AfterViewInit, OnDestroy {
     this.ws.onopen = () => {
       console.log(`[WebSocket] ✅ Connected for project ${this.projectPid}`);
       this.isConnected = true;
-      this.terminal.writeln('\x1b[1;32m[Connected to terminal - Ready for input]\x1b[0m');
+
+      // Clear terminal to remove any garbage that came through before connection
+      this.terminal.clear();
+      console.log('[WebSocket] Terminal cleared - ready for cmd.exe output');
 
       // Send any buffered input
       if (this.inputBuffer.length > 0) {
