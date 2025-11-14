@@ -58,6 +58,7 @@ class ManagedTerminalProcess:
         self.command_queue: queue.Queue[str] = queue.Queue()
         self.output_buffer: List[str] = []  # Last N lines
         self.max_buffer_lines = 1000
+        self.last_line: str = ''  # Track last line to filter duplicates
 
         # Threading
         self.stdout_thread: Optional[threading.Thread] = None
@@ -84,7 +85,7 @@ class ManagedTerminalProcess:
                 text=True,
                 bufsize=1,  # Line buffered
                 cwd=self.workspace_path,
-                encoding='utf-8',
+                encoding='cp850',  # Windows Spanish console encoding
                 errors='replace',
                 creationflags=subprocess.CREATE_NO_WINDOW  # No separate window
             )
@@ -135,8 +136,11 @@ class ManagedTerminalProcess:
                 if self._stop_event.is_set():
                     break
 
-                line = line.rstrip('\r\n')
-                self._handle_output('stdout', line)
+                # Keep newline - don't strip it completely
+                # Just ensure it ends with \n for proper terminal display
+                line = line.rstrip('\r\n')  # Remove any existing line endings
+                if line:  # Only send non-empty lines
+                    self._handle_output('stdout', line + '\n')  # Add back \n
         except Exception as e:
             if not self._stop_event.is_set():
                 logger.error(f"Error reading stdout: {e}")
@@ -148,8 +152,10 @@ class ManagedTerminalProcess:
                 if self._stop_event.is_set():
                     break
 
+                # Keep newline for proper terminal display
                 line = line.rstrip('\r\n')
-                self._handle_output('stderr', line)
+                if line:
+                    self._handle_output('stderr', line + '\n')
         except Exception as e:
             if not self._stop_event.is_set():
                 logger.error(f"Error reading stderr: {e}")
@@ -182,6 +188,15 @@ class ManagedTerminalProcess:
     def _handle_output(self, stream: str, line: str):
         """Handle output line from stdout/stderr"""
         self.last_activity = datetime.now()
+
+        # Filter duplicate consecutive lines (especially prompts)
+        line_stripped = line.strip()
+        if line_stripped == self.last_line.strip() and line_stripped:
+            # Skip duplicate line
+            logger.debug(f"Skipping duplicate line: {line_stripped[:50]}")
+            return
+
+        self.last_line = line
 
         # Add to buffer
         self.output_buffer.append(line)
