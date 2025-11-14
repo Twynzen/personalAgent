@@ -1,0 +1,16 @@
+<!-- Modal Backdrop -->
+<div class="modal-backdrop" (click)="onBackdropClick()">
+  <!-- Modal Content (click no se propaga al backdrop) -->
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="terminal-container">
+      <div class="terminal-header">
+        <span class="terminal-title">{{ projectName }} - Terminal</span>
+        <div class="terminal-actions">
+          <button class="terminal-minimize" (click)="minimizeTerminal()" title="Minimize">_</button>
+          <button class="terminal-close" (click)="closeTerminal()" title="Close">&times;</button>
+        </div>
+      </div>
+      <div class="terminal-body" #terminalElement></div>
+    </div>
+  </div>
+</div>

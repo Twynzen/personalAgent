@@ -31,7 +31,9 @@
       "Bash(cat:*)",
       "Bash(bash:*)",
       "Bash(npm install:*)",
-      "Bash(./build-dashboard.sh:*)"
+      "Bash(./build-dashboard.sh:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

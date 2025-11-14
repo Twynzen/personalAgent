@@ -1,0 +1,995 @@
+# Guía Maestra Completa: Integración de Terminales xterm.js en Angular con Backend Python
+
+## Resumen Ejecutivo
+
+Esta guía maestra documenta el proceso completo para construir terminales web de nivel producción, desde arquitectura hasta testing, basada en implementaciones reales de VS Code, AWS CloudShell y Replit que sirven a millones de usuarios diariamente.
+
+**Stack Recomendado:**
+- **Frontend:** Angular + xterm.js v5.x + FitAddon + WebLinksAddon
+- **Comunicación:** WebSocket (latencia ~10ms, bidireccional full-duplex)
+- **Backend:** Python FastAPI + PTY management (pty.fork)
+- **Addons esenciales:** FitAddon (obligatorio), WebLinksAddon, WebglAddon
+
+---
+
+## PARTE 1: Arquitectura Completa de Terminales Web
+
+### Por qué esta arquitectura domina
+
+VS Code, AWS CloudShell y Replit convergen en el mismo patrón porque resuelve problemas fundamentales:
+- **Emulación terminal completa** con ANSI escape codes
+- **Comunicación bidireccional en tiempo real** sin polling
+- **Escalabilidad horizontal** con sesiones persistentes
+
+### Componentes esenciales
+
+**Frontend (xterm.js):**
+- Renderizado terminal con soporte Unicode y emojis
+- GPU-acceleration con WebglAddon
+- Gestión de buffer y scrollback
+- Manejo de eventos de teclado/mouse
+
+**Backend (Python PTY):**
+- `pty.fork()` crea pseudo-terminal
+- Proceso hijo ejecuta bash/zsh
+- Padre lee/escribe a master file descriptor
+- Maneja señales (SIGINT, SIGTERM, SIGWINCH)
+
+**Comunicación (WebSocket):**
+- Full-duplex bidireccional
+- Latencia ~10ms vs ~30ms SSE
+- Protocolo JSON recomendado
+- Flow control para prevenir overflow
+
+### Arquitectura de VS Code
+
+```
+Frontend (xterm.js) ←→ WebSocket/IPC ←→ Backend (ConPTY/PTY) ←→ Shell Process
+```
+
+- ConPTY en Windows 10+ (build 18309+)
+- PTY nativo en Unix/Linux
+- Shell integration con OSC 633 sequences
+- Session persistence y process reconnection
+
+### Arquitectura de Replit (Shell2)
+
+**Mejoras clave:**
+- 200× performance improvement
+- @replit/ruspty (Rust-based PTY)
+- xterm-headless para estado servidor
+- Streaming directo de bytes sin conversiones
+- Multiplayer-native (múltiples usuarios simultáneos)
+
+---
+
+## PARTE 2: Integración Angular Paso a Paso
+
+### Instalación correcta
+
+```bash
+npm install xterm xterm-addon-fit xterm-addon-web-links
+```
+
+**Compatibilidad:** Angular 12+ funciona con xterm.js 4.x-5.x
+
+### Componente TypeScript completo
+
+```typescript
+import { Component, ViewChild, ElementRef, AfterViewInit, 
+         OnDestroy, ViewEncapsulation, NgZone } from '@angular/core';
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
+
+@Component({
+  selector: 'app-terminal',
+  templateUrl: './terminal.component.html',
+  styleUrls: ['./terminal.component.scss'],
+  encapsulation: ViewEncapsulation.None  // CRÍTICO
+})
+export class TerminalComponent implements AfterViewInit, OnDestroy {
+  
+  @ViewChild('terminalContainer', { static: false }) 
+  terminalContainer!: ElementRef;
+  
+  private terminal!: Terminal;
+  private fitAddon?: FitAddon;
+  
+  constructor(private ngZone: NgZone) {}
+  
+  ngAfterViewInit(): void {
+    this.ngZone.runOutsideAngular(() => {
+      this.terminal = new Terminal({
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: 'Consolas, "Courier New", monospace',
+        theme: {
+          background: '#1e1e1e',
+          foreground: '#cccccc'
+        }
+      });
+      
+      this.fitAddon = new FitAddon();
+      this.terminal.loadAddon(this.fitAddon);
+      this.terminal.loadAddon(new WebLinksAddon());
+      
+      this.terminal.open(this.terminalContainer.nativeElement);
+      this.fitAddon.fit();
+      
+      this.terminal.onData((data) => {
+        this.ngZone.run(() => this.handleInput(data));
+      });
+    });
+    
+    window.addEventListener('resize', () => this.fitAddon?.fit());
+  }
+  
+  private handleInput(data: string): void {
+    // Enviar a backend via WebSocket
+  }
+  
+  ngOnDestroy(): void {
+    this.terminal?.dispose();
+  }
+}
+```
+
+### Template y estilos
+
+```html
+<!-- terminal.component.html -->
+<div class="terminal-wrapper">
+  <div #terminalContainer class="terminal-container"></div>
+</div>
+```
+
+```scss
+// terminal.component.scss
+@import 'xterm/css/xterm.css';
+
+.terminal-wrapper {
+  width: 100%;
+  height: 600px;
+  background-color: #1e1e1e;
+}
+
+.terminal-container {
+  width: 100%;
+  height: 100%;
+}
+```
+
+### Puntos críticos del ciclo de vida
+
+**✅ CORRECTO - ngAfterViewInit:**
+```typescript
+ngAfterViewInit(): void {
+  this.terminal = new Terminal();
+  this.terminal.open(this.terminalContainer.nativeElement); // DOM ready
+}
+```
+
+**❌ INCORRECTO - ngOnInit:**
+```typescript
+ngOnInit(): void {
+  this.terminal.open(this.terminalContainer.nativeElement); // ERROR: undefined
+}
+```
+
+### Manejo de Zone.js
+
+Zone.js dispara change detection en cada operación async. Para terminales de alta frecuencia:
+
+```typescript
+this.ngZone.runOutsideAngular(() => {
+  // Operaciones de terminal aquí
+  this.terminal.onData((data) => {
+    // Re-entrar solo si necesitas actualizar UI Angular
+    this.ngZone.run(() => {
+      this.someProperty = data;
+    });
+  });
+});
+```
+
+---
+
+## PARTE 3: CSS y Rendering Correcto
+
+### CSS obligatorio
+
+xterm.js **requiere absolutamente** xterm.css:
+
+```scss
+@import 'xterm/css/xterm.css';
+```
+
+O en angular.json:
+
+```json
+{
+  "styles": [
+    "node_modules/xterm/css/xterm.css",
+    "src/styles.scss"
+  ]
+}
+```
+
+### Problema de ViewEncapsulation
+
+Angular's default encapsulation rompe estilos xterm.js. **Soluciones:**
+
+1. **ViewEncapsulation.None** (recomendado)
+2. CSS global en angular.json
+3. `::ng-deep` (deprecated pero funcional)
+
+### CSS de producción completo
+
+```scss
+@import 'xterm/css/xterm.css';
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.terminal-wrapper {
+  width: 100%;
+  height: 100%;
+  background-color: #1e1e1e;
+  border-radius: 4px;
+  
+  ::ng-deep .xterm {
+    height: 100%;
+    width: 100%;
+    padding: 10px;
+  }
+  
+  // Scrollbar personalizado
+  ::ng-deep .xterm-viewport::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::ng-deep .xterm-viewport::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+}
+```
+
+### Diseño responsivo
+
+```typescript
+private setupResize(container: HTMLElement): void {
+  const resizeObserver = new ResizeObserver(() => {
+    clearTimeout(this.resizeTimeout);
+    this.resizeTimeout = setTimeout(() => {
+      this.fitAddon?.fit();
+    }, 100);
+  });
+  resizeObserver.observe(container);
+}
+```
+
+### Temas (Dark/Light)
+
+```typescript
+const darkTheme = {
+  foreground: '#d4d4d4',
+  background: '#1e1e1e',
+  cursor: '#ffffff',
+  red: '#cd3131',
+  green: '#0dbc79',
+  blue: '#2472c8'
+};
+
+terminal.options.theme = darkTheme;
+```
+
+---
+
+## PARTE 4: FitAddon y Manejo de Resize
+
+### Funcionamiento de FitAddon
+
+FitAddon calcula dimensiones óptimas:
+1. Mide espacio disponible del contenedor (offsetWidth, offsetHeight)
+2. Resta padding
+3. Mide dimensiones de caracteres desde DOM
+4. Calcula cols = floor(ancho / anchoCaracter)
+5. Calcula rows = floor(alto / altoCaracter)
+6. Llama `terminal.resize(cols, rows)`
+
+### Timing correcto
+
+```typescript
+// ORDEN CORRECTO:
+terminal.loadAddon(fitAddon);  // 1. Cargar
+terminal.open(container);       // 2. Abrir
+fitAddon.fit();                 // 3. Ajustar
+```
+
+### Implementación robusta
+
+```typescript
+class TerminalManager {
+  safelyFit() {
+    // Guard clauses
+    if (!this.isReady) {
+      this.pendingFit = true;
+      return;
+    }
+    
+    if (!this.container.offsetParent) { // Hidden
+      this.pendingFit = true;
+      return;
+    }
+    
+    if (this.container.offsetWidth === 0) { // No dimensions
+      this.pendingFit = true;
+      return;
+    }
+    
+    try {
+      this.fitAddon.fit();
+      this.pendingFit = false;
+    } catch (err) {
+      console.error('Fit failed:', err);
+    }
+  }
+}
+```
+
+### ResizeObserver vs window.resize
+
+**Recomendación: usa ambos**
+
+```typescript
+// Window resize (fallback)
+window.addEventListener('resize', () => this.fitAddon?.fit());
+
+// ResizeObserver (preciso)
+const observer = new ResizeObserver(() => this.fitAddon?.fit());
+observer.observe(container);
+```
+
+---
+
+## PARTE 5: Backend Python con WebSocket
+
+### Implementación FastAPI completa
+
+```python
+import asyncio, os, pty, select, struct, fcntl, termios, json
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+
+app = FastAPI()
+
+class TerminalSession:
+    def __init__(self, command="/bin/bash"):
+        self.command = command
+        self.master_fd = None
+        self.child_pid = None
+        
+    def start(self):
+        self.child_pid, self.master_fd = pty.fork()
+        
+        if self.child_pid == 0:  # Child
+            os.execvp(self.command, [self.command])
+        
+        # Parent - set non-blocking
+        flags = fcntl.fcntl(self.master_fd, fcntl.F_GETFL)
+        fcntl.fcntl(self.master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+        
+    def resize(self, rows, cols):
+        if self.master_fd:
+            winsize = struct.pack("HHHH", rows, cols, 0, 0)
+            fcntl.ioctl(self.master_fd, termios.TIOCSWINSZ, winsize)
+            
+    def write(self, data):
+        if self.master_fd:
+            os.write(self.master_fd, data.encode())
+            
+    def read(self):
+        if not self.master_fd:
+            return None
+        try:
+            return os.read(self.master_fd, 4096).decode('utf-8', errors='ignore')
+        except OSError:
+            return None
+            
+    def close(self):
+        if self.master_fd:
+            os.close(self.master_fd)
+        if self.child_pid:
+            os.kill(self.child_pid, 15)
+            os.waitpid(self.child_pid, 0)
+
+@app.websocket("/ws/terminal")
+async def terminal_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    terminal = TerminalSession()
+    terminal.start()
+    
+    async def read_from_pty():
+        while True:
+            readable, _, _ = select.select([terminal.master_fd], [], [], 0.01)
+            if readable:
+                data = terminal.read()
+                if data:
+                    await websocket.send_json({"type": "output", "data": data})
+            await asyncio.sleep(0.01)
+    
+    read_task = asyncio.create_task(read_from_pty())
+    
+    try:
+        while True:
+            message = await websocket.receive_text()
+            msg = json.loads(message)
+            
+            if msg["type"] == "input":
+                terminal.write(msg["data"])
+            elif msg["type"] == "resize":
+                terminal.resize(msg["rows"], msg["cols"])
+    except WebSocketDisconnect:
+        pass
+    finally:
+        read_task.cancel()
+        terminal.close()
+```
+
+### Protocolo de mensajes
+
+**Cliente → Servidor:**
+```json
+{"type": "input", "data": "ls -la\n"}
+{"type": "resize", "rows": 24, "cols": 80}
+```
+
+**Servidor → Cliente:**
+```json
+{"type": "output", "data": "file.txt\ndir/"}
+{"type": "error", "message": "Connection lost"}
+```
+
+### PTY vs subprocess
+
+**✅ PTY (mandatorio para terminales):**
+- Emulación completa con colores y cursor
+- Programas interactivos (vim, nano, htop)
+- ANSI escape codes automáticos
+- Señales funcionan correctamente
+
+**❌ subprocess (solo comandos simples):**
+- Sin emulación terminal
+- No funciona con apps interactivas
+
+---
+
+## PARTE 6: Manejo de Entrada/Salida
+
+### Captura de input con onData
+
+```typescript
+terminal.onData(data => {
+  // Enviar a backend
+  websocket.send(JSON.stringify({ type: 'input', data }));
+});
+```
+
+### Echo remoto (RECOMENDADO)
+
+```typescript
+// Cliente
+terminal.onData(data => socket.send(data));
+socket.onmessage = (event) => terminal.write(event.data);
+```
+
+### Teclas especiales
+
+- **Enter**: `\r` (0x0D)
+- **Backspace**: `\x7F` - escribe `\b \b`
+- **Ctrl+C**: `\x03` - interrupt
+- **Ctrl+D**: `\x04` - EOF
+- **Flecha arriba**: `\x1b[A`
+- **Flecha abajo**: `\x1b[B`
+
+### Handler completo
+
+```typescript
+class TerminalInputHandler {
+  private buffer = '';
+  private history: string[] = [];
+  
+  handleInput(data: string) {
+    if (data === '\r') { // Enter
+      this.terminal.write('\r\n');
+      this.history.push(this.buffer);
+      this.onCommand(this.buffer);
+      this.buffer = '';
+    }
+    else if (data === '\x7F') { // Backspace
+      if (this.buffer.length > 0) {
+        this.buffer = this.buffer.slice(0, -1);
+        this.terminal.write('\b \b');
+      }
+    }
+    else if (data === '\x03') { // Ctrl+C
+      this.terminal.write('^C\r\n');
+      this.buffer = '';
+    }
+    else {
+      this.buffer += data;
+      this.terminal.write(data);
+    }
+  }
+}
+```
+
+### Códigos ANSI
+
+```typescript
+const ANSI = {
+  FG_RED: '\x1b[31m',
+  FG_GREEN: '\x1b[32m',
+  BOLD: '\x1b[1m',
+  RESET: '\x1b[0m'
+};
+
+terminal.write(ANSI.FG_RED + 'ERROR:' + ANSI.RESET + ' Failed\r\n');
+```
+
+### Flow control (watermark-based)
+
+```typescript
+const HIGH_WATERMARK = 100000;
+const LOW_WATERMARK = 10000;
+let watermark = 0;
+
+pty.onData(chunk => {
+  watermark += chunk.length;
+  
+  terminal.write(chunk, () => {
+    watermark -= chunk.length;
+    if (watermark < LOW_WATERMARK) {
+      pty.resume();
+    }
+  });
+  
+  if (watermark > HIGH_WATERMARK) {
+    pty.pause();
+  }
+});
+```
+
+---
+
+## PARTE 7: Features Avanzadas
+
+### Copy/Paste
+
+```typescript
+import { ClipboardAddon } from '@xterm/addon-clipboard';
+terminal.loadAddon(new ClipboardAddon());
+
+// O manual:
+terminal.attachCustomKeyEventHandler((event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+    if (terminal.hasSelection()) {
+      navigator.clipboard.writeText(terminal.getSelection());
+      return false;
+    }
+  }
+  return true;
+});
+```
+
+### Búsqueda (Ctrl+F)
+
+```typescript
+import { SearchAddon } from '@xterm/addon-search';
+const searchAddon = new SearchAddon();
+terminal.loadAddon(searchAddon);
+
+searchAddon.findNext('searchTerm', {
+  regex: false,
+  caseSensitive: false
+});
+```
+
+### Links clickeables
+
+```typescript
+import { WebLinksAddon } from '@xterm/addon-web-links';
+terminal.loadAddon(new WebLinksAddon());
+
+// Custom handler
+terminal.loadAddon(new WebLinksAddon((event, uri) => {
+  if (event.ctrlKey) {
+    window.open(uri, '_blank');
+  }
+}));
+```
+
+### Exportar output
+
+```typescript
+import { SerializeAddon } from '@xterm/addon-serialize';
+const serializeAddon = new SerializeAddon();
+terminal.loadAddon(serializeAddon);
+
+function exportAsText() {
+  const serialized = serializeAddon.serialize();
+  const blob = new Blob([serialized], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `terminal-${Date.now()}.txt`;
+  a.click();
+}
+```
+
+### Comandos custom
+
+```typescript
+executeCommand(cmd: string) {
+  const [command, ...args] = cmd.split(' ');
+  
+  switch (command) {
+    case 'clear':
+      this.terminal.clear();
+      break;
+    case 'echo':
+      this.terminal.writeln(args.join(' '));
+      break;
+    default:
+      this.terminal.writeln(`Command not found: ${command}`);
+  }
+}
+```
+
+---
+
+## PARTE 8: Troubleshooting
+
+### Problema: Memory leaks
+
+```typescript
+class TerminalManager {
+  private disposables: IDisposable[] = [];
+  
+  constructor() {
+    this.disposables.push(
+      this.terminal.onData(data => this.handleData(data))
+    );
+  }
+  
+  dispose() {
+    this.disposables.forEach(d => d.dispose());
+    this.terminal?.dispose();
+  }
+}
+```
+
+### Problema: Performance pobre
+
+```typescript
+const terminal = new Terminal({
+  scrollback: 1000,  // No ilimitado
+  rendererType: 'canvas'
+});
+
+// Usar WebGL
+import { WebglAddon } from '@xterm/addon-webgl';
+terminal.loadAddon(new WebglAddon());
+```
+
+### Problema: Flickering
+
+```typescript
+// Debounce resize
+const debouncedFit = debounce(() => fitAddon.fit(), 50);
+window.addEventListener('resize', debouncedFit);
+
+// Prevenir sub-pixel
+container.style.transform = 'translateZ(0)';
+```
+
+### Problema: WebSocket disconnected
+
+```typescript
+class WebSocketManager {
+  private reconnectAttempts = 0;
+  
+  reconnect(url: string, term: Terminal) {
+    if (this.reconnectAttempts < 5) {
+      this.reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
+      setTimeout(() => this.connect(url, term), delay);
+    }
+  }
+}
+```
+
+---
+
+## PARTE 9: Proyectos de Referencia
+
+### ng-terminal (130+ stars)
+- **URL:** https://github.com/qwefgh90/ng-terminal
+- **Destacado:** Biblioteca Angular completa, OnPush strategy, ResizeObserver
+- **Patrón clave:** RxJS observables para data flow
+
+### el-term (Electron + Angular)
+- **URL:** https://github.com/mflorence99/el-term
+- **Destacado:** Splits arbitrarios, NGXS state management, múltiples tabs
+- **Patrón clave:** State management con NGXS para complejidad
+
+### Patrones comunes
+
+```typescript
+// Inicialización estándar
+ngAfterViewInit() {
+  this.terminal = new Terminal(options);
+  this.terminal.loadAddon(new FitAddon());
+  this.terminal.open(this.terminalElement.nativeElement);
+  this.fitAddon.fit();
+}
+
+// ViewChild pattern
+@ViewChild('terminal', { static: false }) 
+terminalDiv: ElementRef<HTMLElement>;
+```
+
+---
+
+## PARTE 10: Testing
+
+### Unit tests
+
+```typescript
+import { TestBed } from '@angular/core/testing';
+
+describe('TerminalComponent', () => {
+  let fixture: ComponentFixture<TerminalComponent>;
+  
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [TerminalComponent]
+    }).compileComponents();
+  });
+
+  it('should create terminal', () => {
+    fixture.detectChanges();
+    expect(component.terminal).toBeDefined();
+  });
+});
+```
+
+### Mock WebSocket
+
+```typescript
+export const WEBSOCKET_CTOR = new InjectionToken<typeof webSocket>(
+  'WEBSOCKET_CTOR'
+);
+
+// En test
+const fakeSocket = new Subject();
+TestBed.configureTestingModule({
+  providers: [
+    { provide: WEBSOCKET_CTOR, useValue: () => fakeSocket }
+  ]
+});
+```
+
+### Integration tests (Playwright)
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test('should handle input', async ({ page }) => {
+  await page.goto('http://localhost:4200/terminal');
+  const terminal = await page.locator('.xterm-helper-textarea');
+  await terminal.type('echo test');
+  await terminal.press('Enter');
+  
+  const content = await page.locator('.xterm-rows').textContent();
+  expect(content).toContain('test');
+});
+```
+
+### CI/CD (GitHub Actions)
+
+```yaml
+name: Test
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: npm ci
+    - run: npm test -- --watch=false --browsers=ChromeHeadless
+    - run: npx playwright install
+    - run: npm run test:e2e
+```
+
+---
+
+## Conclusión: Stack de Producción Completo
+
+### Componentes esenciales
+
+**Frontend:**
+- Angular 12+
+- xterm.js v5.x
+- @xterm/addon-fit (obligatorio)
+- @xterm/addon-web-links
+- @xterm/addon-webgl (performance)
+
+**Backend:**
+- Python 3.8+
+- FastAPI (recomendado) o Flask-SocketIO
+- PTY management con pty.fork()
+- asyncio para I/O eficiente
+
+**Comunicación:**
+- WebSocket (wss:// en producción)
+- Protocolo JSON
+- Flow control watermark-based
+- Reconnection con backoff exponencial
+
+### Arquitectura final
+
+```
+┌─────────────────────────────────────────────────────┐
+│                FRONTEND (Browser)                    │
+│                                                      │
+│  Angular Component (ngAfterViewInit)                │
+│         ↓                                            │
+│  xterm.js Terminal + FitAddon                       │
+│         ↓                                            │
+│  WebSocket Client                                   │
+│                                                      │
+└──────────────────┬──────────────────────────────────┘
+                   │
+                   │ WebSocket (JSON protocol)
+                   │
+┌──────────────────▼──────────────────────────────────┐
+│                BACKEND (Python)                      │
+│                                                      │
+│  FastAPI WebSocket Endpoint                         │
+│         ↓                                            │
+│  PTY Session (pty.fork)                             │
+│         ↓                                            │
+│  Shell Process (bash/zsh)                           │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+### Checklist de implementación
+
+**✅ Frontend Setup:**
+- [ ] Instalar xterm.js y addons
+- [ ] Importar xterm.css (global o component)
+- [ ] ViewEncapsulation.None o CSS global
+- [ ] Inicializar en ngAfterViewInit
+- [ ] ViewChild para obtener ElementRef
+- [ ] Cargar FitAddon antes de open()
+- [ ] Setup ResizeObserver + debounce
+- [ ] ngZone.runOutsideAngular para performance
+- [ ] Dispose en ngOnDestroy
+
+**✅ Backend Setup:**
+- [ ] FastAPI con WebSocket support
+- [ ] TerminalSession class con pty.fork()
+- [ ] Non-blocking I/O (fcntl)
+- [ ] Resize handler con TIOCSWINSZ
+- [ ] Cleanup con SIGTERM + SIGKILL fallback
+- [ ] Error handling y logging
+- [ ] Flow control implementation
+
+**✅ Comunicación:**
+- [ ] Protocolo JSON definido
+- [ ] WebSocket connection handling
+- [ ] Reconnection con backoff
+- [ ] Flow control watermark-based
+- [ ] Manejo de disconnect graceful
+
+**✅ Features:**
+- [ ] Copy/paste (Ctrl+C/V)
+- [ ] Search (Ctrl+F)
+- [ ] Clickable links
+- [ ] Export output
+- [ ] Custom commands
+- [ ] Themes (dark/light)
+
+**✅ Testing:**
+- [ ] Unit tests con TestBed
+- [ ] WebSocket mocking
+- [ ] Integration tests con Playwright
+- [ ] CI/CD pipeline
+- [ ] Coverage > 80%
+
+### Recursos adicionales
+
+**Documentación oficial:**
+- xterm.js: https://xtermjs.org/docs/
+- FastAPI: https://fastapi.tiangolo.com/
+- Angular: https://angular.dev/
+
+**Proyectos de referencia:**
+- VS Code: https://github.com/microsoft/vscode
+- ng-terminal: https://github.com/qwefgh90/ng-terminal
+- el-term: https://github.com/mflorence99/el-term
+
+**Testing:**
+- Playwright: https://playwright.dev/
+- Angular Testing: https://angular.dev/guide/testing
+
+### Performance benchmarks
+
+**xterm.js:**
+- WebGL renderer: ~200× más rápido que DOM
+- Scrollback 1000 lines: ~5MB memoria
+- Scrollback 10000 lines: ~34MB memoria
+
+**WebSocket:**
+- Latencia típica: ~10ms
+- Throughput: >100MB/s con flow control
+- Ctrl+C response: <100ms con watermarks correctos
+
+### Seguridad en producción
+
+**Obligatorio:**
+- WSS (WebSocket Secure) en producción
+- Autenticación antes de WebSocket upgrade
+- Rate limiting en mensajes WebSocket
+- Sanitización de input del usuario
+- Command whitelisting cuando apropiado
+- Resource limits por sesión
+- Auditoría de comandos ejecutados
+
+**Configuración nginx:**
+```nginx
+location /ws/ {
+  proxy_pass http://backend;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection "upgrade";
+  proxy_read_timeout 86400;
+}
+```
+
+### Deployment con Docker
+
+```dockerfile
+FROM python:3.11
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+### Conclusión final
+
+Esta guía documenta arquitecturas y código probado en batalla por **millones de desarrolladores en VS Code, AWS CloudShell y Replit**. El stack converge en:
+
+1. **xterm.js** - Única opción madura con GPU rendering, Unicode completo
+2. **WebSocket** - Comunicación bidireccional con latencia ~10ms
+3. **Angular** - Estrategias específicas de lifecycle y performance
+4. **Python PTY** - Emulación terminal completa con pty.fork()
+
+Los desafíos clave tienen soluciones conocidas:
+- **FitAddon + ResizeObserver** maneja responsive sizing
+- **Flow control watermark** previene overflow manteniendo responsividad
+- **ngAfterViewInit + ViewEncapsulation.None** evita errores Angular
+- **WebSocket reconnection con backoff** maneja disconnects
+- **Testing con mocks** permite CI/CD confiable
+
+Siguiendo esta guía, puedes construir terminales web de nivel producción que igualen la experiencia de VS Code, con código mantenible, performante y bien testeado.
+
+**¡Éxito en tu implementación!** 🚀

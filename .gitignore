@@ -158,3 +158,6 @@ sendell-dashboard/node_modules/
 sendell-dashboard/dist/
 sendell-dashboard/.angular/
 sendell-dashboard/.vscode/
+
+# Terminal Server (deprecated - using Python backend)
+terminal-server/
