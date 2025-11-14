@@ -1,168 +1,428 @@
-# Sendell - Tu Asistente AI Personal
+# Sendell - Orquestador AI para Proyectos de Desarrollo
 
-**Version**: 0.1.0 MVP
-**Estado**: Funcional
+**Versión**: 0.3.0
+**Estado**: Dashboard con Terminales Embebidos (Funcional)
 **Desarrollador**: Daniel
-
-Sendell es tu agente AI autónomo que monitorea tu sistema Windows, te ayuda con tareas, y aprende sobre ti. Es tu Jarvis personal.
-
----
-
-## Lo que hace Sendell AHORA (100% funcional)
-
-- Monitorea CPU, RAM, Disco en tiempo real
-- Ve qué aplicación estás usando (respetando privacidad)
-- Lista procesos que consumen recursos
-- Abre aplicaciones por comando
-- Conversa contigo inteligentemente
-- Tiene una "mente" visual donde puedes gestionar su memoria y configuración
-- Se adapta según el nivel de autonomía que le des (L1-L5)
+**Co-Authored-By**: Claude (Anthropic)
 
 ---
 
-## Instalación Rápida
+## 🎯 ¿Qué es Sendell?
+
+Sendell es un **agente AI autónomo** que monitorea y controla tu entorno de desarrollo Windows. Detecta proyectos VS Code abiertos, muestra su estado en tiempo real (OFFLINE/READY/WORKING) y proporciona terminales embebidos en un dashboard web para ejecutar comandos en cada proyecto.
+
+**Casos de uso:**
+- Monitorear múltiples proyectos simultáneamente
+- Ejecutar comandos npm/git sin cambiar ventanas
+- Ver actividad de proyectos en gráficos ECG-style
+- Gestión proactiva con recordatorios y notificaciones
+
+---
+
+## 📋 Estado Actual del Proyecto
+
+### ✅ Completado (v0.1 - v0.3)
+
+#### Core Agent (v0.1)
+- [x] Chat interactivo con GPT-4 via LangGraph
+- [x] 8 herramientas funcionales (system health, procesos, apps, reminders, dashboard)
+- [x] Sistema de memoria JSON persistente
+- [x] Niveles de autonomía L1-L5 configurables
+- [x] Brain GUI (tkinter) para gestionar memoria/prompts
+
+#### Sistema Proactivo (v0.2)
+- [x] AgentIdentity con fases temporales (birth → maturity)
+- [x] ReminderManager (one-time, recurring, important)
+- [x] Loop proactivo asyncio no bloqueante
+- [x] NotificationWindow con ASCII art y sonidos
+
+#### Dashboard & Terminales (v0.3)
+- [x] **Angular Dashboard** web (localhost:8765)
+- [x] **Detección multi-proyecto** VS Code via psutil
+- [x] **Gráficos de actividad** ECG-style (Canvas API)
+- [x] **Terminales embebidos** xterm.js con WebSocket bidireccional
+- [x] **Estados de proyecto**: OFFLINE (rojo) → READY (azul) → WORKING (verde)
+- [x] **TerminalManager** backend (subprocess.Popen + threading)
+- [x] **Click behavior**: OFFLINE crea terminal, READY/WORKING toggle visibilidad
+- [x] **Performance optimizations**: NgZone.runOutsideAngular, WebGL rendering
+- [x] **Auto-reconnection** WebSocket con backoff exponencial
+- [x] **Mejoras UX**: Encoding cp850, saltos de línea, filtro duplicados
+
+### ⏸️ Incompleto / En Pausa
+
+- [ ] VS Code Extension (iniciada, en `sendell-vscode-extension/`)
+- [ ] PTY backend (investigado, no implementado - subprocess suficiente para casos básicos)
+- [ ] Database completa (actualmente solo JSON files)
+- [ ] Sub-agentes especializados (arquitectura planificada, no implementada)
+- [ ] Integración Claude Code (concepto definido, sin implementar)
+
+---
+
+## 🚀 Inicio Rápido
 
 ### 1. Requisitos
-- Windows 10/11
-- Python 3.10+
-- OpenAI API Key
+- **OS**: Windows 10/11
+- **Python**: 3.10+
+- **Node.js**: 16+ (para dashboard)
+- **API Key**: OpenAI GPT-4
 
-### 2. Instalar
-```powershell
+### 2. Instalación
+
+```bash
+# Clonar repositorio
 cd C:\Users\Daniel\Desktop\Daniel\sendell
+
+# Instalar dependencias Python
 uv sync
+
+# Configurar environment
 copy .env.example .env
-notepad .env  # Pega tu OPENAI_API_KEY
+notepad .env  # Agregar OPENAI_API_KEY
+
+# Build Angular dashboard (si no está built)
+cd sendell-dashboard
+npm install
+npm run build
+cd ..
+bash build-dashboard.sh
 ```
 
-### 3. Probar
-```powershell
-uv run python -m sendell health
+### 3. Uso Básico
+
+```bash
+# Iniciar chat con Sendell
+uv run python -m sendell chat
+
+# Dentro del chat, abrir dashboard:
+You: open dashboard
 ```
 
-Si ves una tabla con CPU/RAM/Disco, está listo.
+El dashboard se abre en `http://localhost:8765` y muestra:
+- Proyectos VS Code detectados automáticamente
+- Estado de cada proyecto (OFFLINE/READY/WORKING)
+- Gráficos de actividad en tiempo real
+- Terminales embebidos (click en proyecto)
 
 ---
 
-## Cómo Usar Sendell
+## 🎮 Comandos CLI
 
-### Comando 1: `sendell health`
-**Qué hace**: Chequeo rápido del sistema (sin agente)
-
-```powershell
-uv run python -m sendell health
-```
-
-**Salida**: Tabla con CPU%, RAM%, Disco%
-
----
-
-### Comando 2: `sendell chat` (EL PRINCIPAL)
-**Qué hace**: Chat interactivo con Sendell
-
-```powershell
+### `sendell chat` - Chat Interactivo (Principal)
+```bash
 uv run python -m sendell chat
 ```
 
-**Ejemplos de lo que puedes decirle:**
-
+**Ejemplos:**
 ```
-You: "How's my system?"
-Sendell: CPU 25%, RAM 89% (alta), Disco 89%
+You: how's my system?
+Sendell: CPU 25%, RAM 89%, Disk 75%
 
-You: "What's using all my RAM?"
-Sendell: Top 3: Chrome (1.5GB), VS Code (800MB)...
+You: open dashboard
+Sendell: [Abre dashboard web en navegador]
 
-You: "Open notepad"
-Sendell: [Si nivel >= L3] Abre notepad directamente
-        [Si nivel = L2] Pide tu aprobación primero
+You: remind me to commit code in 30 minutes
+Sendell: [Crea reminder, notifica en 30 min]
 
-You: "Show me your brain"
-Sendell: Abre GUI para gestionar memoria y config
+You: show brain
+Sendell: [Abre GUI de configuración]
 ```
 
-**Comandos especiales en el chat:**
-- `/health` - Health check rápido
-- `/help` - Ayuda
-- `/quit` - Salir
+### `sendell health` - System Check
+```bash
+uv run python -m sendell health
+```
+Output: Tabla con CPU%, RAM%, Disk%
 
----
-
-### Comando 3: `sendell brain` (NUEVO - IMPORTANTE)
-**Qué hace**: Abre la interfaz gráfica de Sendell
-
-```powershell
+### `sendell brain` - Configuración GUI
+```bash
 uv run python -m sendell brain
 ```
 
-**GUI con 3 pestañas:**
+Abre GUI tkinter con 3 tabs:
+1. **Memorias**: Ver/editar facts, configurar autonomía L1-L5
+2. **Prompts**: Editar system prompt de Sendell
+3. **Herramientas**: Lista de 8 tools disponibles
 
-#### Tab 1: MEMORIAS
-- **Facts aprendidos**: Lo que Sendell sabe de ti
-- **Agregar/Eliminar facts** manualmente
-- **Estadísticas**: Total de facts, conversaciones, sesiones
-- **⭐ CONFIGURAR AUTONOMÍA**: Cambia entre L1-L5 aquí
-
-#### Tab 2: PROMPTS
-- **Ver/Editar** el system prompt que define a Sendell
-- Personaliza su personalidad y comportamiento
-- Guarda y reinicia para aplicar cambios
-
-#### Tab 3: HERRAMIENTAS
-- Lista de las **6 acciones** que Sendell puede hacer
-- Con descripciones de cada una
-
----
-
-### Comando 4: `sendell start`
-**Qué hace**: Modo proactivo (loop OODA)
-
-```powershell
-# 3 ciclos de prueba cada 30 segundos
-uv run python -m sendell start --interval 30 --max-cycles 3
+### `sendell version`
+```bash
+uv run python -m sendell version
 ```
 
-Sendell monitorea tu sistema cada N segundos y te alerta proactivamente.
+---
+
+## 🧰 Las 8 Herramientas de Sendell
+
+| # | Herramienta | Descripción | Autonomía Requerida |
+|---|-------------|-------------|---------------------|
+| 1 | `get_system_health` | CPU/RAM/Disk metrics | L1+ |
+| 2 | `get_active_window` | Ventana activa actual | L1+ |
+| 3 | `list_top_processes` | Top N procesos por CPU/RAM | L1+ |
+| 4 | `open_application` | Abrir apps (notepad, chrome, vscode) | L3+ |
+| 5 | `respond_to_user` | Enviar mensajes proactivos | L1+ |
+| 6 | `show_brain` | Abrir Brain GUI | L1+ |
+| 7 | `add_reminder` | Crear reminders (one-time, recurring) | L2+ |
+| 8 | `open_dashboard` | Abrir dashboard web multi-proyecto | L1+ |
 
 ---
 
-## Niveles de Autonomía (L1-L5)
+## 📊 Dashboard Web (v0.3)
 
-**Configurar**: `sendell brain` → tab Memorias → Selector desplegable
+### Características
+
+**Proyectos Detectados:**
+- Escanea procesos `Code.exe` con psutil
+- Parsea workspace paths
+- Muestra nombre + estado en cards
+
+**Estados de Proyecto:**
+- 🔴 **OFFLINE**: VS Code cerrado
+- 🔵 **READY**: VS Code abierto, terminal idle
+- 🟢 **WORKING**: Comando ejecutándose en terminal
+
+**Gráficos de Actividad:**
+- ECG-style animación
+- Canvas API rendering
+- Actualización en tiempo real vía WebSocket
+
+**Terminales Embebidos:**
+- Click en proyecto OFFLINE → Crea terminal nuevo
+- Click en proyecto READY/WORKING → Toggle visibilidad
+- xterm.js v5.5 con FitAddon, WebLinksAddon, WebglAddon
+- WebSocket bidireccional para I/O
+- Performance: NgZone.runOutsideAngular (200-300% mejora)
+- Encoding cp850 (caracteres españoles correctos)
+- Auto-reconnection con backoff exponencial
+- Botones: Minimizar (`_`) + Cerrar (`×`)
+
+### Tecnologías Dashboard
+
+**Frontend:**
+- Angular 17 (standalone components)
+- xterm.js 5.5 (terminal emulation)
+- Canvas API (gráficos)
+- WebSocket client
+
+**Backend:**
+- FastAPI (REST API + WebSocket)
+- subprocess.Popen (terminal control - cmd.exe)
+- psutil (VS Code detection)
+- Threading (I/O non-blocking)
+
+---
+
+## 🔧 Arquitectura del Proyecto
+
+```
+sendell/
+├── src/sendell/
+│   ├── agent/                      # Core LangGraph Agent
+│   │   ├── core.py                # SendellAgent (8 tools)
+│   │   ├── prompts.py             # System prompts
+│   │   ├── memory.py              # JSON persistence
+│   │   └── brain_gui.py           # tkinter GUI
+│   │
+│   ├── proactive/                  # Sistema Proactivo (v0.2)
+│   │   ├── identity.py            # AgentIdentity (temporal phases)
+│   │   ├── reminders.py           # ReminderManager
+│   │   ├── proactive_loop.py      # Background asyncio loop
+│   │   └── temporal_clock.py      # Time tracking
+│   │
+│   ├── ui/                         # Notificaciones (v0.2)
+│   │   ├── notification_window.py # tkinter notifications
+│   │   └── ascii_art.py           # ASCII art library (25 arts)
+│   │
+│   ├── web/                        # Dashboard Backend (v0.3)
+│   │   ├── server.py              # FastAPI app + WebSocket
+│   │   ├── routes.py              # REST endpoints
+│   │   ├── websocket.py           # WebSocket manager
+│   │   └── background.py          # Background scanner
+│   │
+│   ├── terminal_manager/           # Terminal Control (v0.3)
+│   │   ├── manager.py             # TerminalManager singleton
+│   │   ├── process.py             # ManagedTerminalProcess (subprocess)
+│   │   └── types.py               # Pydantic models
+│   │
+│   ├── project_manager/            # VS Code Detection (v0.3)
+│   │   ├── vscode_detector.py     # psutil-based detection
+│   │   ├── project_states.py      # State machine (OFFLINE/READY/WORKING)
+│   │   └── bridge.py              # bridge.json management
+│   │
+│   ├── device/                     # System Monitoring
+│   │   ├── monitor.py             # psutil wrapper
+│   │   ├── automation.py          # App launching
+│   │   └── platform/
+│   │       └── windows.py         # Windows APIs
+│   │
+│   ├── security/                   # Permisos y Validación
+│   │   ├── permissions.py         # Sistema L1-L5
+│   │   └── validator.py           # Input validation
+│   │
+│   └── utils/
+│       ├── logger.py              # Logging con PII scrubbing
+│       └── errors.py              # Excepciones custom
+│
+├── sendell-dashboard/              # Angular Frontend (v0.3)
+│   ├── src/app/
+│   │   ├── app.ts                 # Main component
+│   │   ├── app.html               # Template (projects + terminals)
+│   │   ├── app.scss               # Cyberpunk styling
+│   │   ├── components/
+│   │   │   ├── activity-graph.component.ts  # ECG graphs
+│   │   │   ├── terminal.component.ts        # xterm.js wrapper
+│   │   │   ├── terminal.component.html
+│   │   │   └── terminal.component.scss
+│   │   └── core/
+│   │       ├── models/            # TypeScript interfaces
+│   │       └── services/          # API, WebSocket, Terminal
+│   │
+│   └── dist/                      # Build output
+│       └── sendell-dashboard/     # Deployed a src/sendell/web/static/
+│
+├── data/                           # Data Persistence
+│   ├── sendell_memory.json        # Memoria del agente
+│   └── .sendell/                  # Runtime data
+│       ├── dashboard_server.pid
+│       └── bridge.json            # Project states
+│
+└── docs/                           # Documentación
+    ├── CLAUDE.md                  # Memoria permanente del proyecto
+    ├── FASE1_TERMINAL_REFACTOR.md # Doc de refactor terminal
+    └── research/
+        └── angular-terminal-complete-guide.txt  # Investigación
+```
+
+---
+
+## 🎨 Sistema de Niveles de Autonomía
+
+Configurable en `sendell brain` → Tab Memorias → Dropdown
 
 | Nivel | Nombre | Comportamiento |
 |-------|--------|---------------|
 | **L1** | Monitor Only | Solo observa, nunca actúa |
 | **L2** | Ask Permission | **DEFAULT** - Pide permiso para TODO |
-| **L3** | Safe Actions | Ejecuta acciones seguras automáticamente (abrir apps) |
+| **L3** | Safe Actions | Auto-ejecuta acciones seguras (abrir apps) |
 | **L4** | Modify State | Puede cerrar apps, modificar archivos |
-| **L5** | Full Autonomy | Autonomía completa (peligroso) |
-
-**Recomendación**: Usa L2 si no confías 100%, L3 para uso normal.
+| **L5** | Full Autonomy | Autonomía completa (⚠️ usar con precaución) |
 
 ---
 
-## Las 6 Herramientas de Sendell
+## 🧠 Sistema de Memoria
 
-Todas 100% funcionales:
+### Ubicación
+`data/sendell_memory.json`
 
-1. **get_system_health** - Obtiene CPU, RAM, Disco %
-2. **get_active_window** - Ve qué ventana está activa
-3. **list_top_processes** - Lista procesos por uso de recursos
-4. **open_application** - Abre apps (notepad, chrome, vscode, etc.)
-5. **respond_to_user** - Te envía mensajes
-6. **show_brain** - Abre la GUI de configuración
+### Estructura
+```json
+{
+  "facts": [
+    {
+      "fact": "Daniel trabaja en AI",
+      "category": "work",
+      "confidence": 1.0,
+      "source": "conversation",
+      "timestamp": "2025-11-14T10:00:00"
+    }
+  ],
+  "preferences": {
+    "favorite_apps": ["vscode"],
+    "work_hours": "14:00-18:00"
+  },
+  "identity": {
+    "birth_date": "2025-10-28T15:30:00",
+    "age_days": 16,
+    "phase": "ADOLESCENCE"
+  },
+  "reminders": [
+    {
+      "id": "rem_001",
+      "content": "Commit code",
+      "trigger_time": "2025-11-14T14:30:00",
+      "type": "one_time",
+      "actions": ["visual_notification", "sound"]
+    }
+  ],
+  "conversations": [...],
+  "sessions": [...]
+}
+```
+
+### Gestión
+- **Leer/Editar**: `sendell brain` → Tab Memorias
+- **Agregar fact**: Botón "Agregar Fact" en GUI
+- **Eliminar**: Seleccionar + botón "Eliminar"
 
 ---
 
-## Configuración (.env)
+## 🔐 Privacidad y Seguridad
+
+### ❌ Lo que Sendell NUNCA hace
+- Leer contenido de ventanas (solo títulos)
+- Monitorear apps bloqueadas (`SENDELL_BLOCKED_APPS`)
+- Guardar contraseñas
+- Enviar datos a terceros (excepto OpenAI API)
+- Ejecutar comandos destructivos sin permiso (L1-L2)
+
+### ✅ Lo que Sendell SÍ hace
+- Scrubbing de PII en logs (emails, teléfonos, tarjetas)
+- Validación de inputs con Pydantic
+- Ejecución segura (`subprocess` sin `shell=True`)
+- Logs de auditoría de todas las acciones
+- Respeto a niveles de autonomía configurados
+
+---
+
+## 🐛 Troubleshooting
+
+### Dashboard no muestra proyectos
+**Causa**: VS Code no detectado o server no corriendo
+
+**Solución**:
+```bash
+# Verificar VS Code abierto con proyectos
+# Verificar server: http://localhost:8765/api/projects
+# Restart server si necesario
+```
+
+### Terminal no aparece al hacer click
+**Causa**: WebSocket no conecta o CSS no cargó
+
+**Solución**:
+```bash
+# Hard refresh navegador
+Ctrl + Shift + R
+
+# Verificar build actualizado
+cd sendell-dashboard
+npm run build
+cd ..
+bash build-dashboard.sh
+```
+
+### Caracteres raros en terminal (ñ, á, é)
+**Estado**: ✅ **RESUELTO** en v0.3 (encoding cp850)
+
+### "ModuleNotFoundError"
+```bash
+uv sync --all-extras
+```
+
+### "OpenAI API Key invalid"
+```bash
+# Verificar .env tiene API key correcta
+notepad .env
+```
+
+---
+
+## 📝 Configuración (.env)
 
 ```bash
 # OpenAI (OBLIGATORIO)
 OPENAI_API_KEY=sk-tu-api-key-aqui
 OPENAI_MODEL=gpt-4-turbo-preview
 
-# Autonomía (configurable desde GUI)
+# Autonomía (configurable desde Brain GUI)
 SENDELL_AUTONOMY_LEVEL=2
 
 # Loop proactivo
@@ -177,198 +437,117 @@ SENDELL_SCRUB_PII=true
 SENDELL_LOG_LEVEL=INFO
 ```
 
-**No toques el .env manualmente**. Usa `sendell brain` para configurar.
+---
+
+## 🗺️ Roadmap
+
+### ✅ v0.1 - Core Agent (Completado)
+- Chat interactivo con LangGraph + GPT-4
+- 6 herramientas básicas
+- Brain GUI (tkinter)
+- Sistema de memoria JSON
+- Niveles de autonomía L1-L5
+
+### ✅ v0.2 - Sistema Proactivo (Completado)
+- AgentIdentity con fases temporales
+- ReminderManager (one-time, recurring)
+- Loop proactivo asyncio
+- Notificaciones visuales con ASCII art
+
+### ✅ v0.3 - Dashboard & Terminales (Completado)
+- Angular Dashboard web
+- Detección multi-proyecto VS Code
+- Gráficos de actividad ECG-style
+- Terminales embebidos xterm.js
+- TerminalManager backend
+- Estados OFFLINE/READY/WORKING
+
+### 🔜 v0.4 - Orquestación Agéntica (Próximo)
+- [ ] Sub-agentes especializados (GitMonitor, NPM Watcher, etc.)
+- [ ] Bridge.json expandido (agents, tasks, timeline)
+- [ ] Task queue + progress tracking
+- [ ] Database de progreso (JSON files estructurados)
+- [ ] Panel de estado de agentes en dashboard
+
+### 🔮 v0.5 - Integración Claude Code (Futuro)
+- [ ] API local de Claude Code
+- [ ] Protocolo de comunicación agente ↔ agente (JSON)
+- [ ] Task assignment automático
+- [ ] Progress reporting en tiempo real
+- [ ] Timeline de eventos (JSONL append-only)
+
+### 🚀 v1.0 - Producción (Largo Plazo)
+- [ ] PTY backend para terminal real (vim, nano, htop support)
+- [ ] Database PostgreSQL/SQLite
+- [ ] Multi-dispositivo (Windows + macOS + Linux)
+- [ ] Servidor MCP completo
+- [ ] Sistema de plugins
 
 ---
 
-## Arquitectura del Proyecto
+## 📚 Documentación Adicional
 
-```
-sendell/
-├── src/sendell/
-│   ├── agent/
-│   │   ├── core.py          # Agente LangGraph + GPT-4
-│   │   ├── prompts.py       # System prompt
-│   │   ├── memory.py        # Sistema de memoria (JSON)
-│   │   └── brain_gui.py     # GUI tkinter
-│   ├── device/
-│   │   ├── monitor.py       # Wrapper de psutil
-│   │   ├── automation.py    # Control de apps
-│   │   └── platform/
-│   │       └── windows.py   # APIs de Windows
-│   ├── mcp/
-│   │   ├── server.py        # Servidor MCP (no usado aún)
-│   │   └── tools/           # Implementación de herramientas
-│   ├── security/
-│   │   └── permissions.py   # Sistema L1-L5
-│   ├── utils/
-│   │   ├── logger.py        # Logging con PII scrubbing
-│   │   └── errors.py        # Excepciones custom
-│   ├── config.py            # Configuración Pydantic
-│   └── __main__.py          # CLI principal
-├── data/
-│   └── sendell_memory.json  # Memoria persistente
-├── .env                     # Tu configuración
-└── pyproject.toml           # Dependencias
-```
+- **`CLAUDE.md`**: Memoria permanente del proyecto (actualizada cada sesión)
+- **`TUTORIAL.md`**: Tutorial de uso paso a paso
+- **`docs/FASE1_TERMINAL_REFACTOR.md`**: Documentación detallada del refactor de terminales (4500+ palabras)
+- **`docs/research/angular-terminal-complete-guide.txt`**: Investigación completa sobre integración xterm.js + Angular
 
 ---
 
-## Stack Tecnológico
+## 💡 Stack Tecnológico
 
-- **Agente**: LangGraph (ReAct pattern)
+### Backend
+- **Agent Framework**: LangGraph (ReAct pattern)
 - **LLM**: OpenAI GPT-4 Turbo
-- **Monitoreo**: psutil (cross-platform) + pywin32 (Windows)
-- **GUI**: tkinter (incluido en Python)
-- **Config**: Pydantic + python-dotenv
+- **API Server**: FastAPI + Uvicorn
+- **System Monitoring**: psutil
+- **Windows APIs**: pywin32
+- **Terminal Control**: subprocess.Popen + threading
+- **WebSocket**: FastAPI native WebSocket
+
+### Frontend
+- **Framework**: Angular 17 (standalone components)
+- **Terminal**: xterm.js 5.5 + addons (Fit, WebLinks, Webgl)
+- **Real-time**: WebSocket client
+- **Graphics**: Canvas API (ECG graphs)
+- **Styling**: SCSS (cyberpunk theme)
+
+### Database
+- **Current**: JSON files (`sendell_memory.json`, `bridge.json`)
+- **Future**: PostgreSQL/SQLite para producción
+
+### Tools
+- **Package Manager**: uv (Python), npm (Angular)
+- **GUI**: tkinter (Brain GUI)
+- **Notifications**: tkinter + winsound
 - **CLI**: Typer + Rich
 
 ---
 
-## Sistema de Memoria
+## 🤝 Contribuir
 
-### Dónde se guarda
-`data/sendell_memory.json`
+Sendell es un proyecto personal de Daniel. Para sugerencias o reportar bugs:
 
-### Qué guarda
-```json
-{
-  "facts": [
-    {"fact": "Daniel trabaja en AI", "category": "work"}
-  ],
-  "preferences": {
-    "favorite_apps": ["vscode"],
-    "work_hours": "14:00-18:00"
-  },
-  "conversations": [...],
-  "sessions": [...]
-}
-```
-
-### Cómo agregar facts
-1. `sendell brain`
-2. Tab Memorias
-3. "Agregar Fact"
-4. Escribe y guarda
-
-**Nota**: Por ahora son manuales. Auto-aprendizaje viene en v0.2.
+1. Crear issue en el repositorio
+2. Describir problema/feature claramente
+3. Incluir logs si es bug (`SENDELL_LOG_LEVEL=DEBUG`)
 
 ---
 
-## Privacidad y Seguridad
+## 📄 Licencia
 
-### Lo que Sendell NUNCA hace
-- ❌ Leer contenido de ventanas (solo títulos)
-- ❌ Monitorear apps bloqueadas (password managers, banking)
-- ❌ Guardar contraseñas o datos sensibles
-- ❌ Enviar datos a terceros (excepto OpenAI para el LLM)
-
-### Lo que Sendell SÍ hace
-- ✅ Scrubbing de PII en logs (emails, teléfonos, tarjetas)
-- ✅ Validación de inputs con Pydantic
-- ✅ Ejecución segura (sin shell=True)
-- ✅ Logs de auditoría de todas las acciones
+Proyecto personal de uso privado.
+Código generado con asistencia de Claude (Anthropic).
 
 ---
 
-## Troubleshooting
+## 🙏 Créditos
 
-### Error: "ModuleNotFoundError"
-```powershell
-uv sync --all-extras
-```
-
-### Error: "OpenAI API Key"
-Verifica que `.env` tenga tu API key correcta.
-
-### Sendell pide permiso para todo
-Cambias a L3: `sendell brain` → Memorias → Autonomía L3
-
-### GUI no abre
-```powershell
-uv add tk  # Si falta tkinter
-```
+**Desarrollador**: Daniel
+**AI Assistant**: Claude (Anthropic)
+**Versión**: 0.3.0
+**Última actualización**: Noviembre 2025
 
 ---
 
-## Roadmap
-
-### ✅ v0.1 (ACTUAL)
-- [x] Chat interactivo funcional
-- [x] 6 herramientas operativas
-- [x] GUI "Ver Cerebro"
-- [x] Sistema de memoria (JSON)
-- [x] Configuración de autonomía desde GUI
-- [x] Niveles L1-L5
-
-### 🔜 v0.2 (Próximo - 2-3 semanas)
-- [ ] Memoria conversacional persistente
-- [ ] Sendell lee facts automáticamente en conversaciones
-- [ ] Aprendizaje automático de facts
-- [ ] Checkpointer de LangGraph
-- [ ] Más herramientas (screenshots, proyectos, música)
-
-### 🔮 v0.3 (Futuro)
-- [ ] Integración email/calendario
-- [ ] Sistema de plugins
-- [ ] Análisis de productividad
-
-### 🚀 v1.0 (Largo plazo)
-- [ ] Servidor MCP funcional
-- [ ] Multi-dispositivo
-- [ ] macOS support
-
----
-
-## Preguntas Frecuentes
-
-### ¿Cuánto cuesta usar Sendell?
-Sendell es gratis. Pagas solo el uso de OpenAI API (muy barato, ~$0.01-0.05 por conversación).
-
-### ¿Funciona sin internet?
-No. Necesita internet para conectarse a OpenAI.
-
-### ¿Sendell guarda mis conversaciones?
-Sí, en `data/sendell_memory.json` localmente. Puedes borrarlas desde la GUI.
-
-### ¿Puedo usar otro LLM (no OpenAI)?
-Por ahora solo OpenAI. Soporte para modelos locales (Llama, etc.) en v0.3.
-
-### ¿Por qué "Sendell"?
-Es tu nombre personalizado para tu asistente AI. Úsalo como quieras.
-
----
-
-## Comandos Rápidos (Cheatsheet)
-
-```powershell
-# Chequeo rápido
-uv run python -m sendell health
-
-# Chat principal
-uv run python -m sendell chat
-
-# Abrir configuración/memoria
-uv run python -m sendell brain
-
-# Modo proactivo (3 ciclos de prueba)
-uv run python -m sendell start --max-cycles 3
-
-# Ver versión
-uv run python -m sendell version
-```
-
----
-
-## Soporte
-
-- **Bugs/Features**: Crea issues en el repo
-- **Documentación técnica**: Ver `claude.md`
-- **Developer**: Daniel
-
----
-
-**Hecho por Daniel**
-**Con ayuda de Claude (Anthropic)**
-
-v0.1.0 - MVP Release - Octubre 2025
+**🤖 Co-Authored-By: Claude <noreply@anthropic.com>**
